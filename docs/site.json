@@ -1,7 +1,7 @@
 {
   "baseUrl": "",
-  "titlePrefix": "",
-  "titleSuffix": "AddressBook Level-3",
+  "titlePrefix": "CareBook",
+  "titleSuffix": "CareBook <3",
   "faviconPath": "images/SeEduLogo.png",
   "style": {
     "codeTheme": "light"
