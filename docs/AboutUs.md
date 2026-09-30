@@ -42,7 +42,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ### Qian Grace Pan
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/graceqian06.png.png" width="200px">
 
 [[github](http://github.com/graceqian06)]
 
