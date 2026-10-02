@@ -322,11 +322,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed
+2.  Should be able to finish a command within 1 second for a contact book holding up to 1000 persons 
+3. Invalid commands should show a clear error message and usage example
+4. A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+5. If saving fails, the previous data file should be preserved and the user should be told what went wrong
+6. Should be able to handle empty or malformed commands without crashing
+7. Should run without a remote server
+8. Should be usable at all screen resolutions and scales
 
-*{More to be added}*
 
 ### Glossary
 
