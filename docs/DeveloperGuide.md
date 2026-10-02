@@ -271,26 +271,23 @@ _{Explain here how the data archiving feature will be implemented}_
 **Target user profile**:
 
 * has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* works in at a desktop workstation for post-op care
+* requires quick access to patient care details and priority
+* requires quick access to patients' relevant contacts
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: Streamlined platform for post-op care coordinators to keep track of critical patients and access family contact details.
 
 
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+| Priority | As a …                                    | I want to …             | So that I can…                                             |
+|----------|--------------------------------------------|-------------------------|------------------------------------------------------------|
+| `* * *`  | new user                                   | see usage instructions  | refer to instructions when I forget how to use the App     |
+| `* * *`  | user                                       | add a new patient       |                                                            |
+| `* * *`  | user                                       | delete a patient        | remove entries who have completed their recovery           |
+| `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
 
 *{More to be added}*
 
@@ -325,16 +322,22 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed
+2.  Should be able to finish a command within 1 second for a contact book holding up to 1000 persons 
+3. Invalid commands should show a clear error message and usage example
+4. A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+5. If saving fails, the previous data file should be preserved and the user should be told what went wrong
+6. Should be able to handle empty or malformed commands without crashing
+7. Should run without a remote server
+8. Should be usable at all screen resolutions and scales
 
-*{More to be added}*
 
 ### Glossary
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Recovery**: Patient is deemed to have reached their normal level of physical and physiological function
+* **Relevant contacts**: A patient's emergency contact, or other family contacts
+
 
 --------------------------------------------------------------------------------------------------------------------
 
