@@ -1,7 +1,6 @@
 {
   "baseUrl": "",
   "titlePrefix": "CareBook",
-  "titleSuffix": "CareBook <3",
   "faviconPath": "images/SeEduLogo.png",
   "style": {
     "codeTheme": "light"
