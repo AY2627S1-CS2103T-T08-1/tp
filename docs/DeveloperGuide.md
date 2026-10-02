@@ -331,7 +331,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 ### Glossary
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Recovery**: Patient is deemed to have reached their normal level of physical and physiological function
+* **Relevant contacts**: A patient's emergency contact, or other family contacts
+
 
 --------------------------------------------------------------------------------------------------------------------
 
