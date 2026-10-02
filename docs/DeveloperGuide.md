@@ -287,7 +287,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is the `CareBook` and the **Actor** is the `user`, unless specified otherwise)
 
 **Use case: Add a contact**
 
@@ -310,19 +310,19 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 *2a. The name contains invalid characters.
 
-    *2a1. AddressBook shows an error message.
+    *2a1. CareBook shows an error message.
 
         Use case resumes at step 1
 
 *2b. A phone number contains non-numeric characters.
 
-    *2b1. AddressBook shows an error message.
+    *2b1. CareBook shows an error message.
 
         Use case resumes at step 1.
 
 *2c. A required field is missing.
 
-    *2c1. AddressBook shows an error message.
+    *2c1. CareBook shows an error message.
 
         Use case resumes at step 1.
 
@@ -331,9 +331,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 **MSS**
 
 1.  User requests to list persons
-2.  AddressBook shows a list of persons
+2.  CareBook shows a list of persons
 3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+4.  CareBook deletes the person
 
     Use case ends.
 
@@ -345,7 +345,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3a. The given index is invalid.
 
-    * 3a1. AddressBook shows an error message.
+    * 3a1. CareBook shows an error message.
 
       Use case resumes at step 2.
 
@@ -364,19 +364,19 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 *2a. The command format is invalid. 
 
-    *2a1. AddressBook shows an error message
+    *2a1. CareBook shows an error message
         
         Use case ends.
 
 *2b. The command contains leading or trailing whitespace.
 
-    *2b1. AddressBook ignores the whitespace and validates the command.
+    *2b1. CareBook ignores the whitespace and validates the command.
 
         Use case resumes at step 3. 
 
 *3a. No contacts are stored in the address book.
 
-    *3a1. AddressBook shows No contacts found.
+    *3a1. CareBook shows No contacts found.
 
         Use case ends.
 
