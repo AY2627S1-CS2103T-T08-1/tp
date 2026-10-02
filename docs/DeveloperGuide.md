@@ -271,41 +271,75 @@ _{Explain here how the data archiving feature will be implemented}_
 **Target user profile**:
 
 * has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* works in at a desktop workstation for post-op care
+* requires quick access to patient care details and priority
+* requires quick access to patients' relevant contacts
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: Streamlined platform for post-op care coordinators to keep track of critical patients and access family contact details.
 
 
 ### User stories
 
 Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+| Priority | As a …                                    | I want to …             | So that I can…                                             |
+|----------|--------------------------------------------|-------------------------|------------------------------------------------------------|
+| `* * *`  | new user                                   | see usage instructions  | refer to instructions when I forget how to use the App     |
+| `* * *`  | user                                       | add a new patient       |                                                            |
+| `* * *`  | user                                       | delete a patient        | remove entries who have completed their recovery           |
+| `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
 
 *{More to be added}*
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is the `CareBook` and the **Actor** is the `user`, unless specified otherwise)
+
+**Use case: Add a contact**
+
+**MSS:**
+
+1. User requests to add a person with the person's name, patient phone number, family phone number, and address
+2. CareBook validates the command format and input fields 
+3. CareBook adds the person to the address book 
+4. CareBook displays a confirmation with the person's details 
+
+    Use case ends. 
+
+**Extensions** 
+
+*1a. The command format is invalid 
+
+    *1a1. CareBook shows an error message with the correct command format.
+
+        Use case ends.
+
+*2a. The name contains invalid characters.
+
+    *2a1. CareBook shows an error message.
+
+        Use case resumes at step 1
+
+*2b. A phone number contains non-numeric characters.
+
+    *2b1. CareBook shows an error message.
+
+        Use case resumes at step 1.
+
+*2c. A required field is missing.
+
+    *2c1. CareBook shows an error message.
+
+        Use case resumes at step 1.
 
 **Use case: Delete a person**
 
 **MSS**
 
 1.  User requests to list persons
-2.  AddressBook shows a list of persons
+2.  CareBook shows a list of persons
 3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+4.  CareBook deletes the person
 
     Use case ends.
 
@@ -317,9 +351,83 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3a. The given index is invalid.
 
-    * 3a1. AddressBook shows an error message.
+    * 3a1. CareBook shows an error message.
 
       Use case resumes at step 2.
+
+**Use case: List all contacts**
+
+**MSS:**
+
+1. User requests to view all contacts 
+2. CareBook validates the command format
+3. CareBook displays all contacts currently stored 
+4. CareBook displays a confirmation that all contacts have been shown
+
+   Use case ends.
+
+**Extensions**
+
+*2a. The command format is invalid. 
+
+    *2a1. CareBook shows an error message
+        
+        Use case ends.
+
+*2b. The command contains leading or trailing whitespace.
+
+    *2b1. CareBook ignores the whitespace and validates the command.
+
+        Use case resumes at step 3. 
+
+*3a. No contacts are stored in the address book.
+
+    *3a1. CareBook shows No contacts found.
+
+        Use case ends.
+
+**Use case: View contact details**
+
+**MSS:**
+
+1. User requests to view contact details 
+2. CareBook validates the command format
+3. CareBook searches for contacts whose full name matches the given name exactly 
+4. CareBook displays the matching contact’s name, patient phone number, family phone number, and address
+
+   Use case ends.
+
+**Extensions**
+
+*1a. User enters details without contact name. 
+
+    *1a1. CareBook displays error message. 
+        
+        Use case ends. 
+
+*1b. The user enters extra spaces between the name and details.
+
+    *1b1. CareBook ignores the extra spaces and processes request. 
+        
+        User case resumes at step 2. 
+
+*2a. The command word is invalid.
+    
+    *2a1. CareBook displays error message. 
+
+        Use case ends. 
+
+*3a. No contact matches given name.
+
+    *3a1. CareBook displays error message.
+
+        Use case ends.
+
+*3b. Multiple contacts have the same name 
+
+    *3b1. CareBook displays details of all matching contacts 
+
+        Use case ends. 
 
 **Use case: Save contact list after an update**
 
@@ -335,24 +443,32 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Extensions**
 
-* 3a. The requested change is invalid.
+*3a. The requested change is invalid.
 
-  * 3a1. CareBook displays an error message and leaves the contact list unchanged. 
-  * 3a2. User submits a corrected update request to the contact list.
-      Use case resumes at step 4.
-
+    *3a1. CareBook displays an error message and leaves the contact list unchanged.
+    
+    *3a2. User submits a corrected update request to the contact list.
+    
+        Use case resumes at step 4.
+      
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed
+2.  Should be able to finish a command within 1 second for a contact book holding up to 1000 persons 
+3. Invalid commands should show a clear error message and usage example
+4. A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
+5. If saving fails, the previous data file should be preserved and the user should be told what went wrong
+6. Should be able to handle empty or malformed commands without crashing
+7. Should run without a remote server
+8. Should be usable at all screen resolutions and scales
 
-*{More to be added}*
 
 ### Glossary
 
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Private contact detail**: A contact detail that is not meant to be shared with others
+* **Recovery**: Patient is deemed to have reached their normal level of physical and physiological function
+* **Relevant contacts**: A patient's emergency contact, or other family contacts
+
 
 --------------------------------------------------------------------------------------------------------------------
 
