@@ -289,6 +289,43 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 (For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
 
+**Use case: Add a contact**
+
+**MSS:**
+
+1. User requests to add a person with the person's name, patient phone number, family phone number, and address
+2. CareBook validates the command format and input fields 
+3. CareBook adds the person to the address book 
+4. CareBook displays a confirmation with the person's details 
+
+    Use case ends. 
+
+**Extensions** 
+
+*1a. The command format is invalid 
+
+    *1a1. CareBook shows an error message with the correct command format.
+
+        Use case ends.
+
+*2a. The name contains invalid characters.
+
+    *2a1. AddressBook shows an error message.
+
+        Use case resumes at step 1
+
+*2b. A phone number contains non-numeric characters.
+
+    *2b1. AddressBook shows an error message.
+
+        Use case resumes at step 1.
+
+*2c. A required field is missing.
+
+    *2c1. AddressBook shows an error message.
+
+        Use case resumes at step 1.
+
 **Use case: Delete a person**
 
 **MSS**
@@ -312,7 +349,80 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-*{More to be added}*
+**Use case: List all contacts**
+
+**MSS:**
+
+1. User requests to view all contacts 
+2. CareBook validates the command format
+3. CareBook displays all contacts currently stored 
+4. CareBook displays a confirmation that all contacts have been shown
+
+   Use case ends.
+
+**Extensions**
+
+*2a. The command format is invalid. 
+
+    *2a1. AddressBook shows an error message
+        
+        Use case ends.
+
+*2b. The command contains leading or trailing whitespace.
+
+    *2b1. AddressBook ignores the whitespace and validates the command.
+
+        Use case resumes at step 3. 
+
+*3a. No contacts are stored in the address book.
+
+    *3a1. AddressBook shows No contacts found.
+
+        Use case ends.
+
+**Use case: View contact details**
+
+**MSS:**
+
+1. User requests to view contact details 
+2. CareBook validates the command format
+3. CareBook searches for contacts whose full name matches the given name exactly 
+4. CareBook displays the matching contact’s name, patient phone number, family phone number, and address
+
+   Use case ends.
+
+**Extensions**
+
+*1a. User enters details without contact name. 
+
+    *1a1. CareBook displays error message. 
+        
+        Use case ends. 
+
+*1b. The user enters extra spaces between the name and details.
+
+    *1b1. CareBook ignores the extra spaces and processes request. 
+        
+        User case resumes at step 2. 
+
+*2a. The command word is invalid.
+    
+    *2a1. CareBook displays error message. 
+
+        Use case ends. 
+
+*3a. No contact matches given name.
+
+    *3a1. CareBook displays error message.
+
+        Use case ends.
+
+*3b. Multiple contacts have the same name 
+
+    *3b1. CareBook displays details of all matching contacts 
+
+        Use case ends. 
+
 
 ### Non-Functional Requirements
 
