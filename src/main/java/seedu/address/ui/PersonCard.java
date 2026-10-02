@@ -16,9 +16,6 @@ public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
 
-    @FXML
-    private Label remark;
-
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
      * As a consequence, UI elements' variable names cannot be set to such keywords
@@ -29,6 +26,8 @@ public class PersonCard extends UiPart<Region> {
 
     public final Person person;
 
+    @FXML
+    private Label remark;
     @FXML
     private HBox cardPane;
     @FXML
