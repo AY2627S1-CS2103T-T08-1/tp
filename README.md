@@ -1,20 +1,27 @@
 [![CI Status](https://github.com/AY2627S1-CS2103T-T08-1/tp/actions/workflows/gradle.yml/badge.svg)](https://github.com/AY2627S1-CS2103T-T08-1/tp/actions/workflows/gradle.yml)
 
+# CareBook
+
 ![Ui](docs/images/Ui.png)
 
-* This is **a sample project for Software Engineering (SE) students**.<br>
-  Example usages:
-  * as a starting point of a course project (as opposed to writing everything from scratch)
-  * as a case study
-* The project simulates an ongoing software project for a desktop application (called _AddressBook_) used for managing contact details.
-  * It is **written in an object-oriented programming (OOP) style** and provides a **reasonably well-written** codebase of about 6 KLoC. It is **larger** than what students typically write in beginner-level software-engineering modules, without being overwhelming.
-  * It comes with a **reasonable level of user and developer documentation**.
-* It is named `AddressBook Level 3` (`AB3` for short) because it was initially created as a part of a series of `AddressBook` projects (`Level 1`, `Level 2`, `Level 3` ...).
-* For the detailed documentation of this project, see the **[CareBook Product Website](https://ay2627s1-cs2103t-t08-1.github.io/tp/)**.
-* Additional project documentation:
-  * [User Guide](docs/UserGuide.md)
-  * [Developer Guide](docs/DeveloperGuide.md)
-  * [About Us](docs/AboutUs.md)
+CareBook is a desktop, CLI-first contact management application for tech-comfortable in-house caregivers and healthcare administrators who manage contact details for patients and their families.
+
+It gives caregivers a fast and reliable way to store and retrieve patient and family contact details, helping them reach the right person quickly during day-to-day care or an emergency.
+
+## Key features
+
+* Add a new contact.
+* List all saved contacts.
+* Delete an unwanted contact.
+* View the full details of a specific contact.
+* Save contact data automatically between sessions.
+
+## Documentation
+
+* [CareBook Product Website](https://ay2627s1-cs2103t-t08-1.github.io/tp/)
+* [User Guide](docs/UserGuide.md)
+* [Developer Guide](docs/DeveloperGuide.md)
+* [About Us](docs/AboutUs.md)
 
 ## Acknowledgements
 
