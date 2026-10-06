@@ -429,7 +429,28 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
         Use case ends. 
 
+**Use case: Save contact list after an update**
 
+**MSS**
+
+1. User requests to list persons.
+2. CareBook shows a list of persons.
+3. User requests a valid update to the contact list.
+4. CareBook updates the contact list and automatically saves it to the local data file.
+5. CareBook displays the updated contact list and a success message.
+
+    Use case ends.
+
+**Extensions**
+
+*3a. The requested change is invalid.
+
+    *3a1. CareBook displays an error message and leaves the contact list unchanged.
+    
+    *3a2. User submits a corrected update request to the contact list.
+    
+        Use case resumes at step 4.
+      
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed
