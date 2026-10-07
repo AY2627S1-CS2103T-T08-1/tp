@@ -24,6 +24,9 @@ public class DeleteCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1";
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted person: %1$s";
+    public static final String MESSAGE_EMPTY_LIST = "There are no persons in the displayed list to delete.";
+    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "The index provided is out of range. "
+            + "The displayed list has %1$d person(s), so the index must be from 1 to %1$d.";
 
     private final Index targetIndex;
 
@@ -36,8 +39,12 @@ public class DeleteCommand extends Command {
         requireNonNull(model);
         List<Person> lastShownList = model.getFilteredPersonList();
 
+        if (lastShownList.isEmpty()) {
+            throw new CommandException(MESSAGE_EMPTY_LIST);
+        }
+
         if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            throw new CommandException(String.format(MESSAGE_INDEX_OUT_OF_RANGE, lastShownList.size()));
         }
 
         Person personToDelete = lastShownList.get(targetIndex.getZeroBased());
