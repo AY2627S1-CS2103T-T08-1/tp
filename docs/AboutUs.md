@@ -11,21 +11,20 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 ## Project team
 
-### John Doe
+### Ramakrishnan Gnaneswar
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/gnanes99.png" width="200px">
 
-[[homepage](http://www.comp.nus.edu.sg/~damithch)]
-[[github](https://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](https://github.com/Gnanes99)]
+[[portfolio](team/gnanes99.md)]
 
-* Role: Project Advisor
+* Role: Developer
 
 ### Jane Doe
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/malyalakusumita.png" width="200px">
 
-[[github](http://github.com/johndoe)]
+[[github](http://github.com/malyalakusumita)]
 [[portfolio](team/johndoe.md)]
 
 * Role: Team Lead
@@ -41,21 +40,20 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Data
 
-### Jean Doe
+### Qian Grace Pan
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/graceqian06.png" width="200px">
 
-[[github](http://github.com/johndoe)]
-[[portfolio](team/johndoe.md)]
+[[github](http://github.com/graceqian06)]
 
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
 
 ### James Doe
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/carlyngohing.png" width="200px">
 
-[[github](http://github.com/johndoe)]
+[[github](http://github.com/carlyngohing)]
 [[portfolio](team/johndoe.md)]
 
 * Role: Developer
