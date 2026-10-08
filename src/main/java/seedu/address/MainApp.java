@@ -67,7 +67,7 @@ public class MainApp extends Application {
      * An empty address book will be used instead if {@code storage}'s address book is not found,
      * or if errors occur when reading it (in which case a message is also shown to the user).
      */
-    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
+    Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
 
         Optional<ReadOnlyAddressBook> addressBookOptional;
@@ -87,6 +87,13 @@ public class MainApp extends Application {
         }
 
         return new ModelManager(initialData, userPrefs);
+    }
+
+    /**
+     * Returns the message to show the user on launch, or an empty string if there is none.
+     */
+    String getStartupMessage() {
+        return startupMessage;
     }
 
     /**
