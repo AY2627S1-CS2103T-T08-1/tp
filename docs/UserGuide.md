@@ -153,6 +153,10 @@ Format: `delete INDEX`
 * Deletes the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* The command word `delete` is case-insensitive, e.g. `Delete 1` and `DELETE 1` also work.
+* If the index is zero or negative, e.g. `delete 0`, an error message says that the index must be a positive integer.
+* If the index is larger than the number of persons in the displayed list, an error message shows how many persons are in the list. If the displayed list is empty, an error message says that there is no one to delete.
+* If the index is missing, is not a number, or is followed by extra values, e.g. `delete`, `delete abc` or `delete 1 2`, an error message shows the correct command format.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.

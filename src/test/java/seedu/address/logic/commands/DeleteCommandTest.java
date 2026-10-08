@@ -46,7 +46,24 @@ public class DeleteCommandTest {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);
 
-        assertCommandFailure(deleteCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(deleteCommand, model, String.format(DeleteCommand.MESSAGE_INDEX_OUT_OF_RANGE,
+                model.getFilteredPersonList().size()));
+    }
+
+    @Test
+    public void execute_maxIntIndexUnfilteredList_throwsCommandException() {
+        DeleteCommand deleteCommand = new DeleteCommand(Index.fromOneBased(Integer.MAX_VALUE));
+
+        assertCommandFailure(deleteCommand, model, String.format(DeleteCommand.MESSAGE_INDEX_OUT_OF_RANGE,
+                model.getFilteredPersonList().size()));
+    }
+
+    @Test
+    public void execute_emptyList_throwsCommandException() {
+        showNoPerson(model);
+        DeleteCommand deleteCommand = new DeleteCommand(INDEX_FIRST_PERSON);
+
+        assertCommandFailure(deleteCommand, model, DeleteCommand.MESSAGE_EMPTY_LIST);
     }
 
     @Test
@@ -76,7 +93,8 @@ public class DeleteCommandTest {
 
         DeleteCommand deleteCommand = new DeleteCommand(outOfBoundIndex);
 
-        assertCommandFailure(deleteCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(deleteCommand, model, String.format(DeleteCommand.MESSAGE_INDEX_OUT_OF_RANGE,
+                model.getFilteredPersonList().size()));
     }
 
     @Test
