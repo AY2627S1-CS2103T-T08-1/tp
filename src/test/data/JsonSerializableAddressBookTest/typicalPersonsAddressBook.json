@@ -3,43 +3,43 @@
   "contacts" : [ {
     "name" : "Alice Pauline",
     "patientNo" : "94351253",
-    "email" : "alice@example.com",
+    "familyNo" : "81234567",
     "address" : "123, Jurong West Ave 6, #08-111",
     "tags" : [ "friends" ]
   }, {
     "name" : "Benson Meier",
     "patientNo" : "98765432",
-    "email" : "johnd@example.com",
+    "familyNo" : "82345678",
     "address" : "311, Clementi Ave 2, #02-25",
     "tags" : [ "owesMoney", "friends" ]
   }, {
     "name" : "Carl Kurz",
     "patientNo" : "95352563",
-    "email" : "heinz@example.com",
+    "familyNo" : "83456789",
     "address" : "wall street",
     "tags" : [ ]
   }, {
     "name" : "Daniel Meier",
     "patientNo" : "87652533",
-    "email" : "cornelia@example.com",
+    "familyNo" : "84567890",
     "address" : "10th street",
     "tags" : [ "friends" ]
   }, {
     "name" : "Elle Meyer",
     "patientNo" : "9482224",
-    "email" : "werner@example.com",
+    "familyNo" : "85678901",
     "address" : "michegan ave",
     "tags" : [ ]
   }, {
     "name" : "Fiona Kunz",
     "patientNo" : "9482427",
-    "email" : "lydia@example.com",
+    "familyNo" : "86789012",
     "address" : "little tokyo",
     "tags" : [ ]
   }, {
     "name" : "George Best",
     "patientNo" : "9482442",
-    "email" : "anna@example.com",
+    "familyNo" : "87890123",
     "address" : "4th street",
     "tags" : [ ]
   } ]
