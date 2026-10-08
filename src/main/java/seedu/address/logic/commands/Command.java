@@ -17,4 +17,11 @@ public abstract class Command {
      */
     public abstract CommandResult execute(Model model) throws CommandException;
 
+    /**
+     * Returns true if this command may change the stored data, so the data should be saved after it runs.
+     */
+    public boolean modifiesData() {
+        return true;
+    }
+
 }

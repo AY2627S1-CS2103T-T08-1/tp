@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -83,6 +84,23 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_nonModifyingCommandsWithFailingStorage_doNotSave() throws Exception {
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        // none of these commands change the data, so the failing save must never be triggered
+        for (String commandText : new String[] {ListCommand.COMMAND_WORD, "find alice", "help"}) {
+            logic.execute(commandText);
+        }
+    }
+
+    @Test
+    public void execute_modifyingCommandWithFailingStorage_attemptsSave() {
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        assertThrows(CommandException.class, () -> logic.execute(ClearCommand.COMMAND_WORD));
+    }
+
+    @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
     }
@@ -138,6 +156,22 @@ public class LogicManagerTest {
             String expectedMessage, Model expectedModel) {
         assertThrows(expectedException, expectedMessage, () -> logic.execute(inputCommand));
         assertEquals(expectedModel, model);
+    }
+
+    /**
+     * Returns a {@code StorageManager} that throws an {@code IOException} whenever it is asked to save.
+     */
+    private StorageManager createStorageThatFailsToSave() {
+        JsonAddressBookStorage addressBookStorage =
+                new JsonAddressBookStorage(temporaryFolder.resolve("FailingAddressBook.json")) {
+                    @Override
+                    public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                        throw DUMMY_IO_EXCEPTION;
+                    }
+                };
+        JsonUserPrefsStorage userPrefsStorage =
+                new JsonUserPrefsStorage(temporaryFolder.resolve("FailingUserPrefs.json"));
+        return new StorageManager(addressBookStorage, userPrefsStorage);
     }
 
     /**

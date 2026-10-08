@@ -23,7 +23,7 @@ AddressBook Level 3 (AB3) is a **desktop application for managing contacts, opti
 1. Copy the file to the folder you want to use as the _home folder_ for your AddressBook.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+   A GUI similar to the one below should appear in a few seconds. The app starts with an empty contact list the first time you run it.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
@@ -158,16 +158,16 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+AddressBook automatically saves data after every command that changes your contacts (such as `add`, `edit` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+AddressBook data is saved automatically as a JSON file `[JAR file location]/data/contacts.json`. Advanced users are welcome to update data directly by editing that data file.
 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
+If your changes make the data file invalid, AddressBook shows the message "Data file could not be loaded. Starting with an empty contact list." and starts with an empty address book. The invalid file remains on disk until you run a command that changes your contacts, which overwrites it. Still, we recommend backing up the file before editing it.<br>
 Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 

@@ -19,7 +19,6 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.util.SampleDataUtil;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
@@ -33,15 +32,18 @@ import seedu.address.ui.UiManager;
 public class MainApp extends Application {
 
     public static final String VERSION = "V0.5.1";
+    public static final String MESSAGE_DATA_LOADING_FAILED =
+            "Data file could not be loaded. Starting with an empty contact list.";
 
     private static final Logger logger = LogsCenter.getLogger(MainApp.class);
     private static final Path USER_PREFS_FILE_PATH = Paths.get("preferences.json");
-    private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "addressbook.json");
+    private static final Path ADDRESS_BOOK_FILE_PATH = Paths.get("data", "contacts.json");
 
     protected Ui ui;
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private String startupMessage = "";
 
     @Override
     public void init() throws Exception {
@@ -57,13 +59,13 @@ public class MainApp extends Application {
 
         logic = new LogicManager(model, storage);
 
-        ui = new UiManager(logic, storage.getAddressBookFilePath());
+        ui = new UiManager(logic, storage.getAddressBookFilePath(), startupMessage);
     }
 
     /**
      * Returns a {@code ModelManager} with the data from {@code storage}'s address book and {@code userPrefs}. <br>
-     * The data from the sample address book will be used instead if {@code storage}'s address book is not found,
-     * or an empty address book will be used instead if errors occur when reading {@code storage}'s address book.
+     * An empty address book will be used instead if {@code storage}'s address book is not found,
+     * or if errors occur when reading it (in which case a message is also shown to the user).
      */
     private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
@@ -73,13 +75,14 @@ public class MainApp extends Application {
         try {
             addressBookOptional = storage.readAddressBook();
             if (addressBookOptional.isEmpty()) {
-                logger.info("Creating a new data file " + storage.getAddressBookFilePath()
-                        + " populated with a sample AddressBook.");
+                logger.info("No data file found at " + storage.getAddressBookFilePath()
+                        + ". Starting with an empty AddressBook.");
             }
-            initialData = addressBookOptional.orElseGet(SampleDataUtil::getSampleAddressBook);
+            initialData = addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
                     + " Will be starting with an empty AddressBook.");
+            startupMessage = MESSAGE_DATA_LOADING_FAILED;
             initialData = new AddressBook();
         }
 
