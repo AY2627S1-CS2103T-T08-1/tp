@@ -85,14 +85,14 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
         }
         if (!Phone.isValidPhone(patientNo)) {
-            throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException("Patient HP is invalid. " + Phone.MESSAGE_CONSTRAINTS);
         }
 
         if (familyNo == null) {
             throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Phone.class.getSimpleName()));
         }
         if (!Phone.isValidPhone(familyNo)) {
-            throw new IllegalValueException(Phone.MESSAGE_CONSTRAINTS);
+            throw new IllegalValueException("Family HP is invalid. " + Phone.MESSAGE_CONSTRAINTS);
         }
 
         final Phone modelPatientPhone = new Phone(patientNo);

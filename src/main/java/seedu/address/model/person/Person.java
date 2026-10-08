@@ -59,10 +59,6 @@ public class Person {
         return familyNo;
     }
 
-    public Phone getPhone() {
-        return patientNo;
-    }
-
     public Optional<Email> getEmail() {
         return Optional.ofNullable(email);
     }
