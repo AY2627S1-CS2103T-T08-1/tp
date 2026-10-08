@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -18,20 +19,29 @@ public class Person {
 
     // Identity fields
     private final Name name;
-    private final Phone phone;
-    private final Email email;
+    private final Phone patientNo;
+    private final Phone familyNo;
 
     // Data fields
+    private final Email email;
     private final Address address;
     private final Set<Tag> tags = new HashSet<>();
 
     /**
      * Every field must be present and not null.
      */
-    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        requireAllNonNull(name, phone, email, address, tags);
+    public Person(Name name, Phone patientNo, Phone familyNo, Address address, Set<Tag> tags) {
+        this(name, patientNo, familyNo, null, address, tags);
+    }
+
+    /**
+     * Every field except email must be present and not null.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email email, Address address, Set<Tag> tags) {
+        requireAllNonNull(name, patientNo, familyNo, address, tags);
         this.name = name;
-        this.phone = phone;
+        this.patientNo = patientNo;
+        this.familyNo = familyNo;
         this.email = email;
         this.address = address;
         this.tags.addAll(tags);
@@ -41,12 +51,20 @@ public class Person {
         return name;
     }
 
-    public Phone getPhone() {
-        return phone;
+    public Phone getPatientNo() {
+        return patientNo;
     }
 
-    public Email getEmail() {
-        return email;
+    public Phone getFamilyNo() {
+        return familyNo;
+    }
+
+    public Phone getPhone() {
+        return patientNo;
+    }
+
+    public Optional<Email> getEmail() {
+        return Optional.ofNullable(email);
     }
 
     public Address getAddress() {
@@ -90,8 +108,9 @@ public class Person {
         }
 
         return name.equals(otherPerson.name)
-                && phone.equals(otherPerson.phone)
-                && email.equals(otherPerson.email)
+                && patientNo.equals(otherPerson.patientNo)
+                && familyNo.equals(otherPerson.familyNo)
+                && Objects.equals(email, otherPerson.email)
                 && address.equals(otherPerson.address)
                 && tags.equals(otherPerson.tags);
     }
@@ -99,14 +118,15 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, tags);
+        return Objects.hash(name, patientNo, familyNo, email, address, tags);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .add("name", name)
-                .add("phone", phone)
+                .add("patientNo", patientNo)
+                .add("familyNo", familyNo)
                 .add("email", email)
                 .add("address", address)
                 .add("tags", tags)
