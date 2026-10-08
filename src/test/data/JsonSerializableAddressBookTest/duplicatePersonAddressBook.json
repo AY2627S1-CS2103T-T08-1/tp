@@ -1,13 +1,14 @@
 {
-  "persons": [ {
+  "contacts": [ {
     "name": "Alice Pauline",
-    "phone": "94351253",
-    "email": "alice@example.com",
+    "patientNo": "94351253",
+    "familyNo": "81234567",
     "address": "123, Jurong West Ave 6, #08-111",
     "tags": [ "friends" ]
   }, {
     "name": "Alice Pauline",
-    "phone": "94351253",
+    "patientNo": "94351253",
+    "familyNo": "81234567",
     "email": "pauline@example.com",
     "address": "4th street"
   } ]

@@ -20,7 +20,7 @@ import seedu.address.storage.Storage;
  * The main LogicManager of the app.
  */
 public class LogicManager implements Logic {
-    public static final String FILE_OPS_ERROR_FORMAT = "Could not save data due to the following error: %s";
+    public static final String FILE_OPS_ERROR_FORMAT = "Could not save data to file: %s";
 
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder.";
@@ -48,6 +48,21 @@ public class LogicManager implements Logic {
         Command command = addressBookParser.parseCommand(commandText);
         commandResult = command.execute(model);
 
+        if (command.modifiesData()) {
+            saveData();
+        } else {
+            logger.info("Command does not modify data, skipping save.");
+        }
+
+        return commandResult;
+    }
+
+    /**
+     * Saves the address book to storage.
+     *
+     * @throws CommandException if the data could not be written.
+     */
+    private void saveData() throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
@@ -55,8 +70,6 @@ public class LogicManager implements Logic {
         } catch (IOException ioe) {
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
-
-        return commandResult;
     }
 
     @Override

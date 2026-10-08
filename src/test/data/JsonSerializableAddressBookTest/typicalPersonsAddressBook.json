@@ -1,45 +1,45 @@
 {
   "_comment": "AddressBook save file which contains the same Person values as in TypicalPersons#getTypicalAddressBook()",
-  "persons" : [ {
+  "contacts" : [ {
     "name" : "Alice Pauline",
-    "phone" : "94351253",
-    "email" : "alice@example.com",
+    "patientNo" : "94351253",
+    "familyNo" : "81234567",
     "address" : "123, Jurong West Ave 6, #08-111",
     "tags" : [ "friends" ]
   }, {
     "name" : "Benson Meier",
-    "phone" : "98765432",
-    "email" : "johnd@example.com",
+    "patientNo" : "98765432",
+    "familyNo" : "82345678",
     "address" : "311, Clementi Ave 2, #02-25",
     "tags" : [ "owesMoney", "friends" ]
   }, {
     "name" : "Carl Kurz",
-    "phone" : "95352563",
-    "email" : "heinz@example.com",
+    "patientNo" : "95352563",
+    "familyNo" : "83456789",
     "address" : "wall street",
     "tags" : [ ]
   }, {
     "name" : "Daniel Meier",
-    "phone" : "87652533",
-    "email" : "cornelia@example.com",
+    "patientNo" : "87652533",
+    "familyNo" : "84567890",
     "address" : "10th street",
     "tags" : [ "friends" ]
   }, {
     "name" : "Elle Meyer",
-    "phone" : "9482224",
-    "email" : "werner@example.com",
+    "patientNo" : "9482224",
+    "familyNo" : "85678901",
     "address" : "michegan ave",
     "tags" : [ ]
   }, {
     "name" : "Fiona Kunz",
-    "phone" : "9482427",
-    "email" : "lydia@example.com",
+    "patientNo" : "9482427",
+    "familyNo" : "86789012",
     "address" : "little tokyo",
     "tags" : [ ]
   }, {
     "name" : "George Best",
-    "phone" : "9482442",
-    "email" : "anna@example.com",
+    "patientNo" : "9482442",
+    "familyNo" : "87890123",
     "address" : "4th street",
     "tags" : [ ]
   } ]

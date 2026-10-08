@@ -1,16 +1,25 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+feature/delete-contacts
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.FAMILY_PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_PHONE_AMY;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.ListCommand;
@@ -83,6 +93,33 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_nonModifyingCommandsWithFailingStorage_doNotSave() throws Exception {
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        // none of these commands change the data, so the failing save must never be triggered
+        for (String commandText : new String[] {ListCommand.COMMAND_WORD, "find alice", "help", "exit"}) {
+            logic.execute(commandText);
+        }
+    }
+
+    @Test
+    public void execute_modifyingCommand_savesDataToFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        assertFalse(Files.exists(dataFile));
+
+        logic.execute(ClearCommand.COMMAND_WORD);
+
+        assertTrue(Files.exists(dataFile));
+    }
+
+    @Test
+    public void execute_modifyingCommandWithFailingStorage_attemptsSave() {
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        assertThrows(CommandException.class, () -> logic.execute(ClearCommand.COMMAND_WORD));
+    }
+
+    @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
     }
@@ -141,6 +178,22 @@ public class LogicManagerTest {
     }
 
     /**
+     * Returns a {@code StorageManager} that throws an {@code IOException} whenever it is asked to save.
+     */
+    private StorageManager createStorageThatFailsToSave() {
+        JsonAddressBookStorage addressBookStorage =
+                new JsonAddressBookStorage(temporaryFolder.resolve("FailingAddressBook.json")) {
+                    @Override
+                    public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                        throw DUMMY_IO_EXCEPTION;
+                    }
+                };
+        JsonUserPrefsStorage userPrefsStorage =
+                new JsonUserPrefsStorage(temporaryFolder.resolve("FailingUserPrefs.json"));
+        return new StorageManager(addressBookStorage, userPrefsStorage);
+    }
+
+    /**
      * Tests the Logic component's handling of an {@code IOException} thrown by the Storage component.
      *
      * @param e the exception to be thrown by the Storage component
@@ -165,8 +218,9 @@ public class LogicManagerTest {
 
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
-                + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
+                + FAMILY_PHONE_DESC_AMY + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+        Person expectedPerson = new PersonBuilder(AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY)
+                .withEmail(VALID_EMAIL_AMY).withTags().build();
         ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);

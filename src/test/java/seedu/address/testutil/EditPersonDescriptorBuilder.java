@@ -33,8 +33,9 @@ public class EditPersonDescriptorBuilder {
     public EditPersonDescriptorBuilder(Person person) {
         descriptor = new EditPersonDescriptor();
         descriptor.setName(person.getName());
-        descriptor.setPhone(person.getPhone());
-        descriptor.setEmail(person.getEmail());
+        descriptor.setPatientNo(person.getPatientNo());
+        descriptor.setFamilyNo(person.getFamilyNo());
+        person.getEmail().ifPresent(descriptor::setEmail);
         descriptor.setAddress(person.getAddress());
         descriptor.setTags(person.getTags());
     }
@@ -52,6 +53,14 @@ public class EditPersonDescriptorBuilder {
      */
     public EditPersonDescriptorBuilder withPhone(String phone) {
         descriptor.setPhone(new Phone(phone));
+        return this;
+    }
+
+    /**
+     * Sets the family phone number of the {@code EditPersonDescriptor} that we are building.
+     */
+    public EditPersonDescriptorBuilder withFamilyNo(String familyNo) {
+        descriptor.setFamilyNo(new Phone(familyNo));
         return this;
     }
 
