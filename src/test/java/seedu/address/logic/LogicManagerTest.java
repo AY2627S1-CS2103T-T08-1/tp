@@ -1,6 +1,8 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -12,6 +14,7 @@ import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -88,9 +91,19 @@ public class LogicManagerTest {
         logic = new LogicManager(model, createStorageThatFailsToSave());
 
         // none of these commands change the data, so the failing save must never be triggered
-        for (String commandText : new String[] {ListCommand.COMMAND_WORD, "find alice", "help"}) {
+        for (String commandText : new String[] {ListCommand.COMMAND_WORD, "find alice", "help", "exit"}) {
             logic.execute(commandText);
         }
+    }
+
+    @Test
+    public void execute_modifyingCommand_savesDataToFile() throws Exception {
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        assertFalse(Files.exists(dataFile));
+
+        logic.execute(ClearCommand.COMMAND_WORD);
+
+        assertTrue(Files.exists(dataFile));
     }
 
     @Test
