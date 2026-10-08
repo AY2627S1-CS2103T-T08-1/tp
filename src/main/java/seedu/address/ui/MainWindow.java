@@ -128,6 +128,17 @@ public class MainWindow extends UiPart<Stage> {
     }
 
     /**
+     * Shows {@code message} in the result display, if it is not empty.
+     */
+    void showStartupMessage(String message) {
+        assert resultDisplay != null : "fillInnerParts() must be called before showing the startup message";
+        if (message != null && !message.isEmpty()) {
+            logger.info("Showing startup message: " + message);
+            resultDisplay.setFeedbackToUser(message);
+        }
+    }
+
+    /**
      * Sets the default size based on {@code guiSettings}.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
