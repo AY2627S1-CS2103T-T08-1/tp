@@ -97,6 +97,20 @@ Shows a list of all persons in the address book.
 
 Format: `list`
 
+### Viewing a person's full details: `view`
+
+Displays only the specified person and shows their full details in the result box.
+
+Format: `view INDEX`
+
+* Displays the person at the specified `INDEX`.
+* The index refers to the index number shown in the displayed person list.
+* The index **must be a positive integer** 1, 2, 3, ...
+* Use `list` to display all persons again.
+
+Example:
+* `view 2` displays the full details of the 2nd person in the displayed list.
+
 ### Editing a person: `edit`
 
 Edits an existing person in the address book.
@@ -201,4 +215,5 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag TAG]... `<br> e.g.,`edit 2 /name James Lee /email jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
