@@ -22,7 +22,8 @@ public class PersonBuilder {
     public static final String DEFAULT_ADDRESS = "123, Jurong West Ave 6, #08-111";
 
     private Name name;
-    private Phone phone;
+    private Phone patientNo;
+    private Phone familyNo;
     private Email email;
     private Address address;
     private Set<Tag> tags;
@@ -32,7 +33,8 @@ public class PersonBuilder {
      */
     public PersonBuilder() {
         name = new Name(DEFAULT_NAME);
-        phone = new Phone(DEFAULT_PHONE);
+        patientNo = new Phone(DEFAULT_PHONE);
+        familyNo = new Phone("87654321");
         email = new Email(DEFAULT_EMAIL);
         address = new Address(DEFAULT_ADDRESS);
         tags = new HashSet<>();
@@ -43,8 +45,9 @@ public class PersonBuilder {
      */
     public PersonBuilder(Person personToCopy) {
         name = personToCopy.getName();
-        phone = personToCopy.getPhone();
-        email = personToCopy.getEmail();
+        patientNo = personToCopy.getPatientNo();
+        familyNo = personToCopy.getFamilyNo();
+        email = personToCopy.getEmail().orElse(null);
         address = personToCopy.getAddress();
         tags = new HashSet<>(personToCopy.getTags());
     }
@@ -77,7 +80,23 @@ public class PersonBuilder {
      * Sets the {@code Phone} of the {@code Person} that we are building.
      */
     public PersonBuilder withPhone(String phone) {
-        this.phone = new Phone(phone);
+        this.patientNo = new Phone(phone);
+        return this;
+    }
+
+    /**
+     * Sets the patient phone number of the {@code Person} that we are building.
+     */
+    public PersonBuilder withPatientNo(String patientNo) {
+        this.patientNo = new Phone(patientNo);
+        return this;
+    }
+
+    /**
+     * Sets the family phone number of the {@code Person} that we are building.
+     */
+    public PersonBuilder withFamilyNo(String familyNo) {
+        this.familyNo = new Phone(familyNo);
         return this;
     }
 
@@ -89,8 +108,16 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Removes the optional email from the {@code Person} that we are building.
+     */
+    public PersonBuilder withoutEmail() {
+        this.email = null;
+        return this;
+    }
+
     public Person build() {
-        return new Person(name, phone, email, address, tags);
+        return new Person(name, patientNo, familyNo, email, address, tags);
     }
 
 }
