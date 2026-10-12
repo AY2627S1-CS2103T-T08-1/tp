@@ -97,6 +97,18 @@ Shows a list of all persons in the address book.
 
 Format: `list`
 
+**Common errors:**
+
+| Incorrect input | Error message | How to correct it |
+| --- | --- | --- |
+| `list 3` | `Invalid command format. List command format: list` | Remove the index. Use `list` to show all persons. |
+| `list Alice` or `list n/Alice` | `Invalid command format. List command format: list` | Use `find Alice` to search by name, or `list` to show all persons. |
+| `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
+
+The `list` command accepts no arguments. Leading and trailing spaces are allowed.
+If all persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
+this is normal behavior. After a `find` command, use `list` to display all persons again.
+
 ### Viewing a person's full details: `view`
 
 Displays only the specified person and shows their full details in the result box.
