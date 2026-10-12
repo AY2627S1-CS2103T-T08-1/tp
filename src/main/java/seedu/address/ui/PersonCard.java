@@ -53,10 +53,23 @@ public class PersonCard extends UiPart<Region> {
         name.setText(person.getName().fullName);
         patientNo.setText("Patient HP: " + person.getPatientNo().value);
         familyNo.setText("Family HP: " + person.getFamilyNo().value);
-        email.setText(person.getEmail().map(personEmail -> personEmail.value).orElse(""));
+        email.setText(getEmailText(person));
         address.setText(person.getAddress().value);
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+    }
+
+    private static String getEmailText(Person person) {
+        StringBuilder builder = new StringBuilder();
+        person.getPatientEmail().ifPresent(patientEmail ->
+                builder.append("Patient Email: ").append(patientEmail.value));
+        person.getFamilyEmail().ifPresent(familyEmail -> {
+            if (builder.length() > 0) {
+                builder.append(" | ");
+            }
+            builder.append("Family Email: ").append(familyEmail.value);
+        });
+        return builder.toString();
     }
 }
