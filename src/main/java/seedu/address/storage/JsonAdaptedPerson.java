@@ -27,9 +27,7 @@ class JsonAdaptedPerson {
     private final String name;
     private final String patientNo;
     private final String familyNo;
-    @JsonProperty("pEmail")
     private final String patientEmail;
-    @JsonProperty("fEmail")
     private final String familyEmail;
     private final String address;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
