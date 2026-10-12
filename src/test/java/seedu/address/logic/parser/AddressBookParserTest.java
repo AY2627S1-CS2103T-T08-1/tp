@@ -92,19 +92,25 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_list_success() throws Exception {
-        assertTrue(parser.parseCommand(ListCommand.COMMAND_WORD) instanceof ListCommand);
-        assertTrue(parser.parseCommand("   " + ListCommand.COMMAND_WORD + "   ") instanceof ListCommand);
-        assertTrue(parser.parseCommand("\t" + ListCommand.COMMAND_WORD + "\t") instanceof ListCommand);
+        for (String input : List.of("list", "   list", "list   ", "   list   ", "\tlist\t",
+                " \t list \t ", "\nlist\r\n")) {
+            assertTrue(parser.parseCommand(input) instanceof ListCommand, input);
+        }
     }
 
     @Test
     public void parseCommand_listWithArguments_throwsParseException() {
-        assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, ()
-                -> parser.parseCommand("list 3"));
-        assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, ()
-                -> parser.parseCommand("list abc"));
-        assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, ()
-                -> parser.parseCommand("   list abc"));
+        for (String input : List.of("list 3", "list abc", "   list abc", "list\tabc",
+                "list n/Alice", "list --help", "list abc def", "list 0", "list -1", "list !")) {
+            assertThrows(ParseException.class, ListCommand.MESSAGE_INVALID_FORMAT, () -> parser.parseCommand(input));
+        }
+    }
+
+    @Test
+    public void parseCommand_listWithWrongCaseOrSpelling_throwsUnknownCommand() {
+        for (String input : List.of("LIST", "List", "lIsT", "list3", "listabc", "lists")) {
+            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(input));
+        }
     }
 
     @Test
