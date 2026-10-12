@@ -140,13 +140,21 @@ Format: `delete INDEX`
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * The command word `delete` is case-insensitive, e.g. `Delete 1` and `DELETE 1` also work.
-* If the index is zero or negative, e.g. `delete 0`, an error message says that the index must be a positive integer.
-* If the index is larger than the number of persons in the displayed list, an error message shows how many persons are in the list. If the displayed list is empty, an error message says that there is no one to delete.
-* If the index is missing, is not a number, or is followed by extra values, e.g. `delete`, `delete abc` or `delete 1 2`, an error message shows the correct command format.
 
 Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+
+Common errors:
+
+Input | Error message shown | How to fix
+------|---------------------|-----------
+`delete` (no index) | `Invalid command format!` followed by the correct usage | Supply an index, e.g. `delete 1`
+`delete abc` | `Invalid command format!` followed by the correct usage | Use a number, not text
+`delete 1 2` | `Invalid command format!` followed by the correct usage | Use a single index per command
+`delete 0` / `delete -1` | `Index must be a positive integer.` | Use an index of 1 or more
+`delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list
+`delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first 
 
 ### Clearing all entries: `clear`
 
