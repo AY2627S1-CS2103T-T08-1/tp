@@ -67,6 +67,11 @@ public class ViewCommandTest {
     }
 
     @Test
+    public void modifiesData_view_returnsFalse() {
+        assertFalse(new ViewCommand(INDEX_FIRST_PERSON).modifiesData());
+    }
+
+    @Test
     public void equals() {
         ViewCommand viewFirstCommand = new ViewCommand(INDEX_FIRST_PERSON);
         ViewCommand viewSecondCommand = new ViewCommand(INDEX_SECOND_PERSON);
