@@ -31,7 +31,7 @@ import seedu.address.ui.UiManager;
  */
 public class MainApp extends Application {
 
-    public static final String VERSION = "V0.5.1";
+    public static final String VERSION = "V1.3";
     public static final String MESSAGE_DATA_LOADING_FAILED =
             "Data file could not be loaded. Starting with an empty contact list.";
 
@@ -130,7 +130,7 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        logger.info("Starting AddressBook " + MainApp.VERSION);
+        logger.info("Starting CareBook " + MainApp.VERSION);
         ui.start(primaryStage);
     }
 
