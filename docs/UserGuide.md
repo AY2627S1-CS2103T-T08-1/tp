@@ -22,7 +22,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
 1. Copy the file to the folder you want to use as the _home folder_ for CareBook.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar carebook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. The app starts with an empty contact list the first time you run it.<br>
    ![Ui](images/Ui.png)
 
@@ -206,14 +206,15 @@ CareBook data is saved automatically as a JSON file `[JAR file location]/data/co
 
 The file is a JSON object with a `contacts` list. Each contact has these fields:
 
-| Field       | Required | Description                                  |
-|-------------|----------|----------------------------------------------|
-| `name`      | Yes      | The contact's name.                          |
-| `patientNo` | Yes      | The patient's phone number.                  |
-| `familyNo`  | Yes      | The family member's phone number.            |
-| `email`     | No       | Leave it out if the contact has no email.    |
-| `address`   | Yes      | The contact's address.                       |
-| `tags`      | No       | A list of tags. Use `[ ]` for no tags.       |
+| Field          | Required | Description                                         |
+|----------------|----------|-----------------------------------------------------|
+| `name`         | Yes      | The contact's name.                                 |
+| `patientNo`    | Yes      | The patient's phone number.                         |
+| `familyNo`     | Yes      | The family member's phone number.                   |
+| `patientEmail` | No       | Leave it out if the patient has no email.           |
+| `familyEmail`  | No       | Leave it out if the family member has no email.     |
+| `address`      | Yes      | The contact's address.                              |
+| `tags`         | No       | A list of tags. Use `[ ]` for no tags.              |
 
 Example:
 
