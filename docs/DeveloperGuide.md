@@ -457,7 +457,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 2.  Should be able to finish a command within 1 second for a contact book holding up to 1000 persons 
 3. Invalid commands should show a clear error message and usage example
 4. A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-5. If saving fails, the previous data file should be preserved and the user should be told what went wrong
+5. If saving fails, the user should be told what went wrong and CareBook should keep running
 6. Should be able to handle empty or malformed commands without crashing
 7. Should run without a remote server
 8. Should be usable at all screen resolutions and scales
@@ -521,6 +521,16 @@ testers are expected to do more *exploratory* testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+   1. Prerequisites: Run CareBook at least once and add a contact, so that `data/contacts.json` exists. Close CareBook before each test case.
 
-1. _{ more test cases … }_
+   1. Test case: Delete `data/contacts.json`, then launch CareBook.<br>
+      Expected: CareBook starts with an empty contact list and no error message. The file is created again after the next command that changes contacts, such as `add`.
+
+   1. Test case: Replace the contents of `data/contacts.json` with `not json`, then launch CareBook.<br>
+      Expected: CareBook starts with an empty contact list. The result box shows "Data file could not be loaded. Starting with an empty contact list." The file keeps its contents until the next command that changes contacts, which overwrites it.
+
+   1. Test case: In `data/contacts.json`, change a `patientNo` to `abc`, or remove the `name` field of a contact, then launch CareBook.<br>
+      Expected: Same as the previous test case.
+
+   1. Test case: Launch CareBook with a valid `data/contacts.json`, then run `list`, `find` or `view 1`.<br>
+      Expected: The commands run normally and the data file is not rewritten (its last modified time does not change).

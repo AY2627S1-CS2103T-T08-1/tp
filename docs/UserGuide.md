@@ -204,6 +204,31 @@ CareBook automatically saves data after every command that changes your contacts
 
 CareBook data is saved automatically as a JSON file `[JAR file location]/data/contacts.json`. Advanced users are welcome to update data directly by editing that data file.
 
+The file is a JSON object with a `contacts` list. Each contact has these fields:
+
+| Field       | Required | Description                                  |
+|-------------|----------|----------------------------------------------|
+| `name`      | Yes      | The contact's name.                          |
+| `patientNo` | Yes      | The patient's phone number.                  |
+| `familyNo`  | Yes      | The family member's phone number.            |
+| `email`     | No       | Leave it out if the contact has no email.    |
+| `address`   | Yes      | The contact's address.                       |
+| `tags`      | No       | A list of tags. Use `[ ]` for no tags.       |
+
+Example:
+
+```
+{
+  "contacts" : [ {
+    "name" : "Alice Pauline",
+    "patientNo" : "94351253",
+    "familyNo" : "81234567",
+    "address" : "123, Jurong West Ave 6, #08-111",
+    "tags" : [ "friends" ]
+  } ]
+}
+```
+
 <box type="warning" seamless>
 
 **Caution:**
