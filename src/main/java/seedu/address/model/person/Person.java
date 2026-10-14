@@ -23,7 +23,8 @@ public class Person {
     private final Phone familyNo;
 
     // Data fields
-    private final Email email;
+    private final Email patientEmail;
+    private final Email familyEmail;
     private final Address address;
     private final Set<Tag> tags = new HashSet<>();
 
@@ -31,18 +32,27 @@ public class Person {
      * Every field must be present and not null.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Address address, Set<Tag> tags) {
-        this(name, patientNo, familyNo, null, address, tags);
+        this(name, patientNo, familyNo, null, null, address, tags);
     }
 
     /**
      * Every field except email must be present and not null.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email email, Address address, Set<Tag> tags) {
+        this(name, patientNo, familyNo, email, null, address, tags);
+    }
+
+    /**
+     * Every field except emails must be present and not null.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
+            Address address, Set<Tag> tags) {
         requireAllNonNull(name, patientNo, familyNo, address, tags);
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
-        this.email = email;
+        this.patientEmail = patientEmail;
+        this.familyEmail = familyEmail;
         this.address = address;
         this.tags.addAll(tags);
     }
@@ -60,7 +70,15 @@ public class Person {
     }
 
     public Optional<Email> getEmail() {
-        return Optional.ofNullable(email);
+        return getPatientEmail();
+    }
+
+    public Optional<Email> getPatientEmail() {
+        return Optional.ofNullable(patientEmail);
+    }
+
+    public Optional<Email> getFamilyEmail() {
+        return Optional.ofNullable(familyEmail);
     }
 
     public Address getAddress() {
@@ -106,7 +124,8 @@ public class Person {
         return name.equals(otherPerson.name)
                 && patientNo.equals(otherPerson.patientNo)
                 && familyNo.equals(otherPerson.familyNo)
-                && Objects.equals(email, otherPerson.email)
+                && Objects.equals(patientEmail, otherPerson.patientEmail)
+                && Objects.equals(familyEmail, otherPerson.familyEmail)
                 && address.equals(otherPerson.address)
                 && tags.equals(otherPerson.tags);
     }
@@ -114,7 +133,7 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, patientNo, familyNo, email, address, tags);
+        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags);
     }
 
     @Override
@@ -123,7 +142,8 @@ public class Person {
                 .add("name", name)
                 .add("patientNo", patientNo)
                 .add("familyNo", familyNo)
-                .add("email", email)
+                .add("patientEmail", patientEmail)
+                .add("familyEmail", familyEmail)
                 .add("address", address)
                 .add("tags", tags)
                 .toString();

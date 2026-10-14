@@ -27,7 +27,8 @@ class JsonAdaptedPerson {
     private final String name;
     private final String patientNo;
     private final String familyNo;
-    private final String email;
+    private final String patientEmail;
+    private final String familyEmail;
     private final String address;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
@@ -36,16 +37,26 @@ class JsonAdaptedPerson {
      */
     @JsonCreator
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("patientNo") String patientNo,
-            @JsonProperty("familyNo") String familyNo, @JsonProperty("email") String email,
+            @JsonProperty("familyNo") String familyNo, @JsonProperty("pEmail") String patientEmail,
+            @JsonProperty("fEmail") String familyEmail, @JsonProperty("email") String legacyEmail,
             @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
-        this.email = email;
+        this.patientEmail = patientEmail != null ? patientEmail : legacyEmail;
+        this.familyEmail = familyEmail;
         this.address = address;
         if (tags != null) {
             this.tags.addAll(tags);
         }
+    }
+
+    /**
+     * Constructs a {@code JsonAdaptedPerson} with one legacy email.
+     */
+    public JsonAdaptedPerson(String name, String patientNo, String familyNo, String email, String address,
+            List<JsonAdaptedTag> tags) {
+        this(name, patientNo, familyNo, email, null, null, address, tags);
     }
 
     /**
@@ -55,7 +66,8 @@ class JsonAdaptedPerson {
         name = source.getName().fullName;
         patientNo = source.getPatientNo().value;
         familyNo = source.getFamilyNo().value;
-        email = source.getEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
+        patientEmail = source.getPatientEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
+        familyEmail = source.getFamilyEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         address = source.getAddress().value;
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
@@ -98,14 +110,24 @@ class JsonAdaptedPerson {
         final Phone modelPatientPhone = new Phone(patientNo);
         final Phone modelFamilyPhone = new Phone(familyNo);
 
-        final Email modelEmail;
-        if (email != null) {
-            if (!Email.isValidEmail(email)) {
+        final Email modelPatientEmail;
+        if (patientEmail != null) {
+            if (!Email.isValidEmail(patientEmail)) {
                 throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
             }
-            modelEmail = new Email(email);
+            modelPatientEmail = new Email(patientEmail);
         } else {
-            modelEmail = null;
+            modelPatientEmail = null;
+        }
+
+        final Email modelFamilyEmail;
+        if (familyEmail != null) {
+            if (!Email.isValidEmail(familyEmail)) {
+                throw new IllegalValueException(Email.MESSAGE_CONSTRAINTS);
+            }
+            modelFamilyEmail = new Email(familyEmail);
+        } else {
+            modelFamilyEmail = null;
         }
 
         if (address == null) {
@@ -117,7 +139,8 @@ class JsonAdaptedPerson {
         final Address modelAddress = new Address(address);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelEmail, modelAddress, modelTags);
+        return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
+                modelAddress, modelTags);
     }
 
 }

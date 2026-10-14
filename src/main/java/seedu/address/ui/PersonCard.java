@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
+import java.util.List;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -51,12 +52,38 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
-        patientNo.setText("Patient HP: " + person.getPatientNo().value);
-        familyNo.setText("Family HP: " + person.getFamilyNo().value);
-        email.setText(person.getEmail().map(personEmail -> personEmail.value).orElse(""));
+        patientNo.setText(getPatientNoText(person));
+        familyNo.setText(getFamilyNoText(person));
+        email.setText(getEmailText(person));
         address.setText(person.getAddress().value);
-        person.getTags().stream()
+        getTagTexts(person).forEach(tagName -> tags.getChildren().add(new Label(tagName)));
+    }
+
+    static String getPatientNoText(Person person) {
+        return "Patient HP: " + person.getPatientNo().value;
+    }
+
+    static String getFamilyNoText(Person person) {
+        return "Family HP: " + person.getFamilyNo().value;
+    }
+
+    static String getEmailText(Person person) {
+        StringBuilder builder = new StringBuilder();
+        person.getPatientEmail().ifPresent(patientEmail ->
+                builder.append("Patient Email: ").append(patientEmail.value));
+        person.getFamilyEmail().ifPresent(familyEmail -> {
+            if (builder.length() > 0) {
+                builder.append(" | ");
+            }
+            builder.append("Family Email: ").append(familyEmail.value);
+        });
+        return builder.toString();
+    }
+
+    static List<String> getTagTexts(Person person) {
+        return person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+                .map(tag -> tag.tagName)
+                .toList();
     }
 }

@@ -31,7 +31,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
    * `list` : Lists all contacts.
 
-   * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /email johnd@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to CareBook.
+   * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to the CareBook.
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
@@ -80,7 +80,9 @@ Format: `help`
 
 Adds a person to CareBook.
 
-Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/email EMAIL] /address ADDRESS [/tag TAG]... `
+Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag TAG]... `
+
+Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
 
 <box type="tip" seamless>
 
@@ -89,7 +91,7 @@ Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/email 
 
 Examples:
 * `add /name Aunty Rosalind /patientNo 81268767 /familyNo 90783658 /address Goonvale Street Block 2 #01-09`
-* `add /name John Doe /patientNo 98765432 /familyNo 91234567 /email johnd@example.com /address John street, block 123, #01-01 /tag friend`
+* `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01 /tag friend`
 
 ### Listing all persons: `list`
 
@@ -225,7 +227,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/email EMAIL] /address ADDRESS [/tag TAG]... ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /email jamesho@example.com /address 123, Clementi Rd, 1234665 /tag friend /tag colleague`
+**Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag TAG]... ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag friend /tag colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag TAG]... `<br> e.g.,`edit 2 /name James Lee /email jameslee@example.com`

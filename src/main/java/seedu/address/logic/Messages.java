@@ -40,7 +40,8 @@ public class Messages {
                 .append(person.getPatientNo())
                 .append("; Family Contact: ")
                 .append(person.getFamilyNo());
-        person.getEmail().ifPresent(email -> builder.append("; Email: ").append(email));
+        person.getPatientEmail().ifPresent(email -> builder.append("; Patient Email: ").append(email));
+        person.getFamilyEmail().ifPresent(email -> builder.append("; Family Email: ").append(email));
         builder.append("; Address: ")
                 .append(person.getAddress())
                 .append("; Tags: ");
