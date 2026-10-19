@@ -30,6 +30,7 @@ public class Person {
 
     /**
      * Every field must be present and not null.
+     * The tag set may be empty when no priority is assigned.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Address address, Set<Tag> tags) {
         this(name, patientNo, familyNo, null, null, address, tags);
@@ -37,6 +38,7 @@ public class Person {
 
     /**
      * Every field except email must be present and not null.
+     * The tag set may be empty when no priority is assigned.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email email, Address address, Set<Tag> tags) {
         this(name, patientNo, familyNo, email, null, address, tags);
@@ -44,6 +46,7 @@ public class Person {
 
     /**
      * Every field except emails must be present and not null.
+     * The tag set may be empty when no priority is assigned.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags) {
@@ -88,6 +91,7 @@ public class Person {
     /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
+     * Returns an empty set when the person has no assigned tags.
      */
     public Set<Tag> getTags() {
         return Collections.unmodifiableSet(tags);

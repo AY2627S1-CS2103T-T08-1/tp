@@ -97,9 +97,12 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String tag} into a {@code Tag}.
-     * Leading and trailing whitespaces will be trimmed.
+     * Trims leading and trailing whitespace but preserves case.
      *
-     * @throws ParseException if the given {@code tag} is invalid.
+     * @param tag The priority name to parse.
+     * @return A tag containing the trimmed priority name.
+     * @throws ParseException If the trimmed name is not exactly HIGH, MEDIUM, or LOW.
+     * @throws NullPointerException If {@code tag} is null.
      */
     public static Tag parseTag(String tag) throws ParseException {
         requireNonNull(tag);
@@ -112,6 +115,12 @@ public class ParserUtil {
 
     /**
      * Parses {@code Collection<String> tags} into a {@code Set<Tag>}.
+     * Applies {@link #parseTag(String)} to each name and removes duplicate tags.
+     *
+     * @param tags The priority names to parse.
+     * @return A set of distinct tags, or an empty set if the collection is empty.
+     * @throws ParseException If any trimmed name is not an allowed priority.
+     * @throws NullPointerException If {@code tags} or any element is null.
      */
     public static Set<Tag> parseTags(Collection<String> tags) throws ParseException {
         requireNonNull(tags);
