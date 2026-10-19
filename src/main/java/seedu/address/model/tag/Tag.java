@@ -10,7 +10,6 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Tag {
 
     public static final String MESSAGE_CONSTRAINTS = "Tag names must be HIGH, MEDIUM or LOW";
-    public static final String VALIDATION_REGEX = "HIGH|MEDIUM|LOW";
 
     public final String tagName;
 
@@ -28,14 +27,20 @@ public class Tag {
     }
 
     /**
-     * Returns whether the given string is exactly {@code HIGH}, {@code MEDIUM}, or {@code LOW}.
+     * Returns whether the given string names a {@link Priority} enum constant.
      * Matching is case-sensitive and does not ignore whitespace.
      *
      * @param test The tag name to validate.
      * @throws NullPointerException If {@code test} is null.
      */
     public static boolean isValidTagName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        try {
+            Priority.valueOf(test);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     /**
