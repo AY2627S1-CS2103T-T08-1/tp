@@ -158,6 +158,31 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
+### Filtering persons by tag: `filter`
+
+Shows only the persons who are tagged with the given tag.
+
+Format: `filter TAG`
+
+* `TAG` must be one of `HIGH`, `MEDIUM` or `LOW`.
+* The tag is case-insensitive; for example, `medium` matches persons tagged `MEDIUM`.
+* Only persons who have the exact tag are returned.
+* Exactly one tag must be given.
+
+Examples:
+* `filter MEDIUM` lists all persons tagged as `MEDIUM`.
+* `filter high` lists all persons tagged as `HIGH`.
+
+**Common errors:**
+
+| Incorrect input | Error message | How to correct it |
+| --- | --- | --- |
+| `filter` (no tag) | `Invalid command format!` followed by the correct usage | Supply a tag, e.g. `filter MEDIUM`. |
+| `filter URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
+| `filter HIGH LOW` (more than one tag) | `Invalid command format!` followed by the correct usage | Give only one tag per command. |
+
+After a `filter` command, use `list` to display all persons again.
+
 ### Deleting a person: `delete`
 
 Deletes the specified person from CareBook.
@@ -266,6 +291,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag TAG]... `<br> e.g.,`edit 2 /name James Lee /email jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
