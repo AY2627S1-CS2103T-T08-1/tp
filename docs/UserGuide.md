@@ -22,7 +22,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
 1. Copy the file to the folder you want to use as the _home folder_ for CareBook.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar carebook.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. The app starts with an empty contact list the first time you run it.<br>
    ![Ui](images/Ui.png)
 
