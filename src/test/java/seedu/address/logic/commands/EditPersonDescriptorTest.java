@@ -53,6 +53,14 @@ public class EditPersonDescriptorTest {
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withFamilyEmail(VALID_FAMILY_EMAIL_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
+        // patient email removed versus not edited -> returns false
+        EditPersonDescriptor noPatientEmail = new EditPersonDescriptorBuilder().withoutPatientEmail().build();
+        assertFalse(new EditPersonDescriptor().equals(noPatientEmail));
+
+        // family email removed versus not edited -> returns false
+        EditPersonDescriptor noFamilyEmail = new EditPersonDescriptorBuilder().withoutFamilyEmail().build();
+        assertFalse(new EditPersonDescriptor().equals(noFamilyEmail));
+
         // different address -> returns false
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withAddress(VALID_ADDRESS_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));

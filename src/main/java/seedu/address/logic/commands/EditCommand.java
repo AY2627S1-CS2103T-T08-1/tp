@@ -103,10 +103,12 @@ public class EditCommand extends Command {
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
         Phone updatedPatientNo = editPersonDescriptor.getPatientNo().orElse(personToEdit.getPatientNo());
         Phone updatedFamilyNo = editPersonDescriptor.getFamilyNo().orElse(personToEdit.getFamilyNo());
-        Email updatedPatientEmail = editPersonDescriptor.getPatientEmail()
-                .orElse(personToEdit.getPatientEmail().orElse(null));
-        Email updatedFamilyEmail = editPersonDescriptor.getFamilyEmail()
-                .orElse(personToEdit.getFamilyEmail().orElse(null));
+        Email updatedPatientEmail = editPersonDescriptor.isPatientEmailEdited()
+                ? editPersonDescriptor.getPatientEmail().orElse(null)
+                : personToEdit.getPatientEmail().orElse(null);
+        Email updatedFamilyEmail = editPersonDescriptor.isFamilyEmailEdited()
+                ? editPersonDescriptor.getFamilyEmail().orElse(null)
+                : personToEdit.getFamilyEmail().orElse(null);
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
@@ -147,6 +149,8 @@ public class EditCommand extends Command {
         private Phone familyNo;
         private Email patientEmail;
         private Email familyEmail;
+        private boolean isPatientEmailEdited;
+        private boolean isFamilyEmailEdited;
         private Address address;
         private Set<Tag> tags;
 
@@ -160,8 +164,10 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setPatientNo(toCopy.patientNo);
             setFamilyNo(toCopy.familyNo);
-            setPatientEmail(toCopy.patientEmail);
-            setFamilyEmail(toCopy.familyEmail);
+            patientEmail = toCopy.patientEmail;
+            familyEmail = toCopy.familyEmail;
+            isPatientEmailEdited = toCopy.isPatientEmailEdited;
+            isFamilyEmailEdited = toCopy.isFamilyEmailEdited;
             setAddress(toCopy.address);
             setTags(toCopy.tags);
         }
@@ -170,8 +176,8 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, patientNo, familyNo, patientEmail, familyEmail, address,
-                    tags);
+            return CollectionUtil.isAnyNonNull(name, patientNo, familyNo, address, tags)
+                    || isPatientEmailEdited || isFamilyEmailEdited;
         }
 
         public void setName(Name name) {
@@ -206,20 +212,42 @@ public class EditCommand extends Command {
             return getPatientNo();
         }
 
+        /**
+         * Sets the patient email to {@code patientEmail}, or removes it if {@code patientEmail} is null.
+         */
         public void setPatientEmail(Email patientEmail) {
             this.patientEmail = patientEmail;
+            isPatientEmailEdited = true;
         }
 
         public Optional<Email> getPatientEmail() {
             return Optional.ofNullable(patientEmail);
         }
 
+        /**
+         * Sets the family email to {@code familyEmail}, or removes it if {@code familyEmail} is null.
+         */
         public void setFamilyEmail(Email familyEmail) {
             this.familyEmail = familyEmail;
+            isFamilyEmailEdited = true;
         }
 
         public Optional<Email> getFamilyEmail() {
             return Optional.ofNullable(familyEmail);
+        }
+
+        /**
+         * Returns true if the patient email is to be changed or removed.
+         */
+        public boolean isPatientEmailEdited() {
+            return isPatientEmailEdited;
+        }
+
+        /**
+         * Returns true if the family email is to be changed or removed.
+         */
+        public boolean isFamilyEmailEdited() {
+            return isFamilyEmailEdited;
         }
 
         public void setAddress(Address address) {
@@ -263,6 +291,8 @@ public class EditCommand extends Command {
                     && Objects.equals(familyNo, otherEditPersonDescriptor.familyNo)
                     && Objects.equals(patientEmail, otherEditPersonDescriptor.patientEmail)
                     && Objects.equals(familyEmail, otherEditPersonDescriptor.familyEmail)
+                    && isPatientEmailEdited == otherEditPersonDescriptor.isPatientEmailEdited
+                    && isFamilyEmailEdited == otherEditPersonDescriptor.isFamilyEmailEdited
                     && Objects.equals(address, otherEditPersonDescriptor.address)
                     && Objects.equals(tags, otherEditPersonDescriptor.tags);
         }

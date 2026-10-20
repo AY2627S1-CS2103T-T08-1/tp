@@ -26,6 +26,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HIGH;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
@@ -209,6 +210,17 @@ public class EditCommandParserTest {
         assertParseFailure(parser, userInput,
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PATIENT_PHONE, PREFIX_PATIENT_EMAIL,
                         PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void parse_emptyEmail_removesEmail() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withoutPatientEmail().build();
+        assertParseSuccess(parser, "1 " + PREFIX_PATIENT_EMAIL,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        descriptor = new EditPersonDescriptorBuilder().withoutFamilyEmail().build();
+        assertParseSuccess(parser, "1 " + PREFIX_FAMILY_EMAIL,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test

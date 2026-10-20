@@ -20,6 +20,7 @@ import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.Email;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -67,11 +68,11 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         if (argMultimap.getValue(PREFIX_PATIENT_EMAIL).isPresent()) {
             editPersonDescriptor.setPatientEmail(
-                    ParserUtil.parseEmail(argMultimap.getValue(PREFIX_PATIENT_EMAIL).get()));
+                    parseEmailForEdit(argMultimap.getValue(PREFIX_PATIENT_EMAIL).get()));
         }
         if (argMultimap.getValue(PREFIX_FAMILY_EMAIL).isPresent()) {
             editPersonDescriptor.setFamilyEmail(
-                    ParserUtil.parseEmail(argMultimap.getValue(PREFIX_FAMILY_EMAIL).get()));
+                    parseEmailForEdit(argMultimap.getValue(PREFIX_FAMILY_EMAIL).get()));
         }
         if (argMultimap.getValue(PREFIX_ADDRESS).isPresent()) {
             editPersonDescriptor.setAddress(ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get()));
@@ -98,6 +99,18 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
         Collection<String> tagSet = tags.size() == 1 && tags.contains("") ? Collections.emptySet() : tags;
         return Optional.of(ParserUtil.parseTags(tagSet));
+    }
+
+    /**
+     * Parses {@code email} into an {@code Email}, or returns null if {@code email} is empty.
+     * A null email tells {@code EditCommand} to remove that email from the person.
+     *
+     * @throws ParseException if {@code email} is not empty and not a valid email.
+     */
+    private Email parseEmailForEdit(String email) throws ParseException {
+        assert email != null;
+
+        return email.isEmpty() ? null : ParserUtil.parseEmail(email);
     }
 
 }

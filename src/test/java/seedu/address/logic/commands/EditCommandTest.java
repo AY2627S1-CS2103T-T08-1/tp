@@ -93,6 +93,26 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_removePatientEmail_keepsFamilyEmail() {
+        Person personWithEmails = new PersonBuilder().withPatientEmail(VALID_EMAIL_AMY)
+                .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
+        Model modelWithEmails = new ModelManager(new AddressBook(), new UserPrefs());
+        modelWithEmails.addPerson(personWithEmails);
+
+        Person editedPerson = new PersonBuilder(personWithEmails).withoutEmail()
+                .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withoutPatientEmail().build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
+        expectedModel.addPerson(editedPerson);
+
+        assertCommandSuccess(editCommand, modelWithEmails, expectedMessage, expectedModel);
+    }
+
+    @Test
     public void execute_familyEmailOnly_success() {
         Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person editedPerson = new PersonBuilder(firstPerson).withFamilyEmail(VALID_FAMILY_EMAIL_BOB).build();

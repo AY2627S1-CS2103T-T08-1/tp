@@ -82,6 +82,22 @@ public class EditPersonDescriptorBuilder {
     }
 
     /**
+     * Marks the patient email for removal in the {@code EditPersonDescriptor} that we are building.
+     */
+    public EditPersonDescriptorBuilder withoutPatientEmail() {
+        descriptor.setPatientEmail(null);
+        return this;
+    }
+
+    /**
+     * Marks the family email for removal in the {@code EditPersonDescriptor} that we are building.
+     */
+    public EditPersonDescriptorBuilder withoutFamilyEmail() {
+        descriptor.setFamilyEmail(null);
+        return this;
+    }
+
+    /**
      * Sets the {@code Address} of the {@code EditPersonDescriptor} that we are building.
      */
     public EditPersonDescriptorBuilder withAddress(String address) {
