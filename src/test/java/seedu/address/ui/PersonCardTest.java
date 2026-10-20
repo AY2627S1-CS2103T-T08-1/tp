@@ -60,11 +60,18 @@ public class PersonCardTest {
     }
 
     @Test
-    public void getTagTexts_validPerson_returnsSortedTagTexts() {
+    public void getTagTexts_noTags_returnsEmptyList() {
+        Person person = new PersonBuilder().withTags().build();
+
+        assertEquals(List.of(), PersonCard.getTagTexts(person));
+    }
+
+    @Test
+    public void getTagTexts_validPerson_returnsPriorityTagText() {
         Person person = new PersonBuilder()
-                .withTags("urgent", "family", "appointment")
+                .withTags("MEDIUM")
                 .build();
 
-        assertEquals(List.of("appointment", "family", "urgent"), PersonCard.getTagTexts(person));
+        assertEquals(List.of("MEDIUM"), PersonCard.getTagTexts(person));
     }
 }

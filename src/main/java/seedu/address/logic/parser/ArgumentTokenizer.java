@@ -1,5 +1,7 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,6 +64,7 @@ public class ArgumentTokenizer {
      * {@code argsString} starting from index {@code fromIndex}. An occurrence
      * is valid if there is a whitespace before {@code prefix}. Returns -1 if no
      * such occurrence can be found.
+     * The tag prefix is matched ignoring case; other prefixes retain exact matching.
      *
      * E.g if {@code argsString} = "e/hip/900", {@code prefix} = "p/" and
      * {@code fromIndex} = 0, this method returns -1 as there are no valid
@@ -70,6 +73,15 @@ public class ArgumentTokenizer {
      * {@code fromIndex} = 0, this method returns 5.
      */
     private static int findPrefixPosition(String argsString, String prefix, int fromIndex) {
+        if (prefix.equals(PREFIX_TAG.getPrefix())) {
+            for (int i = fromIndex; i < argsString.length(); i++) {
+                if (argsString.charAt(i) == ' '
+                        && argsString.regionMatches(true, i + 1, prefix, 0, prefix.length())) {
+                    return i + 1;
+                }
+            }
+            return -1;
+        }
         int prefixIndex = argsString.indexOf(" " + prefix, fromIndex);
         return prefixIndex == -1 ? -1
                 : prefixIndex + 1; // +1 as offset for whitespace

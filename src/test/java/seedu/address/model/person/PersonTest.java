@@ -8,7 +8,7 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_LOW;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
@@ -18,6 +18,17 @@ import org.junit.jupiter.api.Test;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
+
+    @Test
+    public void constructor_multiplePriorities_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_TAG_COUNT_CONSTRAINTS, () ->
+                new PersonBuilder().withTags("HIGH", "LOW").build());
+    }
+
+    @Test
+    public void constructor_noPriority_success() {
+        assertTrue(new PersonBuilder().withTags().build().getTags().isEmpty());
+    }
 
     @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
@@ -35,7 +46,7 @@ public class PersonTest {
 
         // same name, all other attributes different -> returns true
         Person editedAlice = new PersonBuilder(ALICE).withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
-                .withFamilyNo(VALID_FAMILY_PHONE_BOB).withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND)
+                .withFamilyNo(VALID_FAMILY_PHONE_BOB).withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_LOW)
                 .build();
         assertTrue(ALICE.isSamePerson(editedAlice));
 
@@ -92,7 +103,7 @@ public class PersonTest {
         assertFalse(ALICE.equals(editedAlice));
 
         // different tags -> returns false
-        editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
+        editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_LOW).build();
         assertFalse(ALICE.equals(editedAlice));
     }
 
