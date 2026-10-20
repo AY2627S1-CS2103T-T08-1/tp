@@ -159,6 +159,35 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Find command
+
+The `find KEYWORD [MORE_KEYWORDS]...` command displays contacts whose names contain any of the given
+keywords as whole words, ignoring case, and returns the number of matches in the result box.
+It searches all stored contacts and changes the display filter without modifying stored contacts.
+
+The sequence diagram below shows a successful `find ali` command. A successful search may return zero
+matches; `ali` matches a name containing the word `Ali`, but does not match `Alice`.
+The diagram focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find ali command" />
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `find`
+   and creates a `FindCommandParser`.
+2. `FindCommandParser#parse()` trims the arguments and splits them on whitespace. It creates a
+   `NameContainsKeywordsPredicate` containing the keywords, then creates a `FindCommand` with that predicate.
+3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
+   `NameContainsKeywordsPredicate#test()` uses `StringUtil#containsWordIgnoreCase()` to match any keyword
+   against whole words in each contact's name. The UI observes the filtered list and updates the contact cards.
+4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
+   `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
+5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
+   `MainWindow` displays the returned feedback in `ResultDisplay`.
+
+**Error handling:** Missing or whitespace-only arguments cause `FindCommandParser#parse()` to throw a
+`ParseException` with the command usage. This leaves both the stored contacts and the display filter unchanged.
+A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
+Use `list` to display all contacts again after a successful `find` command.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
