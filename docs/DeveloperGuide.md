@@ -161,6 +161,21 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Saving data
+
+CareBook saves the contact list to `data/contacts.json` only after a command that changes it. Each `Command` has a `modifiesData()` method that returns `true` by default. Commands that only show information (`list`, `find`, `view`, `help` and `exit`) override it to return `false`.
+
+The sequence diagram below shows how `LogicManager` decides whether to save after executing a command.
+
+<puml src="diagrams/SaveSequenceDiagram.puml" alt="How LogicManager decides whether to save after a command" />
+
+1. `LogicManager` parses the command text into a `Command` and executes it.
+1. It then calls `modifiesData()` on the command.
+1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. If the save fails, the error becomes a `CommandException`, so the user sees `Could not save data to file: ...` and CareBook keeps running.
+1. Otherwise, `LogicManager` only logs that the save was skipped, and the data file is left as it is.
+
+**Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
+
 ### Priority tags
 
 Priority tags use the existing `/tag` prefix and `Tag` model, with names restricted to `HIGH`, `MEDIUM`, and `LOW`.
