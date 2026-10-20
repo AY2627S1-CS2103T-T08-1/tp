@@ -7,6 +7,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -197,5 +198,31 @@ public class ParserUtilTest {
     public void parseTags_multiplePriorities_throwsParseException() {
         assertThrows(ParseException.class, Person.MESSAGE_TAG_COUNT_CONSTRAINTS, () ->
                 ParserUtil.parseTags(List.of(VALID_TAG_1, VALID_TAG_2)));
+    }
+
+    @Test
+    public void parseTag_mixedCase_returnsUppercaseTag() throws Exception {
+        for (String value : List.of("high", "High", "hIgH", "HIGH", "medium", "Medium", "low", "LoW")) {
+            assertEquals(new Tag(value.toUpperCase(Locale.ROOT)), ParserUtil.parseTag(" " + value + " "));
+        }
+    }
+
+    @Test
+    public void parseTags_mixedCaseDuplicates_returnsSingleTag() throws Exception {
+        assertEquals(Set.of(new Tag("HIGH")), ParserUtil.parseTags(List.of("High", "high", "HIGH")));
+        assertThrows(ParseException.class, Person.MESSAGE_TAG_COUNT_CONSTRAINTS, () ->
+                ParserUtil.parseTags(List.of("High", "low")));
+    }
+
+    @Test
+    public void parseTag_turkishLocale_returnsUppercaseTag() throws Exception {
+        Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            assertEquals(new Tag("HIGH"), ParserUtil.parseTag("high"));
+            assertEquals(new Tag("MEDIUM"), ParserUtil.parseTag("medium"));
+        } finally {
+            Locale.setDefault(originalLocale);
+        }
     }
 }

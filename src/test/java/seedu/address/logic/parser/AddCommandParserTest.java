@@ -250,4 +250,19 @@ public class AddCommandParserTest {
                 + TAG_DESC_HIGH,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
     }
+
+    @Test
+    public void parse_mixedCaseTag_success() {
+        Person expectedPerson = new PersonBuilder(AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY)
+                .withoutEmail().withTags(VALID_TAG_HIGH).build();
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + FAMILY_PHONE_DESC_AMY + ADDRESS_DESC_AMY;
+        for (String prefix : new String[] {"/tag", "/Tag", "/TAG", "/tAg"}) {
+            for (String value : new String[] {"high", "High", "HIGH", "hIgH"}) {
+                assertParseSuccess(parser, fields + " " + prefix + " " + value, new AddCommand(expectedPerson));
+            }
+        }
+        assertParseSuccess(parser, fields + " /TAG High /tag high", new AddCommand(expectedPerson));
+        assertParseFailure(parser, fields + " /TAG High /tAg low", Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
+        assertParseFailure(parser, fields + " /TAG urgent", Tag.MESSAGE_CONSTRAINTS);
+    }
 }

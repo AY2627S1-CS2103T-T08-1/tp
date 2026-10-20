@@ -97,9 +97,9 @@ Examples:
 
 Use `/tag PRIORITY` with `add` or `edit` to label a person's priority. Choose one of the three supported values: `HIGH`, `MEDIUM`, or `LOW`. Custom priority names are not supported.
 
-* Values are case-sensitive: `/tag HIGH` is valid; `/tag high`, `/tag Medium`, and free-form tags such as `/tag friend` are invalid.
+* The `/tag` prefix and priority values are case-insensitive: `/tag High`, `/TAG high`, and `/TaG HIGH` all assign `HIGH`. Tags are displayed and saved in uppercase. Free-form tags such as `/tag friend` are invalid.
 * Spaces before and after a priority value are ignored in commands.
-* Only one distinct priority is allowed. `/tag HIGH /tag LOW` is rejected with `A contact can have at most one priority tag.` Repeating `/tag HIGH /tag HIGH` stores one `HIGH` tag. `/tag HIGH LOW` is also invalid.
+* Only one distinct priority is allowed. `/tag HIGH /tag LOW` is rejected with `A contact can have at most one priority tag.` Repeating `/tag High /TAG high` stores one `HIGH` tag. `/tag HIGH LOW` is also invalid.
 * Omitting `/tag` when adding a person leaves them without priority tags. A bare `/tag` is invalid for `add`.
 * The assigned priority tag appears on the person's card.
 
@@ -146,13 +146,13 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
-* Priority values must be `HIGH`, `MEDIUM`, or `LOW` (see [Priority tags](#priority-tags)).
+* Priority values must be `HIGH`, `MEDIUM`, or `LOW`, in any letter case (see [Priority tags](#priority-tags)).
 * Supplying `/tag PRIORITY` replaces the person's existing priority tag. Omitting `/tag` leaves their tags unchanged.
 * To remove all of a person's priority tags, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
 
 Examples:
 *  `edit 1 /patientNo 91234567 /email johndoe@example.com` Edits the patient phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 1 /tag MEDIUM` Replaces the priority tag of the 1st person with `MEDIUM`.
+*  `edit 1 /TAG Medium` Replaces the priority tag of the 1st person with `MEDIUM`.
 *  `edit 2 /name Betsy Crower /tag` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 
 ### Locating persons by name: `find`
@@ -244,7 +244,7 @@ Example:
 }
 ```
 
-Priority strings in the data file must match exactly, including uppercase letters and no surrounding spaces. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
+Commands accept any letter case, but priority strings edited directly in the data file must match exactly, including uppercase letters and no surrounding spaces. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
 
 <box type="warning" seamless>
 

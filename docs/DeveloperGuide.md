@@ -172,7 +172,7 @@ Priority tags use the existing `/tag` prefix and `Tag` model, with names restric
 
 #### Command parsing and editing
 
-`AddCommandParser` and `EditCommandParser` collect all `/tag` values. `ParserUtil.parseTag` trims each value before validation, while preserving case. Invalid values cause a `ParseException` with `Tag.MESSAGE_CONSTRAINTS`: `Tag names must be HIGH, MEDIUM or LOW`. `ParserUtil.parseTags` removes duplicates and rejects more than one distinct priority with a `ParseException` using `Person.MESSAGE_TAG_COUNT_CONSTRAINTS`. It returns an empty set or a singleton set; invalid input prevents the command from changing the model.
+`AddCommandParser` and `EditCommandParser` collect all `/tag` values. `ArgumentTokenizer` recognizes `/tag` ignoring case and maps variants such as `/TAG` and `/TaG` to the canonical `PREFIX_TAG`. It preserves argument values and the matching rules for other prefixes. `ParserUtil.parseTag` trims each value and converts it to uppercase using `Locale.ROOT` before enum validation. This accepts mixed-case command input independently of the system locale while keeping model and stored values uppercase. Invalid values cause a `ParseException` with `Tag.MESSAGE_CONSTRAINTS`: `Tag names must be HIGH, MEDIUM or LOW`. `ParserUtil.parseTags` removes duplicates after case normalization and rejects more than one distinct priority with a `ParseException` using `Person.MESSAGE_TAG_COUNT_CONSTRAINTS`. It returns an empty set or a singleton set; invalid input prevents the command from changing the model.
 
 * For `add`, omitting `/tag` produces an empty set. An empty `/tag` value is invalid.
 * For `edit`, omitting `/tag` leaves tags unchanged. Providing values replaces the whole set through `EditPersonDescriptor` and `EditCommand`.
@@ -552,7 +552,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Adding priority tags
 
-   1. Test case: `add /name Priority Test /patientNo 98765432 /familyNo 91234567 /address Test Street /tag HIGH /tag HIGH` (use a name not already stored).<br>
+   1. Test case: `add /name Priority Test /patientNo 98765432 /familyNo 91234567 /address Test Street /TAG High /tag high` (use a name not already stored).<br>
       Expected: The contact is added with exactly one tag, displayed as `HIGH`. Repeat with a new name and `/tag HIGH /tag LOW`; the command should show `A contact can have at most one priority tag.` and add no contact.
 
    1. Test case: Add another uniquely named contact without `/tag`.<br>
@@ -562,7 +562,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Prerequisites: Run `list` and ensure at least one contact exists. The following commands act on contact 1.
 
-   1. Test case: `edit 1 /tag MEDIUM`<br>
+   1. Test cases: `edit 1 /tag medium`, `edit 1 /TAG Medium`, and `edit 1 /TaG MEDIUM`.<br>
       Expected: All existing tags are replaced with `MEDIUM`.
 
    1. Test case: `edit 1 /address Updated Street`<br>
@@ -571,10 +571,10 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `edit 1 /tag HIGH /tag MEDIUM /tag LOW`<br>
       Expected: The command shows `A contact can have at most one priority tag.` and leaves the contact unchanged.
 
-   1. Test cases: `edit 1 /tag high`, `edit 1 /tag friends`, `edit 1 /tag HIGH LOW`, and `edit 1 /tag HIGH /tag`.<br>
+   1. Test cases: `edit 1 /tag friends`, `edit 1 /tag HIGH LOW`, and `edit 1 /tag HIGH /tag`.<br>
       Expected: Each shows `Tag names must be HIGH, MEDIUM or LOW`; the contact remains unchanged.
 
-   1. Test case: `edit 1 /tag`<br>
+   1. Test case: `edit 1 /TAG`<br>
       Expected: All priority tags are cleared.
 
 1. Saving and loading priority tags

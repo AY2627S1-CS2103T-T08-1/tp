@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
@@ -98,16 +99,16 @@ public class ParserUtil {
 
     /**
      * Parses a {@code String tag} into a {@code Tag}.
-     * Trims leading and trailing whitespace but preserves case.
+     * Trims leading and trailing whitespace and normalizes case to uppercase.
      *
      * @param tag The priority name to parse.
-     * @return A tag containing the trimmed priority name.
-     * @throws ParseException If the trimmed name is not exactly HIGH, MEDIUM, or LOW.
+     * @return A tag containing the uppercase priority name.
+     * @throws ParseException If the trimmed name is not HIGH, MEDIUM, or LOW, ignoring case.
      * @throws NullPointerException If {@code tag} is null.
      */
     public static Tag parseTag(String tag) throws ParseException {
         requireNonNull(tag);
-        String trimmedTag = tag.trim();
+        String trimmedTag = tag.trim().toUpperCase(Locale.ROOT);
         if (!Tag.isValidTagName(trimmedTag)) {
             throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
         }

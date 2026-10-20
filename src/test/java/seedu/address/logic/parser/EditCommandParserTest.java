@@ -218,4 +218,21 @@ public class EditCommandParserTest {
 
         assertParseSuccess(parser, userInput, expectedCommand);
     }
+
+    @Test
+    public void parse_mixedCaseTag_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withTags(VALID_TAG_HIGH).build();
+        EditCommand expectedCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+        for (String prefix : new String[] {"/tag", "/Tag", "/TAG", "/tAg"}) {
+            for (String value : new String[] {"high", "High", "HIGH", "hIgH"}) {
+                assertParseSuccess(parser, "1 " + prefix + " " + value, expectedCommand);
+            }
+            assertParseSuccess(parser, "1 " + prefix,
+                    new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withTags().build()));
+        }
+        assertParseSuccess(parser, "1 /TAG High /tag high", expectedCommand);
+        assertParseFailure(parser, "1 /TAG High /tAg low", Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
+        assertParseFailure(parser, "1 /TAG urgent", Tag.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 /TAG High /TaG", Tag.MESSAGE_CONSTRAINTS);
+    }
 }
