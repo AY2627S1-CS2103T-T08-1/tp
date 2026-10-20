@@ -12,6 +12,9 @@ import seedu.address.testutil.PersonBuilder;
 
 public class NameContainsKeywordsPredicateTest {
 
+    /**
+     * Checks that predicate equality depends on the keyword list.
+     */
     @Test
     public void equals() {
         List<String> firstPredicateKeywordList = List.of("first");
@@ -37,6 +40,9 @@ public class NameContainsKeywordsPredicateTest {
         assertFalse(firstPredicate.equals(secondPredicate));
     }
 
+    /**
+     * Checks that any matching name keyword satisfies the predicate regardless of case.
+     */
     @Test
     public void test_nameContainsKeywords_returnsTrue() {
         // One keyword
@@ -56,6 +62,9 @@ public class NameContainsKeywordsPredicateTest {
         assertTrue(predicate.test(new PersonBuilder().withName("Alice Bob").build()));
     }
 
+    /**
+     * Checks that prefixes, middle fragments and suffixes match names regardless of case.
+     */
     @Test
     public void test_nameContainsPartialKeyword_returnsTrue() {
         Person person = new PersonBuilder().withName("Alice Bob").build();
@@ -66,6 +75,9 @@ public class NameContainsKeywordsPredicateTest {
         assertTrue(new NameContainsKeywordsPredicate(List.of("Carol", "lic")).test(person));
     }
 
+    /**
+     * Checks that partial matches in fields other than the name are ignored.
+     */
     @Test
     public void test_partialKeywordMatchesOtherFields_returnsFalse() {
         NameContainsKeywordsPredicate predicate =
@@ -74,6 +86,9 @@ public class NameContainsKeywordsPredicateTest {
                 .withEmail("alice@email.com").withAddress("Main Street").withTags("friends").build()));
     }
 
+    /**
+     * Checks that empty or non-matching keywords do not satisfy the predicate.
+     */
     @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
@@ -90,6 +105,9 @@ public class NameContainsKeywordsPredicateTest {
                 .withEmail("alice@email.com").withAddress("Main Street").build()));
     }
 
+    /**
+     * Checks that the predicate's string representation includes its keywords.
+     */
     @Test
     public void toStringMethod() {
         List<String> keywords = List.of("keyword1", "keyword2");

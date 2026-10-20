@@ -23,15 +23,24 @@ public class FindCommand extends Command {
 
     private final NameContainsKeywordsPredicate predicate;
 
+    /**
+     * Creates a command that filters persons using {@code predicate}.
+     */
     public FindCommand(NameContainsKeywordsPredicate predicate) {
         this.predicate = predicate;
     }
 
+    /**
+     * Returns false because finding persons only changes the displayed list.
+     */
     @Override
     public boolean modifiesData() {
         return false;
     }
 
+    /**
+     * Filters the displayed persons and returns the number of matches.
+     */
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
@@ -40,6 +49,9 @@ public class FindCommand extends Command {
                 String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
     }
 
+    /**
+     * Returns whether {@code other} is a find command with the same predicate.
+     */
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -54,6 +66,9 @@ public class FindCommand extends Command {
         return predicate.equals(otherFindCommand.predicate);
     }
 
+    /**
+     * Returns a string representation of this command and its predicate.
+     */
     @Override
     public String toString() {
         return new ToStringBuilder(this)

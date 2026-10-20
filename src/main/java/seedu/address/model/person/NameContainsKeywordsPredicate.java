@@ -12,10 +12,16 @@ import seedu.address.commons.util.ToStringBuilder;
 public class NameContainsKeywordsPredicate implements Predicate<Person> {
     private final List<String> keywords;
 
+    /**
+     * Creates a predicate that searches names for any of the given {@code keywords}.
+     */
     public NameContainsKeywordsPredicate(List<String> keywords) {
         this.keywords = keywords;
     }
 
+    /**
+     * Returns whether the person's name contains any keyword, ignoring case and allowing partial matches.
+     */
     @Override
     public boolean test(Person person) {
         String name = person.getName().fullName.toLowerCase(Locale.ROOT);
@@ -23,6 +29,9 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
                 .anyMatch(keyword -> name.contains(keyword.toLowerCase(Locale.ROOT)));
     }
 
+    /**
+     * Returns whether {@code other} is a name predicate with the same keywords.
+     */
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -37,6 +46,9 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
         return keywords.equals(otherNameContainsKeywordsPredicate.keywords);
     }
 
+    /**
+     * Returns a string representation of this predicate and its keywords.
+     */
     @Override
     public String toString() {
         return new ToStringBuilder(this).add("keywords", keywords).toString();
