@@ -76,10 +76,6 @@ public class Person {
         return familyNo;
     }
 
-    public Optional<Email> getEmail() {
-        return getPatientEmail();
-    }
-
     public Optional<Email> getPatientEmail() {
         return Optional.ofNullable(patientEmail);
     }

@@ -56,7 +56,10 @@ public class PersonUtil {
                 .append(phone.value).append(" "));
         descriptor.getFamilyNo().ifPresent(fPhone -> sb.append(PREFIX_FAMILY_PHONE).append(" ")
                 .append(fPhone.value).append(" "));
-        descriptor.getEmail().ifPresent(email -> sb.append("/email ").append(email.value).append(" "));
+        descriptor.getPatientEmail().ifPresent(email -> sb.append(PREFIX_PATIENT_EMAIL).append(" ")
+                .append(email.value).append(" "));
+        descriptor.getFamilyEmail().ifPresent(email -> sb.append(PREFIX_FAMILY_EMAIL).append(" ")
+                .append(email.value).append(" "));
         descriptor.getAddress().ifPresent(address -> sb.append(PREFIX_ADDRESS).append(" ")
                 .append(address.value).append(" "));
         if (descriptor.getTags().isPresent()) {

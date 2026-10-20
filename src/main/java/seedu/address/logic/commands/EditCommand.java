@@ -2,9 +2,10 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
@@ -43,13 +44,14 @@ public class EditCommand extends Command {
             + "[" + PREFIX_NAME + " NAME] "
             + "[" + PREFIX_PATIENT_PHONE + " PATIENT_PHONE] "
             + "[" + PREFIX_FAMILY_PHONE + " FAMILY_PHONE] "
-            + "[" + PREFIX_EMAIL + " EMAIL] "
+            + "[" + PREFIX_PATIENT_EMAIL + " PATIENT_EMAIL] "
+            + "[" + PREFIX_FAMILY_EMAIL + " FAMILY_EMAIL] "
             + "[" + PREFIX_ADDRESS + " ADDRESS] "
             + "[" + PREFIX_TAG + " PRIORITY]\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PATIENT_PHONE + " 91234567 "
-            + PREFIX_FAMILY_PHONE + " 89898989 "
-            + PREFIX_ADDRESS + " Goonvale Block 6, #7-89";
+            + PREFIX_FAMILY_EMAIL + " family@example.com "
+            + PREFIX_TAG + " HIGH";
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
@@ -101,11 +103,15 @@ public class EditCommand extends Command {
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
         Phone updatedPatientNo = editPersonDescriptor.getPatientNo().orElse(personToEdit.getPatientNo());
         Phone updatedFamilyNo = editPersonDescriptor.getFamilyNo().orElse(personToEdit.getFamilyNo());
-        Email updatedEmail = editPersonDescriptor.getEmail().orElse(personToEdit.getEmail().orElse(null));
+        Email updatedPatientEmail = editPersonDescriptor.getPatientEmail()
+                .orElse(personToEdit.getPatientEmail().orElse(null));
+        Email updatedFamilyEmail = editPersonDescriptor.getFamilyEmail()
+                .orElse(personToEdit.getFamilyEmail().orElse(null));
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
-        return new Person(updatedName, updatedPatientNo, updatedFamilyNo, updatedEmail, updatedAddress, updatedTags);
+        return new Person(updatedName, updatedPatientNo, updatedFamilyNo, updatedPatientEmail,
+                updatedFamilyEmail, updatedAddress, updatedTags);
     }
 
     @Override
@@ -139,7 +145,8 @@ public class EditCommand extends Command {
         private Name name;
         private Phone patientNo;
         private Phone familyNo;
-        private Email email;
+        private Email patientEmail;
+        private Email familyEmail;
         private Address address;
         private Set<Tag> tags;
 
@@ -153,7 +160,8 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setPatientNo(toCopy.patientNo);
             setFamilyNo(toCopy.familyNo);
-            setEmail(toCopy.email);
+            setPatientEmail(toCopy.patientEmail);
+            setFamilyEmail(toCopy.familyEmail);
             setAddress(toCopy.address);
             setTags(toCopy.tags);
         }
@@ -162,7 +170,8 @@ public class EditCommand extends Command {
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, patientNo, familyNo, email, address, tags);
+            return CollectionUtil.isAnyNonNull(name, patientNo, familyNo, patientEmail, familyEmail, address,
+                    tags);
         }
 
         public void setName(Name name) {
@@ -197,12 +206,20 @@ public class EditCommand extends Command {
             return getPatientNo();
         }
 
-        public void setEmail(Email email) {
-            this.email = email;
+        public void setPatientEmail(Email patientEmail) {
+            this.patientEmail = patientEmail;
         }
 
-        public Optional<Email> getEmail() {
-            return Optional.ofNullable(email);
+        public Optional<Email> getPatientEmail() {
+            return Optional.ofNullable(patientEmail);
+        }
+
+        public void setFamilyEmail(Email familyEmail) {
+            this.familyEmail = familyEmail;
+        }
+
+        public Optional<Email> getFamilyEmail() {
+            return Optional.ofNullable(familyEmail);
         }
 
         public void setAddress(Address address) {
@@ -244,7 +261,8 @@ public class EditCommand extends Command {
             return Objects.equals(name, otherEditPersonDescriptor.name)
                     && Objects.equals(patientNo, otherEditPersonDescriptor.patientNo)
                     && Objects.equals(familyNo, otherEditPersonDescriptor.familyNo)
-                    && Objects.equals(email, otherEditPersonDescriptor.email)
+                    && Objects.equals(patientEmail, otherEditPersonDescriptor.patientEmail)
+                    && Objects.equals(familyEmail, otherEditPersonDescriptor.familyEmail)
                     && Objects.equals(address, otherEditPersonDescriptor.address)
                     && Objects.equals(tags, otherEditPersonDescriptor.tags);
         }
@@ -255,7 +273,8 @@ public class EditCommand extends Command {
                     .add("name", name)
                     .add("patientNo", patientNo)
                     .add("familyNo", familyNo)
-                    .add("email", email)
+                    .add("patientEmail", patientEmail)
+                    .add("familyEmail", familyEmail)
                     .add("address", address)
                     .add("tags", tags)
                     .toString();

@@ -35,7 +35,8 @@ public class EditPersonDescriptorBuilder {
         descriptor.setName(person.getName());
         descriptor.setPatientNo(person.getPatientNo());
         descriptor.setFamilyNo(person.getFamilyNo());
-        person.getEmail().ifPresent(descriptor::setEmail);
+        person.getPatientEmail().ifPresent(descriptor::setPatientEmail);
+        person.getFamilyEmail().ifPresent(descriptor::setFamilyEmail);
         descriptor.setAddress(person.getAddress());
         descriptor.setTags(person.getTags());
     }
@@ -65,10 +66,18 @@ public class EditPersonDescriptorBuilder {
     }
 
     /**
-     * Sets the {@code Email} of the {@code EditPersonDescriptor} that we are building.
+     * Sets the patient email of the {@code EditPersonDescriptor} that we are building.
      */
-    public EditPersonDescriptorBuilder withEmail(String email) {
-        descriptor.setEmail(new Email(email));
+    public EditPersonDescriptorBuilder withPatientEmail(String patientEmail) {
+        descriptor.setPatientEmail(new Email(patientEmail));
+        return this;
+    }
+
+    /**
+     * Sets the family email of the {@code EditPersonDescriptor} that we are building.
+     */
+    public EditPersonDescriptorBuilder withFamilyEmail(String familyEmail) {
+        descriptor.setFamilyEmail(new Email(familyEmail));
         return this;
     }
 

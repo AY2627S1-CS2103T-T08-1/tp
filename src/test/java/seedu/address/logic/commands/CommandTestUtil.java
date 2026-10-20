@@ -49,7 +49,6 @@ public class CommandTestUtil {
     public static final String FAMILY_PHONE_DESC_AMY = " " + PREFIX_FAMILY_PHONE + " " + VALID_FAMILY_PHONE_AMY;
     public static final String FAMILY_PHONE_DESC_BOB = " " + PREFIX_FAMILY_PHONE + " " + VALID_FAMILY_PHONE_BOB;
     public static final String EMAIL_DESC_AMY = " /email " + VALID_EMAIL_AMY;
-    public static final String EMAIL_DESC_BOB = " /email " + VALID_EMAIL_BOB;
     public static final String PATIENT_EMAIL_DESC_AMY = " " + PREFIX_PATIENT_EMAIL + " " + VALID_EMAIL_AMY;
     public static final String PATIENT_EMAIL_DESC_BOB = " " + PREFIX_PATIENT_EMAIL + " " + VALID_EMAIL_BOB;
     public static final String FAMILY_EMAIL_DESC_AMY = " " + PREFIX_FAMILY_EMAIL + " " + VALID_FAMILY_EMAIL_AMY;
@@ -61,7 +60,6 @@ public class CommandTestUtil {
 
     public static final String INVALID_NAME_DESC = " " + PREFIX_NAME + " James&"; // '&' not allowed in names
     public static final String INVALID_PHONE_DESC = " " + PREFIX_PHONE + " 911a"; // 'a' not allowed in phones
-    public static final String INVALID_EMAIL_DESC = " /email bob!yahoo"; // missing '@' symbol
     public static final String INVALID_PATIENT_EMAIL_DESC = " " + PREFIX_PATIENT_EMAIL + " bob!yahoo";
     public static final String INVALID_FAMILY_EMAIL_DESC = " " + PREFIX_FAMILY_EMAIL + " bob!yahoo";
     public static final String INVALID_ADDRESS_DESC = " " + PREFIX_ADDRESS; // empty string not allowed for addresses
@@ -75,11 +73,13 @@ public class CommandTestUtil {
 
     static {
         DESC_AMY = new EditPersonDescriptorBuilder().withName(VALID_NAME_AMY)
-                .withPhone(VALID_PHONE_AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY).withEmail(VALID_EMAIL_AMY)
+                .withPhone(VALID_PHONE_AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY)
+                .withPatientEmail(VALID_EMAIL_AMY).withFamilyEmail(VALID_FAMILY_EMAIL_AMY)
                 .withAddress(VALID_ADDRESS_AMY)
                 .withTags(VALID_TAG_HIGH).build();
         DESC_BOB = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB)
-                .withPhone(VALID_PHONE_BOB).withFamilyNo(VALID_FAMILY_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
+                .withPhone(VALID_PHONE_BOB).withFamilyNo(VALID_FAMILY_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).withFamilyEmail(VALID_FAMILY_EMAIL_BOB)
                 .withAddress(VALID_ADDRESS_BOB)
                 .withTags(VALID_TAG_LOW).build();
     }
