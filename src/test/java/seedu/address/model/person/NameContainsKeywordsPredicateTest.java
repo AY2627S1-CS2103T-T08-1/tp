@@ -57,6 +57,24 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_nameContainsPartialKeyword_returnsTrue() {
+        Person person = new PersonBuilder().withName("Alice Bob").build();
+
+        assertTrue(new NameContainsKeywordsPredicate(List.of("ali")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("LIC")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("ob")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("Carol", "lic")).test(person));
+    }
+
+    @Test
+    public void test_partialKeywordMatchesOtherFields_returnsFalse() {
+        NameContainsKeywordsPredicate predicate =
+                new NameContainsKeywordsPredicate(List.of("234", "email", "ain", "friend"));
+        assertFalse(predicate.test(new PersonBuilder().withName("Alice").withPhone("12345")
+                .withEmail("alice@email.com").withAddress("Main Street").withTags("friends").build()));
+    }
+
+    @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of());
