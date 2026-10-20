@@ -24,7 +24,7 @@ public class SampleDataUtil {
                     getTagSet("HIGH")),
             new Person(new Name("Bernice Yu"), new Phone("99272758"), new Phone("82345678"),
                     new Address("Blk 30 Lorong 3 Serangoon Gardens, #07-18"),
-                    getTagSet("LOW", "HIGH")),
+                    getTagSet("LOW")),
             new Person(new Name("Charlotte Oliveiro"), new Phone("93210283"), new Phone("83456789"),
                     new Address("Blk 11 Ang Mo Kio Street 74, #11-04"),
                     getTagSet("MEDIUM")),

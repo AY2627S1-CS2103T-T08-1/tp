@@ -56,7 +56,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
   For example, `/name NAME [/tag PRIORITY]` can be used as `/name John Doe /tag HIGH` or as `/name John Doe`.
 
 * Items followed by `...` can appear zero or more times.<br>
-  For example, `[/tag PRIORITY]... ` may be omitted, or written as `/tag HIGH` or as `/tag HIGH /tag LOW`.
+  For example, `find KEYWORD [MORE_KEYWORDS]...` can be written as `find John` or `find John Mary`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
@@ -80,13 +80,13 @@ Format: `help`
 
 Adds a person to CareBook.
 
-Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY]... `
+Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] `
 
 Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
 
 <box type="tip" seamless>
 
-**Tip:** Priority tags are optional. A person can have zero to three distinct priority tags: `HIGH`, `MEDIUM`, and `LOW`. Repeating the same tag stores it only once.
+**Tip:** A person can have no priority tag or one priority tag: `HIGH`, `MEDIUM`, or `LOW`. Repeating the same tag stores it only once.
 </box>
 
 Examples:
@@ -99,9 +99,9 @@ Use `/tag PRIORITY` with `add` or `edit` to label a person's priority. Choose on
 
 * Values are case-sensitive: `/tag HIGH` is valid; `/tag high`, `/tag Medium`, and free-form tags such as `/tag friend` are invalid.
 * Spaces before and after a priority value are ignored in commands.
-* To supply multiple priorities, repeat the prefix, for example `/tag HIGH /tag LOW`. `/tag HIGH LOW` is invalid.
+* Only one distinct priority is allowed. `/tag HIGH /tag LOW` is rejected with `A contact can have at most one priority tag.` Repeating `/tag HIGH /tag HIGH` stores one `HIGH` tag. `/tag HIGH LOW` is also invalid.
 * Omitting `/tag` when adding a person leaves them without priority tags. A bare `/tag` is invalid for `add`.
-* Tags appear on the person's card in alphabetical order (`HIGH`, `LOW`, `MEDIUM` when all three are present).
+* The assigned priority tag appears on the person's card.
 
 An invalid priority displays `Tag names must be HIGH, MEDIUM or LOW` and leaves the contacts unchanged.
 
@@ -141,18 +141,18 @@ Example:
 
 Edits an existing person in CareBook.
 
-Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag PRIORITY]... `
+Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag PRIORITY] `
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
 * Priority values must be `HIGH`, `MEDIUM`, or `LOW` (see [Priority tags](#priority-tags)).
-* Supplying `/tag` values replaces all of the person's existing priority tags; adding tags is not cumulative. Omitting `/tag` leaves their tags unchanged.
+* Supplying `/tag PRIORITY` replaces the person's existing priority tag. Omitting `/tag` leaves their tags unchanged.
 * To remove all of a person's priority tags, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
 
 Examples:
 *  `edit 1 /patientNo 91234567 /email johndoe@example.com` Edits the patient phone number and email address of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 1 /tag MEDIUM` Replaces all priority tags of the 1st person with `MEDIUM`.
+*  `edit 1 /tag MEDIUM` Replaces the priority tag of the 1st person with `MEDIUM`.
 *  `edit 2 /name Betsy Crower /tag` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
 
 ### Locating persons by name: `find`
@@ -225,9 +225,10 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `name`      | Yes      | The contact's name.                          |
 | `patientNo` | Yes      | The patient's phone number.                  |
 | `familyNo`  | Yes      | The family member's phone number.            |
-| `email`     | No       | Leave it out if the contact has no email.    |
+| `pEmail`    | No       | The patient's email address. Leave it out if the patient has no email. |
+| `fEmail`    | No       | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
-| `tags`      | No       | A list of priority strings: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
+| `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
 
 Example:
 
@@ -243,7 +244,7 @@ Example:
 }
 ```
 
-Priority strings in the data file must match exactly, including uppercase letters and no surrounding spaces. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, replace each old tag with an appropriate priority or clear the list to `[]`. Omitting the `tags` field also means no priority tags.
+Priority strings in the data file must match exactly, including uppercase letters and no surrounding spaces. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
 
 <box type="warning" seamless>
 
@@ -276,10 +277,10 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY]... ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH /tag LOW`
+**Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag PRIORITY]... `<br> e.g.,`edit 2 /name James Lee /email jameslee@example.com`
+**Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /email jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`

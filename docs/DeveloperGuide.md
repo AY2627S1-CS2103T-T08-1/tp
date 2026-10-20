@@ -125,7 +125,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores each person's priority tags as a `Set<Tag>`. Valid names are `HIGH`, `MEDIUM`, and `LOW`; the set may be empty or contain multiple distinct priorities.
+* stores each person's priority tags as a `Set<Tag>`. Valid names are `HIGH`, `MEDIUM`, and `LOW`; the set must be empty or contain one priority.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -168,27 +168,27 @@ Priority tags use the existing `/tag` prefix and `Tag` model, with names restric
 
 `Tag` is immutable and stores its priority as a `String` in `tagName`. `Tag.isValidTagName` uses `Priority.valueOf` to check whether the input names a `Priority` enum constant. The enum is the source of accepted values (`HIGH`, `MEDIUM`, and `LOW`); there is no separate validation regex. Matching is exact and case-sensitive. Unknown names return `false` by catching `IllegalArgumentException`, while null input throws `NullPointerException`. The constructor does not trim or change case and rejects invalid names with `IllegalArgumentException`.
 
-`Person` copies tags into a `HashSet` and exposes an unmodifiable set through `getTags()`. Equality and hashing of `Tag` use `tagName`, so duplicates collapse into one tag. There is no single-priority restriction: a person can hold zero to three distinct priority tags.
+`Person` copies tags into a `HashSet` and exposes an unmodifiable set through `getTags()`. Equality and hashing of `Tag` use `tagName`, so duplicates collapse into one tag. The `Person` constructor rejects sets with more than one tag using `Person.MESSAGE_TAG_COUNT_CONSTRAINTS`: `A contact can have at most one priority tag.` This keeps the model valid even when constructed outside the command parsers.
 
 #### Command parsing and editing
 
-`AddCommandParser` and `EditCommandParser` collect all `/tag` values. `ParserUtil.parseTag` trims each value before validation, while preserving case. Invalid values cause a `ParseException` with `Tag.MESSAGE_CONSTRAINTS`: `Tag names must be HIGH, MEDIUM or LOW`. `ParserUtil.parseTags` returns a set of distinct tags; invalid input prevents the command from changing the model.
+`AddCommandParser` and `EditCommandParser` collect all `/tag` values. `ParserUtil.parseTag` trims each value before validation, while preserving case. Invalid values cause a `ParseException` with `Tag.MESSAGE_CONSTRAINTS`: `Tag names must be HIGH, MEDIUM or LOW`. `ParserUtil.parseTags` removes duplicates and rejects more than one distinct priority with a `ParseException` using `Person.MESSAGE_TAG_COUNT_CONSTRAINTS`. It returns an empty set or a singleton set; invalid input prevents the command from changing the model.
 
 * For `add`, omitting `/tag` produces an empty set. An empty `/tag` value is invalid.
 * For `edit`, omitting `/tag` leaves tags unchanged. Providing values replaces the whole set through `EditPersonDescriptor` and `EditCommand`.
 * `EditCommandParser.parseTagsForEdit` treats a single empty `/tag` as an empty set, clearing all tags. An empty value combined with other `/tag` occurrences is invalid.
 
-For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` stores two priorities, and `edit 1 /tag` clears them.
+For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` is rejected, and `edit 1 /tag` clears them.
 
 #### Display and persistence
 
-`PersonCard.getTagTexts` sorts tags alphabetically by `tagName`, giving `HIGH`, `LOW`, `MEDIUM` when all three are present. It displays each as a label on the person's card.
+`PersonCard.getTagTexts` returns the assigned priority for display as a label on the person's card, or an empty list for a contact without a tag.
 
-`JsonAdaptedTag` serializes each tag as a JSON string, so the contact's existing `tags` field contains values such as `"tags": ["HIGH", "LOW"]`. `JsonAdaptedPerson` treats an omitted `tags` field or an empty list as no tags and removes duplicates when constructing the model set.
+`JsonAdaptedTag` serializes each tag as a JSON string, so the contact's existing `tags` field contains values such as `"tags": ["HIGH"]`. `JsonAdaptedPerson` treats an omitted `tags` field or an empty list as no tags and removes duplicates when constructing the model set. More than one distinct priority raises `IllegalValueException` with `Person.MESSAGE_TAG_COUNT_CONSTRAINTS` before constructing a `Person`; the storage layer handles this as a data-loading failure.
 
 On loading, `JsonAdaptedTag.toModelType` validates the stored value directly, without trimming or case conversion. An invalid string raises `IllegalValueException`, which `JsonAddressBookStorage` wraps in `DataLoadingException`. `MainApp` then starts with an empty contact list and displays the data-loading failure message. The invalid file remains until a command changes contacts and saves over it.
 
-There is no automatic migration of old free-form tags. Users must back up older data and replace invalid tag strings with valid priorities or remove them before loading the file.
+There is no automatic migration of old free-form tags. Users must back up older data and keep at most one valid priority per contact or remove all tags before loading the file. Existing files with multiple distinct priorities are rejected rather than automatically choosing a priority.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -552,8 +552,8 @@ testers are expected to do more *exploratory* testing.
 
 1. Adding priority tags
 
-   1. Test case: `add /name Priority Test /patientNo 98765432 /familyNo 91234567 /address Test Street /tag HIGH /tag LOW /tag HIGH` (use a name not already stored).<br>
-      Expected: The contact is added with exactly two tags, displayed as `HIGH`, `LOW`.
+   1. Test case: `add /name Priority Test /patientNo 98765432 /familyNo 91234567 /address Test Street /tag HIGH /tag HIGH` (use a name not already stored).<br>
+      Expected: The contact is added with exactly one tag, displayed as `HIGH`. Repeat with a new name and `/tag HIGH /tag LOW`; the command should show `A contact can have at most one priority tag.` and add no contact.
 
    1. Test case: Add another uniquely named contact without `/tag`.<br>
       Expected: The contact has no priority tags.
@@ -569,7 +569,7 @@ testers are expected to do more *exploratory* testing.
       Expected: The address changes and the `MEDIUM` tag remains.
 
    1. Test case: `edit 1 /tag HIGH /tag MEDIUM /tag LOW`<br>
-      Expected: The card displays `HIGH`, `LOW`, `MEDIUM` in that order.
+      Expected: The command shows `A contact can have at most one priority tag.` and leaves the contact unchanged.
 
    1. Test cases: `edit 1 /tag high`, `edit 1 /tag friends`, `edit 1 /tag HIGH LOW`, and `edit 1 /tag HIGH /tag`.<br>
       Expected: Each shows `Tag names must be HIGH, MEDIUM or LOW`; the contact remains unchanged.
@@ -579,10 +579,10 @@ testers are expected to do more *exploratory* testing.
 
 1. Saving and loading priority tags
 
-   1. Test case: Set a contact's tags to `HIGH` and `LOW`, then close and relaunch CareBook.<br>
-      Expected: Both tags are restored. Repeat after clearing the tags; the contact should still have no tags after relaunch.
+   1. Test case: Set a contact's tag to `HIGH`, then close and relaunch CareBook.<br>
+      Expected: The `HIGH` tag is restored. Repeat after clearing the tags; the contact should still have no tags after relaunch.
 
-   1. Test case: Back up `data/contacts.json`, close CareBook, and change a stored tag string to `"friends"`, `"high"`, or `" HIGH "`. Relaunch for each value.<br>
+   1. Test case: Back up `data/contacts.json`, close CareBook, and change a stored tag string to `"friends"`, `"high"`, or `" HIGH "`. Also test a list containing `["HIGH", "LOW"]`. Relaunch for each case.<br>
       Expected: CareBook starts with an empty contact list and shows "Data file could not be loaded. Starting with an empty contact list." Close CareBook and restore the backup before continuing.
 
 ### Saving data

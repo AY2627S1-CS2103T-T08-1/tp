@@ -20,6 +20,17 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void constructor_multiplePriorities_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_TAG_COUNT_CONSTRAINTS, () ->
+                new PersonBuilder().withTags("HIGH", "LOW").build());
+    }
+
+    @Test
+    public void constructor_noPriority_success() {
+        assertTrue(new PersonBuilder().withTags().build().getTags().isEmpty());
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));

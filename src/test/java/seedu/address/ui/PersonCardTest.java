@@ -67,11 +67,11 @@ public class PersonCardTest {
     }
 
     @Test
-    public void getTagTexts_validPerson_returnsSortedTagTexts() {
+    public void getTagTexts_validPerson_returnsPriorityTagText() {
         Person person = new PersonBuilder()
-                .withTags("MEDIUM", "LOW", "HIGH")
+                .withTags("MEDIUM")
                 .build();
 
-        assertEquals(List.of("HIGH", "LOW", "MEDIUM"), PersonCard.getTagTexts(person));
+        assertEquals(List.of("MEDIUM"), PersonCard.getTagTexts(person));
     }
 }

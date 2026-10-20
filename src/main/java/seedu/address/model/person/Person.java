@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collections;
@@ -17,6 +18,8 @@ import seedu.address.model.tag.Tag;
  */
 public class Person {
 
+    public static final String MESSAGE_TAG_COUNT_CONSTRAINTS = "A contact can have at most one priority tag.";
+
     // Identity fields
     private final Name name;
     private final Phone patientNo;
@@ -30,7 +33,7 @@ public class Person {
 
     /**
      * Every field must be present and not null.
-     * The tag set may be empty when no priority is assigned.
+     * The tag set must contain at most one priority and may be empty.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Address address, Set<Tag> tags) {
         this(name, patientNo, familyNo, null, null, address, tags);
@@ -38,7 +41,7 @@ public class Person {
 
     /**
      * Every field except email must be present and not null.
-     * The tag set may be empty when no priority is assigned.
+     * The tag set must contain at most one priority and may be empty.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email email, Address address, Set<Tag> tags) {
         this(name, patientNo, familyNo, email, null, address, tags);
@@ -46,11 +49,12 @@ public class Person {
 
     /**
      * Every field except emails must be present and not null.
-     * The tag set may be empty when no priority is assigned.
+     * The tag set must contain at most one priority and may be empty.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags) {
         requireAllNonNull(name, patientNo, familyNo, address, tags);
+        checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;

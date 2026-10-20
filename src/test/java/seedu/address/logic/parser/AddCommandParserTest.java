@@ -34,7 +34,6 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_PHONE_BO
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HIGH;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_LOW;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
@@ -71,14 +70,14 @@ public class AddCommandParserTest {
                 new AddCommand(expectedPerson));
 
 
-        // multiple tags - all accepted
-        Person expectedPersonMultipleTags = new PersonBuilder(BOB).withFamilyNo(VALID_FAMILY_PHONE_BOB)
-                .withPatientEmail(VALID_EMAIL_BOB).withFamilyEmail(VALID_FAMILY_EMAIL_BOB)
-                .withTags(VALID_TAG_HIGH, VALID_TAG_LOW).build();
-        assertParseSuccess(parser,
-                NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB + PATIENT_EMAIL_DESC_BOB
-                        + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_LOW + TAG_DESC_HIGH,
-                new AddCommand(expectedPersonMultipleTags));
+        // repeated identical tags still represent one priority
+        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HIGH + TAG_DESC_HIGH,
+                new AddCommand(expectedPerson));
+
+        // different priorities are rejected
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                + ADDRESS_DESC_BOB + TAG_DESC_LOW + TAG_DESC_HIGH, Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
     }
 
     @Test

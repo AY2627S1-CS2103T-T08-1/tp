@@ -12,6 +12,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.tag.Tag;
 
@@ -118,8 +119,8 @@ public class ParserUtil {
      * Applies {@link #parseTag(String)} to each name and removes duplicate tags.
      *
      * @param tags The priority names to parse.
-     * @return A set of distinct tags, or an empty set if the collection is empty.
-     * @throws ParseException If any trimmed name is not an allowed priority.
+     * @return A set containing at most one priority tag, or an empty set.
+     * @throws ParseException If any trimmed name is invalid or more than one distinct priority is supplied.
      * @throws NullPointerException If {@code tags} or any element is null.
      */
     public static Set<Tag> parseTags(Collection<String> tags) throws ParseException {
@@ -127,6 +128,9 @@ public class ParserUtil {
         final Set<Tag> tagSet = new HashSet<>();
         for (String tagName : tags) {
             tagSet.add(parseTag(tagName));
+        }
+        if (tagSet.size() > 1) {
+            throw new ParseException(Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
         }
         return tagSet;
     }

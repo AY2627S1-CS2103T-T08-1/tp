@@ -31,7 +31,7 @@ public class AddCommand extends Command {
             + "[" + PREFIX_PATIENT_EMAIL + " PATIENT_EMAIL] "
             + "[" + PREFIX_FAMILY_EMAIL + " FAMILY_EMAIL] "
             + PREFIX_ADDRESS + " ADDRESS "
-            + "[" + PREFIX_TAG + " TAG]...\n"
+            + "[" + PREFIX_TAG + " PRIORITY]\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + " Aunty Rosalind "
             + PREFIX_PATIENT_PHONE + " 81268767 "
