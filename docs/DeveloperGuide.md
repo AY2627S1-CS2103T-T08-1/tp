@@ -159,6 +159,36 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Viewing a contact's full details
+
+The `view INDEX` command displays one contact from the currently displayed list and returns their full details
+in the result box. It changes the display filter without modifying stored contacts.
+
+The sequence diagram below shows a successful `view 1` command, assuming at least one contact is displayed.
+It focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/ViewSequenceDiagram.puml" alt="Sequence of parsing and executing a successful view 1 command" />
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `view`
+   and creates a `ViewCommandParser`.
+1. `ViewCommandParser#parse()` uses `ParserUtil#parseIndex()` to validate the argument and creates a
+   `ViewCommand` containing an `Index`. The user-facing index is one-based; `Index#getZeroBased()` converts it
+   to the corresponding Java list index during execution.
+1. `ViewCommand#execute()` obtains `Model#getFilteredPersonList()` and checks that the index is in range.
+   The index refers to the displayed list, so after `find Alice`, `view 1` selects the first search result.
+1. The command retrieves `personToView` before changing the filter, then calls
+   `Model#updateFilteredPersonList(person -> person.equals(personToView))` to display only that contact.
+   The UI observes the filtered list and updates the contact cards.
+1. `Messages#format()` formats the contact's details for the feedback in a new `CommandResult`.
+   `LogicManager` checks `ViewCommand#modifiesData()`, which returns `false`, and skips saving.
+   `MainWindow` displays the returned feedback in `ResultDisplay`.
+
+**Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
+with the command usage. A parsed index outside the displayed list, including any index when that list is
+empty, causes `ViewCommand#execute()` to throw a `CommandException` with the invalid-index message.
+These errors leave both the stored contacts and the display filter unchanged. Use `list` to display all
+contacts again after a successful `view` command.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
