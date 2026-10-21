@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_LEGACY_EMAIL_PREFIX;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
@@ -194,15 +195,21 @@ public class AddCommandParserTest {
                         + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + VALID_ADDRESS_BOB,
                 expectedMessage);
 
-        // old email prefix is not accepted by add command
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                        + EMAIL_DESC_AMY + ADDRESS_DESC_BOB,
-                expectedMessage);
-
         // all prefixes missing
         assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_FAMILY_PHONE_BOB
                         + VALID_EMAIL_BOB + VALID_ADDRESS_BOB,
                 expectedMessage);
+    }
+
+    @Test
+    public void parse_legacyEmailPrefix_failure() {
+        // all compulsory fields present
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                        + EMAIL_DESC_AMY + ADDRESS_DESC_BOB,
+                MESSAGE_LEGACY_EMAIL_PREFIX);
+
+        // compulsory field missing
+        assertParseFailure(parser, NAME_DESC_BOB + EMAIL_DESC_AMY, MESSAGE_LEGACY_EMAIL_PREFIX);
     }
 
     @Test

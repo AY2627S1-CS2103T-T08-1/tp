@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_LEGACY_EMAIL_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
@@ -49,7 +50,7 @@ public class EditCommandParser implements Parser<EditCommand> {
         }
 
         if (argMultimap.getValue(PREFIX_LEGACY_EMAIL).isPresent()) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE));
+            throw new ParseException(MESSAGE_LEGACY_EMAIL_PREFIX);
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE,
