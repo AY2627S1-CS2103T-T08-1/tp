@@ -8,6 +8,7 @@ import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_LOW;
@@ -43,6 +44,10 @@ public class EditPersonDescriptorTest {
 
         // different phone -> returns false
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withPhone(VALID_PHONE_BOB).build();
+        assertFalse(DESC_AMY.equals(editedAmy));
+
+        // different family phone -> returns false
+        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withFamilyNo(VALID_FAMILY_PHONE_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
         // different patient email -> returns false
