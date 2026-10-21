@@ -204,14 +204,6 @@ public class EditCommand extends Command {
             return Optional.ofNullable(familyNo);
         }
 
-        public void setPhone(Phone phone) {
-            setPatientNo(phone);
-        }
-
-        public Optional<Phone> getPhone() {
-            return getPatientNo();
-        }
-
         /**
          * Sets the patient email to {@code patientEmail}, or removes it if {@code patientEmail} is null.
          */
