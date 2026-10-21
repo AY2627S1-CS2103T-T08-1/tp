@@ -170,35 +170,34 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Priority tags
+### Find command
 
-Priority tags use the existing `/tag` prefix and `Tag` model, with names restricted to `HIGH`, `MEDIUM`, and `LOW`.
+The `find KEYWORD [MORE_KEYWORDS]...` command displays contacts whose names contain any of the given
+keywords as substrings, ignoring case, and returns the number of matches in the result box.
+It searches all stored contacts and changes the display filter without modifying stored contacts.
 
-#### Model and validation
+The sequence diagram below shows a successful `find ali` command. A successful search may return zero
+matches; partial searches are allowed, so `ali` matches names such as `Ali` and `Alice`.
+The diagram focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
 
-`Tag` is immutable and stores its priority as a `String` in `tagName`. `Tag.isValidTagName` uses `Priority.valueOf` to check whether the input names a `Priority` enum constant. The enum is the source of accepted values (`HIGH`, `MEDIUM`, and `LOW`); there is no separate validation regex. Matching is exact and case-sensitive. Unknown names return `false` by catching `IllegalArgumentException`, while null input throws `NullPointerException`. The constructor does not trim or change case and rejects invalid names with `IllegalArgumentException`.
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find ali command" />
 
-`Person` copies tags into a `HashSet` and exposes an unmodifiable set through `getTags()`. Equality and hashing of `Tag` use `tagName`, so duplicates collapse into one tag. The `Person` constructor rejects sets with more than one tag using `Person.MESSAGE_TAG_COUNT_CONSTRAINTS`: `A contact can have at most one priority tag.` This keeps the model valid even when constructed outside the command parsers.
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `find`
+   and creates a `FindCommandParser`.
+2. `FindCommandParser#parse()` trims the arguments and splits them on whitespace. It creates a
+   `NameContainsKeywordsPredicate` containing the keywords, then creates a `FindCommand` with that predicate.
+3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
+   `NameContainsKeywordsPredicate#test()` checks whether each contact's name contains any keyword,
+   ignoring case and allowing partial matches. The UI observes the filtered list and updates the contact cards.
+4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
+   `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
+5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
+   `MainWindow` displays the returned feedback in `ResultDisplay`.
 
-#### Command parsing and editing
-
-`AddCommandParser` and `EditCommandParser` collect all `/tag` values. `ArgumentTokenizer` recognizes `/tag` ignoring case and maps variants such as `/TAG` and `/TaG` to the canonical `PREFIX_TAG`. It preserves argument values and the matching rules for other prefixes. `ParserUtil.parseTag` trims each value and converts it to uppercase using `Locale.ROOT` before enum validation. This accepts mixed-case command input independently of the system locale while keeping model and stored values uppercase. Invalid values cause a `ParseException` with `Tag.MESSAGE_CONSTRAINTS`: `Tag names must be HIGH, MEDIUM or LOW`. `ParserUtil.parseTags` removes duplicates after case normalization and rejects more than one distinct priority with a `ParseException` using `Person.MESSAGE_TAG_COUNT_CONSTRAINTS`. It returns an empty set or a singleton set; invalid input prevents the command from changing the model.
-
-* For `add`, omitting `/tag` produces an empty set. An empty `/tag` value is invalid.
-* For `edit`, omitting `/tag` leaves tags unchanged. Providing values replaces the whole set through `EditPersonDescriptor` and `EditCommand`.
-* `EditCommandParser.parseTagsForEdit` treats a single empty `/tag` as an empty set, clearing all tags. An empty value combined with other `/tag` occurrences is invalid.
-
-For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` is rejected, and `edit 1 /tag` clears them.
-
-#### Display and persistence
-
-`PersonCard.getTagTexts` returns the assigned priority for display as a label on the person's card, or an empty list for a contact without a tag.
-
-`JsonAdaptedTag` serializes each tag as a JSON string, so the contact's existing `tags` field contains values such as `"tags": ["HIGH"]`. `JsonAdaptedPerson` treats an omitted `tags` field or an empty list as no tags and removes duplicates when constructing the model set. More than one distinct priority raises `IllegalValueException` with `Person.MESSAGE_TAG_COUNT_CONSTRAINTS` before constructing a `Person`; the storage layer handles this as a data-loading failure.
-
-On loading, `JsonAdaptedTag.toModelType` validates the stored value directly, without trimming or case conversion. An invalid string raises `IllegalValueException`, which `JsonAddressBookStorage` wraps in `DataLoadingException`. `MainApp` then starts with an empty contact list and displays the data-loading failure message. The invalid file remains until a command changes contacts and saves over it.
-
-There is no automatic migration of old free-form tags. Users must back up older data and keep at most one valid priority per contact or remove all tags before loading the file. Existing files with multiple distinct priorities are rejected rather than automatically choosing a priority.
+**Error handling:** Missing or whitespace-only arguments cause `FindCommandParser#parse()` to throw a
+`ParseException` with the command usage. This leaves both the stored contacts and the display filter unchanged.
+A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
+Use `list` to display all contacts again after a successful `find` command.
 
 ### \[Proposed\] Undo/redo feature
 
