@@ -81,9 +81,9 @@ public class NameContainsKeywordsPredicateTest {
     @Test
     public void test_partialKeywordMatchesOtherFields_returnsFalse() {
         NameContainsKeywordsPredicate predicate =
-                new NameContainsKeywordsPredicate(List.of("234", "email", "ain", "friend"));
+                new NameContainsKeywordsPredicate(List.of("234", "email", "ain", "igh"));
         assertFalse(predicate.test(new PersonBuilder().withName("Alice").withPhone("12345")
-                .withEmail("alice@email.com").withAddress("Main Street").withTags("friends").build()));
+                .withEmail("alice@email.com").withAddress("Main Street").withTags("HIGH").build()));
     }
 
     /**
