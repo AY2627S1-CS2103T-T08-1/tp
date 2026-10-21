@@ -8,10 +8,13 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.parser.Prefix;
+import seedu.address.model.person.Email;
 import seedu.address.model.person.Person;
 import seedu.address.model.tag.Tag;
 
@@ -56,24 +59,36 @@ public class PersonUtil {
                 .append(phone.value).append(" "));
         descriptor.getFamilyNo().ifPresent(fPhone -> sb.append(PREFIX_FAMILY_PHONE).append(" ")
                 .append(fPhone.value).append(" "));
-        if (descriptor.isPatientEmailEdited()) {
-            sb.append(PREFIX_PATIENT_EMAIL).append(" ")
-                    .append(descriptor.getPatientEmail().map(email -> email.value).orElse("")).append(" ");
-        }
-        if (descriptor.isFamilyEmailEdited()) {
-            sb.append(PREFIX_FAMILY_EMAIL).append(" ")
-                    .append(descriptor.getFamilyEmail().map(email -> email.value).orElse("")).append(" ");
-        }
+        appendEmail(sb, PREFIX_PATIENT_EMAIL, descriptor.isPatientEmailEdited(),
+                descriptor.getPatientEmail());
+        appendEmail(sb, PREFIX_FAMILY_EMAIL, descriptor.isFamilyEmailEdited(),
+                descriptor.getFamilyEmail());
         descriptor.getAddress().ifPresent(address -> sb.append(PREFIX_ADDRESS).append(" ")
                 .append(address.value).append(" "));
-        if (descriptor.getTags().isPresent()) {
-            Set<Tag> tags = descriptor.getTags().get();
-            if (tags.isEmpty()) {
-                sb.append(PREFIX_TAG);
-            } else {
-                tags.forEach(s -> sb.append(PREFIX_TAG).append(" ").append(s.tagName).append(" "));
-            }
-        }
+        descriptor.getTags().ifPresent(tags -> appendTags(sb, tags));
         return sb.toString();
+    }
+
+    /**
+     * Appends {@code prefix} and {@code email} to {@code sb} if the email is edited.
+     * A removed email is written as the prefix with no value.
+     */
+    private static void appendEmail(StringBuilder sb, Prefix prefix, boolean isEdited,
+            Optional<Email> email) {
+        if (!isEdited) {
+            return;
+        }
+        sb.append(prefix).append(" ").append(email.map(value -> value.value).orElse("")).append(" ");
+    }
+
+    /**
+     * Appends each tag in {@code tags} to {@code sb}, or a bare tag prefix if {@code tags} is empty.
+     */
+    private static void appendTags(StringBuilder sb, Set<Tag> tags) {
+        if (tags.isEmpty()) {
+            sb.append(PREFIX_TAG);
+            return;
+        }
+        tags.forEach(tag -> sb.append(PREFIX_TAG).append(" ").append(tag.tagName).append(" "));
     }
 }
