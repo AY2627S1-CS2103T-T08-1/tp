@@ -149,6 +149,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 
 * The search is case-insensitive; for example, `hans` matches `Hans`.
 * Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
+* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`
 * The search considers only names.
 * Partial finds are supported; for example, `ha` matches `Hans`, `Johan` and `Anne Ha`.
 * The substring must match; for example, `ha` will not match `Henry Avril`.
