@@ -35,7 +35,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
    * `delete 3` : Deletes the 3rd contact shown in the current list.
 
-   * `clear` : Deletes all contacts.
+   * `clear` : Clears the displayed contact list without deleting contacts.
 
    * `exit` : Exits the app.
 
@@ -61,8 +61,9 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list` command rejects extra parameters; enter `list` on its own.
+* Extraneous parameters for `help` and `exit` are ignored.<br>
+  For example, `help 123` is interpreted as `help`. The `list` and `clear` commands reject extra parameters;
+  enter either command on its own.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -225,11 +226,28 @@ Input | Error message shown | How to fix
 `delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list
 `delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first 
 
-### Clearing all entries: `clear`
+### Clearing the displayed contact list: `clear`
 
-Clears all entries from CareBook.
+Hides all contacts from the displayed list without deleting or changing any stored contact details.
+The result box shows a confirmation instead of the previous command's output.
 
 Format: `clear`
+
+* Takes no arguments. Surrounding whitespace is allowed.
+* Works even if the displayed list is already empty.
+* Use `list` to show all contacts again, or `find KEYWORD` to search the stored contacts.
+* Commands such as `view INDEX`, `edit INDEX` and `delete INDEX` use the currently displayed list.
+  After `clear`, display contacts with `list` or `find` before using these index-based commands.
+* Does not write to the contact data file. Saved contacts remain available after restarting CareBook.
+
+Example:
+* `clear` followed by `list` hides all contacts, then shows them again.
+
+Common errors:
+
+Input | Error message shown | How to fix
+------|---------------------|-----------
+`clear Alice` or `clear 1` | `Invalid command format!` followed by the correct usage | Enter `clear` without arguments. To delete a contact, use `delete INDEX`.
 
 ### Exiting the program: `exit`
 

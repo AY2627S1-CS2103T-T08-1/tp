@@ -13,6 +13,9 @@ public interface Model {
     /** {@code Predicate} that always evaluates to true */
     Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
 
+    /** {@code Predicate} that always evaluates to false, hiding all persons without deleting them. */
+    Predicate<Person> PREDICATE_SHOW_NO_PERSONS = unused -> false;
+
     /**
      * Returns the user prefs.
      */
