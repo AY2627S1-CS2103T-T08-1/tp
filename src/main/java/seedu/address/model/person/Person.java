@@ -40,14 +40,6 @@ public class Person {
     }
 
     /**
-     * Every field except email must be present and not null.
-     * The tag set must contain at most one priority and may be empty.
-     */
-    public Person(Name name, Phone patientNo, Phone familyNo, Email email, Address address, Set<Tag> tags) {
-        this(name, patientNo, familyNo, email, null, address, tags);
-    }
-
-    /**
      * Every field except emails must be present and not null.
      * The tag set must contain at most one priority and may be empty.
      */
