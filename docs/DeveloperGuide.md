@@ -162,11 +162,11 @@ This section describes some noteworthy details on how certain features are imple
 ### Find command
 
 The `find KEYWORD [MORE_KEYWORDS]...` command displays contacts whose names contain any of the given
-keywords as whole words, ignoring case, and returns the number of matches in the result box.
+keywords as substrings, ignoring case, and returns the number of matches in the result box.
 It searches all stored contacts and changes the display filter without modifying stored contacts.
 
 The sequence diagram below shows a successful `find ali` command. A successful search may return zero
-matches; `ali` matches a name containing the word `Ali`, but does not match `Alice`.
+matches; partial searches are allowed, so `ali` matches names such as `Ali` and `Alice`.
 The diagram focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
 
 <puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find ali command" />
@@ -176,8 +176,8 @@ The diagram focuses on command parsing and execution; helper calls and UI update
 2. `FindCommandParser#parse()` trims the arguments and splits them on whitespace. It creates a
    `NameContainsKeywordsPredicate` containing the keywords, then creates a `FindCommand` with that predicate.
 3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
-   `NameContainsKeywordsPredicate#test()` uses `StringUtil#containsWordIgnoreCase()` to match any keyword
-   against whole words in each contact's name. The UI observes the filtered list and updates the contact cards.
+   `NameContainsKeywordsPredicate#test()` checks whether each contact's name contains any keyword,
+   ignoring case and allowing partial matches. The UI observes the filtered list and updates the contact cards.
 4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
    `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
 5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
