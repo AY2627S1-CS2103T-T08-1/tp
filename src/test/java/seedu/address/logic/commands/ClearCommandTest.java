@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.model.Model.PREDICATE_SHOW_NO_PERSONS;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
@@ -27,7 +28,7 @@ public class ClearCommandTest {
     public void execute_nonEmptyAddressBook_hidesContactsWithoutDeleting() {
         Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(person -> false);
+        expectedModel.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ClearCommand(), model, ClearCommand.MESSAGE_SUCCESS, expectedModel);
         assertTrue(model.getFilteredPersonList().isEmpty());
@@ -39,7 +40,7 @@ public class ClearCommandTest {
         Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(person -> false);
+        expectedModel.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ClearCommand(), model, ClearCommand.MESSAGE_SUCCESS, expectedModel);
     }
@@ -47,9 +48,9 @@ public class ClearCommandTest {
     @Test
     public void execute_alreadyClearedDisplay_success() {
         Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(person -> false);
+        expectedModel.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ClearCommand(), model, ClearCommand.MESSAGE_SUCCESS, expectedModel);
     }

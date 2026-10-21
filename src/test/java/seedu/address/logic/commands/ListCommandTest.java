@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.model.Model.PREDICATE_SHOW_NO_PERSONS;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
@@ -61,7 +62,7 @@ public class ListCommandTest {
         addressBook.addPerson(model.getAddressBook().getPersonList().get(0));
         model = new ModelManager(addressBook, new UserPrefs());
         expectedModel = new ModelManager(addressBook, new UserPrefs());
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
     }
@@ -98,7 +99,7 @@ public class ListCommandTest {
         var deletedPerson = model.getFilteredPersonList().get(0);
         model.deletePerson(deletedPerson);
         expectedModel.deletePerson(deletedPerson);
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
     }
@@ -112,7 +113,7 @@ public class ListCommandTest {
         addressBook.addPerson(persons.get(1));
         model = new ModelManager(addressBook, new UserPrefs());
         expectedModel = new ModelManager(addressBook, new UserPrefs());
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
         assertEquals(addressBook.getPersonList(), model.getFilteredPersonList());
