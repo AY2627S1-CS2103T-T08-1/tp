@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_LOW;
@@ -66,6 +69,60 @@ public class EditCommandTest {
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(lastPerson, editedPerson);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_nameOnly_keepsBothEmails() {
+        Person personWithEmails = new PersonBuilder().withPatientEmail(VALID_EMAIL_AMY)
+                .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
+        Model modelWithEmails = new ModelManager(new AddressBook(), new UserPrefs());
+        modelWithEmails.addPerson(personWithEmails);
+
+        Person editedPerson = new PersonBuilder(personWithEmails).withName(VALID_NAME_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
+        expectedModel.addPerson(editedPerson);
+
+        assertCommandSuccess(editCommand, modelWithEmails, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_removePatientEmail_keepsFamilyEmail() {
+        Person personWithEmails = new PersonBuilder().withPatientEmail(VALID_EMAIL_AMY)
+                .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
+        Model modelWithEmails = new ModelManager(new AddressBook(), new UserPrefs());
+        modelWithEmails.addPerson(personWithEmails);
+
+        Person editedPerson = new PersonBuilder(personWithEmails).withoutEmail()
+                .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withoutPatientEmail().build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
+        expectedModel.addPerson(editedPerson);
+
+        assertCommandSuccess(editCommand, modelWithEmails, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_familyEmailOnly_success() {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person editedPerson = new PersonBuilder(firstPerson).withFamilyEmail(VALID_FAMILY_EMAIL_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withFamilyEmail(VALID_FAMILY_EMAIL_BOB).build());
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(firstPerson, editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }

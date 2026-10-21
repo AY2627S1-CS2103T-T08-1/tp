@@ -30,8 +30,13 @@ deactivate DeleteCommandParser
 AddressBookParser -> DeleteCommandParser : parse("1")
 activate DeleteCommandParser
 
+note right of DeleteCommandParser
+  Throws ParseException if the argument
+  is not a positive integer.
+end note
+
 create DeleteCommand
-DeleteCommandParser -> DeleteCommand
+DeleteCommandParser -> DeleteCommand : DeleteCommand(targetIndex)
 activate DeleteCommand
 
 DeleteCommand --> DeleteCommandParser :
@@ -49,14 +54,25 @@ deactivate AddressBookParser
 LogicManager -> DeleteCommand : execute(m)
 activate DeleteCommand
 
-DeleteCommand -> Model : deletePerson(1)
+DeleteCommand -> Model : getFilteredPersonList()
+activate Model
+
+Model --> DeleteCommand : lastShownList
+deactivate Model
+
+note right of DeleteCommand
+  Throws CommandException if lastShownList is empty
+  or targetIndex is out of range.
+end note
+
+DeleteCommand -> Model : deletePerson(personToDelete)
 activate Model
 
 Model --> DeleteCommand
 deactivate Model
 
 create CommandResult
-DeleteCommand -> CommandResult
+DeleteCommand -> CommandResult : CommandResult(successMessage)
 activate CommandResult
 
 CommandResult --> DeleteCommand
