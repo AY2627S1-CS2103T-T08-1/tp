@@ -329,6 +329,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | user                                       | add a new patient       |                                                            |
 | `* * *`  | user                                       | delete a patient        | remove entries who have completed their recovery           |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
+| `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
+
 
 *{More to be added}*
 
@@ -491,6 +493,24 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     *3a2. User submits a corrected update request to the contact list.
     
         Use case resumes at step 4.
+
+**Use case: Find contacts**
+
+**MSS:**
+
+1. User requests to find contacts with names matching the input
+2. CareBook validates the command format
+3. CareBook searches for contacts whose names contain the matching substring
+4. CareBook displays the matching contact cards 
+
+   Use case ends.
+
+**Extensions**
+
+*2a. User input is empty 
+
+    *2a1. Carebook displays an error message and the displayed contacts do not change.
+
       
 ### Non-Functional Requirements
 
