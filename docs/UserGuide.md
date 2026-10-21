@@ -285,8 +285,8 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `name`      | Yes      | The contact's name.                          |
 | `patientNo` | Yes      | The patient's phone number.                  |
 | `familyNo`  | Yes      | The family member's phone number.            |
-| `pEmail`    | No       | The patient's email address. Leave it out if the patient has no email. |
-| `fEmail`    | No       | The family member's email address. Leave it out if the family member has no email. |
+| `patientEmail` | No    | The patient's email address. Leave it out if the patient has no email. |
+| `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
 
@@ -299,7 +299,8 @@ Example:
     "patientNo" : "94351253",
     "familyNo" : "81234567",
     "address" : "123, Jurong West Ave 6, #08-111",
-    "tags" : [ "HIGH" ]
+    "tags" : [ "HIGH" ],
+    "patientEmail" : "alice@example.com"
   } ]
 }
 ```
