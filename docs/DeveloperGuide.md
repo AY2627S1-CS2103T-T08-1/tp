@@ -99,14 +99,24 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
 </box>
 
-
-How the `Logic` component works:
+How the `Logic` component works, using `delete 1` as the example:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex`.
+1. The `DeleteCommand` is returned to the `LogicManager` and executed. It first calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
+1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex` and calls `Model#deletePerson(personToDelete)`.
+1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
+
+The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter HIGH")`.
+
+<puml src="diagrams/FilterSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `filter HIGH` Command" />
+
+How the `filter` command works:
+
+1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse("HIGH")`.
+1. `FilterCommandParser` checks that the argument is one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive), and throws a `ParseException` otherwise. If valid, it creates a `PersonHasTagPredicate` for the tag, and a `FilterCommand` that holds this predicate.
+1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons with a matching tag. It does not modify the address book data.
+1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -125,6 +135,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores each person's priority tags as a `Set<Tag>`. Valid names are `HIGH`, `MEDIUM`, and `LOW`; the set must be empty or contain one priority.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
@@ -317,6 +328,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | user                                       | add a new patient       |                                                            |
 | `* * *`  | user                                       | delete a patient        | remove entries who have completed their recovery           |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
+| `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
+
 
 *{More to be added}*
 
@@ -479,6 +492,24 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     *3a2. User submits a corrected update request to the contact list.
     
         Use case resumes at step 4.
+
+**Use case: Find contacts**
+
+**MSS:**
+
+1. User requests to find contacts with names matching the input
+2. CareBook validates the command format
+3. CareBook searches for contacts whose names contain the matching substring
+4. CareBook displays the matching contact cards 
+
+   Use case ends.
+
+**Extensions**
+
+*2a. User input is empty 
+
+    *2a1. Carebook displays an error message and the displayed contacts do not change.
+
       
 ### Non-Functional Requirements
 
@@ -545,6 +576,43 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Priority tags
+
+1. Adding priority tags
+
+   1. Test case: `add /name Priority Test /patientNo 98765432 /familyNo 91234567 /address Test Street /TAG High /tag high` (use a name not already stored).<br>
+      Expected: The contact is added with exactly one tag, displayed as `HIGH`. Repeat with a new name and `/tag HIGH /tag LOW`; the command should show `A contact can have at most one priority tag.` and add no contact.
+
+   1. Test case: Add another uniquely named contact without `/tag`.<br>
+      Expected: The contact has no priority tags.
+
+1. Editing and validating priority tags
+
+   1. Prerequisites: Run `list` and ensure at least one contact exists. The following commands act on contact 1.
+
+   1. Test cases: `edit 1 /tag medium`, `edit 1 /TAG Medium`, and `edit 1 /TaG MEDIUM`.<br>
+      Expected: All existing tags are replaced with `MEDIUM`.
+
+   1. Test case: `edit 1 /address Updated Street`<br>
+      Expected: The address changes and the `MEDIUM` tag remains.
+
+   1. Test case: `edit 1 /tag HIGH /tag MEDIUM /tag LOW`<br>
+      Expected: The command shows `A contact can have at most one priority tag.` and leaves the contact unchanged.
+
+   1. Test cases: `edit 1 /tag friends`, `edit 1 /tag HIGH LOW`, and `edit 1 /tag HIGH /tag`.<br>
+      Expected: Each shows `Tag names must be HIGH, MEDIUM or LOW`; the contact remains unchanged.
+
+   1. Test case: `edit 1 /TAG`<br>
+      Expected: All priority tags are cleared.
+
+1. Saving and loading priority tags
+
+   1. Test case: Set a contact's tag to `HIGH`, then close and relaunch CareBook.<br>
+      Expected: The `HIGH` tag is restored. Repeat after clearing the tags; the contact should still have no tags after relaunch.
+
+   1. Test case: Back up `data/contacts.json`, close CareBook, and change a stored tag string to `"friends"`, `"high"`, or `" HIGH "`. Also test a list containing `["HIGH", "LOW"]`. Relaunch for each case.<br>
+      Expected: CareBook starts with an empty contact list and shows "Data file could not be loaded. Starting with an empty contact list." Close CareBook and restore the backup before continuing.
 
 ### Saving data
 

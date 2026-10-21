@@ -21,22 +21,22 @@ public class SampleDataUtil {
         return new Person[] {
             new Person(new Name("Alex Yeoh"), new Phone("87438807"), new Phone("81234567"),
                     new Address("Blk 30 Geylang Street 29, #06-40"),
-                    getTagSet("friends")),
+                    getTagSet("HIGH")),
             new Person(new Name("Bernice Yu"), new Phone("99272758"), new Phone("82345678"),
                     new Address("Blk 30 Lorong 3 Serangoon Gardens, #07-18"),
-                    getTagSet("colleagues", "friends")),
+                    getTagSet("LOW")),
             new Person(new Name("Charlotte Oliveiro"), new Phone("93210283"), new Phone("83456789"),
                     new Address("Blk 11 Ang Mo Kio Street 74, #11-04"),
-                    getTagSet("neighbours")),
+                    getTagSet("MEDIUM")),
             new Person(new Name("David Li"), new Phone("91031282"), new Phone("84567890"),
                     new Address("Blk 436 Serangoon Gardens Street 26, #16-43"),
-                    getTagSet("family")),
+                    getTagSet("HIGH")),
             new Person(new Name("Irfan Ibrahim"), new Phone("92492021"), new Phone("85678901"),
                     new Address("Blk 47 Tampines Street 20, #17-35"),
-                    getTagSet("classmates")),
+                    getTagSet("MEDIUM")),
             new Person(new Name("Roy Balakrishnan"), new Phone("92624417"), new Phone("86789012"),
                     new Address("Blk 45 Aljunied Street 85, #11-31"),
-                    getTagSet("colleagues"))
+                    getTagSet("LOW"))
         };
     }
 
@@ -49,7 +49,13 @@ public class SampleDataUtil {
     }
 
     /**
-     * Returns a tag set containing the list of strings given.
+     * Returns a set of distinct priority tags created from the given names.
+     * Names are neither trimmed nor converted to uppercase.
+     *
+     * @param strings The priority names to include.
+     * @return A set of tags, or an empty set if no names are supplied.
+     * @throws IllegalArgumentException If any name is not exactly HIGH, MEDIUM, or LOW.
+     * @throws NullPointerException If {@code strings} or any element is null.
      */
     public static Set<Tag> getTagSet(String... strings) {
         return Arrays.stream(strings)
