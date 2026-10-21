@@ -173,7 +173,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Saving data
 
-CareBook saves the contact list to `data/contacts.json` only after a command that changes it. Each `Command` has a `modifiesData()` method that returns `true` by default. Commands that only show information (`list`, `find`, `view`, `help` and `exit`) override it to return `false`.
+CareBook saves the contact list to `data/contacts.json` only after a command that changes it. Each `Command` has a `modifiesData()` method that returns `true` by default. Commands that only change what is displayed or show information (`list`, `find`, `filter`, `view`, `clear`, `help` and `exit`) override it to return `false`.
 
 The sequence diagram below shows how `LogicManager` decides whether to save after executing a command.
 
