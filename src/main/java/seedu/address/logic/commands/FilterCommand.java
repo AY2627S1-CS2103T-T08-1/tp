@@ -2,12 +2,14 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
 import seedu.address.model.person.PersonHasTagPredicate;
+import seedu.address.model.tag.Priority;
 
 /**
  * Filters and lists all persons in the address book who are tagged with the given tag.
@@ -17,7 +19,7 @@ public class FilterCommand extends Command {
 
     public static final String COMMAND_WORD = "filter";
 
-    public static final List<String> VALID_TAGS = List.of("HIGH", "MEDIUM", "LOW");
+    public static final List<String> VALID_TAGS = Arrays.stream(Priority.values()).map(Enum::name).toList();
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Lists all persons tagged with the specified tag "
             + "(case-insensitive).\n"

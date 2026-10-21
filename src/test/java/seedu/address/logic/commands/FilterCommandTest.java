@@ -53,7 +53,7 @@ public class FilterCommandTest {
     @Test
     public void execute_noPersonWithTag_noPersonFound() {
         String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0);
-        PersonHasTagPredicate predicate = new PersonHasTagPredicate("HIGH");
+        PersonHasTagPredicate predicate = new PersonHasTagPredicate("MEDIUM");
         FilterCommand command = new FilterCommand(predicate);
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
@@ -62,18 +62,18 @@ public class FilterCommandTest {
 
     @Test
     public void execute_tagShared_multiplePersonsFound() {
-        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 3);
-        PersonHasTagPredicate predicate = new PersonHasTagPredicate("friends");
+        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 2);
+        PersonHasTagPredicate predicate = new PersonHasTagPredicate("HIGH");
         FilterCommand command = new FilterCommand(predicate);
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
-        assertEquals(List.of(ALICE, BENSON, DANIEL), model.getFilteredPersonList());
+        assertEquals(List.of(ALICE, DANIEL), model.getFilteredPersonList());
     }
 
     @Test
     public void execute_tagInDifferentCase_personsFound() {
         String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1);
-        PersonHasTagPredicate predicate = new PersonHasTagPredicate("OWESMONEY");
+        PersonHasTagPredicate predicate = new PersonHasTagPredicate("low");
         FilterCommand command = new FilterCommand(predicate);
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);

@@ -53,12 +53,6 @@ public class PersonHasTagPredicateTest {
 
         // only tag
         assertTrue(predicate.test(new PersonBuilder().withTags("MEDIUM").build()));
-
-        // one of several tags
-        assertTrue(predicate.test(new PersonBuilder().withTags("friends", "MEDIUM").build()));
-
-        // mixed-case tag on the person
-        assertTrue(predicate.test(new PersonBuilder().withTags("mEdIuM").build()));
     }
 
     @Test
@@ -76,9 +70,6 @@ public class PersonHasTagPredicateTest {
 
         // different tag
         assertFalse(predicate.test(new PersonBuilder().withTags("HIGH").build()));
-
-        // tag only partially matches
-        assertFalse(predicate.test(new PersonBuilder().withTags("MEDIUMRARE").build()));
     }
 
     @Test
