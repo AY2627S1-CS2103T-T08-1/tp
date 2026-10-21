@@ -395,6 +395,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | new user                                   | see usage instructions  | refer to instructions when I forget how to use the App     |
 | `* * *`  | user                                       | add a new patient       |                                                            |
 | `* * *`  | user                                       | delete a patient        | remove entries who have completed their recovery           |
+| `* * *`  | user                                       | edit a contact's details | keep phone numbers, emails and addresses up to date when they change |
+| `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
 
@@ -464,6 +466,53 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3a1. CareBook shows an error message.
 
       Use case resumes at step 2.
+
+**Use case: Edit a contact**
+
+**MSS**
+
+1.  User requests to list persons
+2.  CareBook shows a list of persons
+3.  User requests to edit a specific person in the list, giving new values for one or more fields
+4.  CareBook updates the person and shows the edited details
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The given index is invalid.
+
+    * 3a1. CareBook shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. No field to edit is given.
+
+    * 3b1. CareBook shows an error message saying that at least one field must be provided.
+
+      Use case resumes at step 2.
+
+* 3c. A new value is invalid, such as a phone number with letters or an email without `@`.
+
+    * 3c1. CareBook shows an error message describing the valid format and leaves the person unchanged.
+
+      Use case resumes at step 2.
+
+* 3d. The new name belongs to another person in CareBook.
+
+    * 3d1. CareBook shows an error message and leaves the person unchanged.
+
+      Use case resumes at step 2.
+
+* 3e. The user gives an email field with no value.
+
+    * 3e1. CareBook removes that email from the person.
+
+      Use case resumes at step 4.
 
 **Use case: List all contacts**
 
@@ -644,6 +693,37 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Editing a person
+
+1. Editing a person while all persons are being shown
+
+   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+
+   1. Test case: `edit 1 /patientNo 91234567 /pEmail patient@example.com`<br>
+      Expected: The first contact's patient phone number and patient email change, and its other fields stay the same. The status message shows the edited contact's details.
+
+   1. Test case: `edit 1 /fEmail family@example.com`<br>
+      Expected: The family email is set. The patient email from the previous test case is unchanged.
+
+   1. Test case: `edit 1 /pEmail`<br>
+      Expected: The patient email is removed. The family email is unchanged.
+
+   1. Test case: `edit 1 /email someone@example.com`<br>
+      Expected: No person is edited. The status message says that `/email` is no longer supported and to use `/pEmail` or `/fEmail` instead.
+
+   1. Test case: `edit 1 /name NAME`, where `NAME` is the name of the second person.<br>
+      Expected: No person is edited. The status message shows `This person already exists in CareBook.`
+
+   1. Other incorrect edit commands to try: `edit 1`, `edit 0 /name Amy`, `edit x /name Amy` (where x is larger than the list size), `edit 1 /patientNo abc` and `edit 1 /pEmail john`<br>
+      Expected: No person is edited. The status message shows error details.
+
+1. Editing a person in a filtered list
+
+   1. Prerequisites: Use `find` with a name that matches some, but not all, persons.
+
+   1. Test case: `edit 1 /address 1 Test Street`<br>
+      Expected: The first person in the filtered list is edited, and the full list is shown again.
 
 ### Priority tags
 
