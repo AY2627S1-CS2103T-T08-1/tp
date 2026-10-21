@@ -151,24 +151,25 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * The old `/email` prefix is not accepted. Use `/pEmail` for the patient's email and `/fEmail` for the family member's email.
 * Priority values must be `HIGH`, `MEDIUM`, or `LOW`, in any letter case (see [Priority tags](#priority-tags)).
 * Supplying `/tag PRIORITY` replaces the person's existing priority tag. Omitting `/tag` leaves their tags unchanged.
-* To remove all of a person's priority tags, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
+* To remove a person's priority tag, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
 
 Examples:
 *  `edit 1 /patientNo 91234567 /pEmail johndoe@example.com` Edits the patient phone number and patient email of the 1st person to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 3 /fEmail daughter@example.com` Sets the family email of the 3rd person to `daughter@example.com`. Their patient email is unchanged.
 *  `edit 2 /pEmail` Removes the patient email of the 2nd person.
 *  `edit 1 /TAG Medium` Replaces the priority tag of the 1st person with `MEDIUM`.
-*  `edit 2 /name Betsy Crower /tag` Edits the name of the 2nd person to be `Betsy Crower` and clears all existing tags.
+*  `edit 2 /name Betsy Crower /tag` Edits the name of the 2nd person to be `Betsy Crower` and removes their priority tag.
 
 **Common errors:**
 
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
 | `edit 1` (no field) | `At least one field to edit must be provided.` | Add at least one field, e.g. `edit 1 /name John Doe`. |
-| `edit 1 /email john@example.com` | `Invalid command format!` followed by the correct usage | Use `/pEmail` for the patient's email or `/fEmail` for the family member's email. |
+| `edit 1 /email john@example.com` | `/email is no longer supported. Use /pEmail for the patient's email or /fEmail for the family member's email.` | Use `/pEmail` for the patient's email or `/fEmail` for the family member's email. |
 | `edit 0 /name John Doe` | `Invalid command format!` followed by the correct usage | Use an index of 1 or more. |
 | `edit 99 /name John Doe` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
+| `edit 1 /name Bernice Yu` (another person already has this name) | `This person already exists in CareBook.` | Use a name that no other person in CareBook has. |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
 
 ### Locating persons by name: `find`
