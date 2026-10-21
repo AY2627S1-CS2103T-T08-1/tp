@@ -15,6 +15,7 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 
 public class JsonAdaptedPersonTest {
@@ -126,4 +127,25 @@ public class JsonAdaptedPersonTest {
         assertThrows(IllegalValueException.class, person::toModelType);
     }
 
+
+    @Test
+    public void toModelType_multiplePriorities_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, VALID_ADDRESS, List.of(new JsonAdaptedTag("HIGH"), new JsonAdaptedTag("LOW")));
+        assertThrows(IllegalValueException.class, Person.MESSAGE_TAG_COUNT_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_duplicatePriority_returnsSingleTag() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, VALID_ADDRESS, List.of(new JsonAdaptedTag("HIGH"), new JsonAdaptedTag("HIGH")));
+        assertEquals(1, person.toModelType().getTags().size());
+    }
+
+    @Test
+    public void toModelType_noPriority_returnsEmptyTagSet() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, VALID_ADDRESS, List.of());
+        assertEquals(0, person.toModelType().getTags().size());
+    }
 }

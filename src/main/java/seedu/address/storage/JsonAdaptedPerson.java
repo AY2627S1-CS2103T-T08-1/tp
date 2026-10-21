@@ -139,6 +139,9 @@ class JsonAdaptedPerson {
         final Address modelAddress = new Address(address);
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
+        if (modelTags.size() > 1) {
+            throw new IllegalValueException(Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
+        }
         return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
                 modelAddress, modelTags);
     }

@@ -9,15 +9,16 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Tag {
 
-    public static final String MESSAGE_CONSTRAINTS = "Tag names should be alphanumeric";
-    public static final String VALIDATION_REGEX = "\\p{Alnum}+";
+    public static final String MESSAGE_CONSTRAINTS = "Tag names must be HIGH, MEDIUM or LOW";
 
     public final String tagName;
 
     /**
-     * Constructs a {@code Tag}.
+     * Constructs a priority tag without trimming or changing the case of its name.
      *
-     * @param tagName A valid tag name.
+     * @param tagName Exactly {@code HIGH}, {@code MEDIUM}, or {@code LOW}.
+     * @throws NullPointerException If {@code tagName} is null.
+     * @throws IllegalArgumentException If {@code tagName} is not an allowed priority.
      */
     public Tag(String tagName) {
         requireNonNull(tagName);
@@ -26,12 +27,26 @@ public class Tag {
     }
 
     /**
-     * Returns true if a given string is a valid tag name.
+     * Returns whether the given string names a {@link Priority} enum constant.
+     * Matching is case-sensitive and does not ignore whitespace.
+     *
+     * @param test The tag name to validate.
+     * @throws NullPointerException If {@code test} is null.
      */
     public static boolean isValidTagName(String test) {
-        return test.matches(VALIDATION_REGEX);
+        requireNonNull(test);
+        try {
+            Priority.valueOf(test);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
+    /**
+     * Returns whether {@code other} is a tag with the same priority name.
+     * Returns false for null or objects of other types.
+     */
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -46,13 +61,16 @@ public class Tag {
         return tagName.equals(otherTag.tagName);
     }
 
+    /**
+     * Returns a hash code based on the priority name, consistent with {@link #equals(Object)}.
+     */
     @Override
     public int hashCode() {
         return tagName.hashCode();
     }
 
     /**
-     * Formats state as text for viewing.
+     * Returns the priority name enclosed in square brackets, for example {@code [HIGH]}.
      */
     public String toString() {
         return '[' + tagName + ']';
