@@ -99,14 +99,24 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
 </box>
 
-
-How the `Logic` component works:
+How the `Logic` component works, using `delete 1` as the example:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
-1. The command can communicate with the `Model` when it is executed (e.g. to delete a person).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
-1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
+1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex`.
+1. The `DeleteCommand` is returned to the `LogicManager` and executed. It first calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
+1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex` and calls `Model#deletePerson(personToDelete)`.
+1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
+
+The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter HIGH")`.
+
+<puml src="diagrams/FilterSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `filter HIGH` Command" />
+
+How the `filter` command works:
+
+1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse("HIGH")`.
+1. `FilterCommandParser` checks that the argument is one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive), and throws a `ParseException` otherwise. If valid, it creates a `PersonHasTagPredicate` for the tag, and a `FilterCommand` that holds this predicate.
+1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons with a matching tag. It does not modify the address book data.
+1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -210,15 +220,35 @@ Priority tags use the existing `/tag` prefix and `Tag` model, with names restric
 
 For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` is rejected, and `edit 1 /tag` clears them.
 
-#### Display and persistence
+### Find command
 
-`PersonCard.getTagTexts` returns the assigned priority for display as a label on the person's card, or an empty list for a contact without a tag.
 
-`JsonAdaptedTag` serializes each tag as a JSON string, so the contact's existing `tags` field contains values such as `"tags": ["HIGH"]`. `JsonAdaptedPerson` treats an omitted `tags` field or an empty list as no tags and removes duplicates when constructing the model set. More than one distinct priority raises `IllegalValueException` with `Person.MESSAGE_TAG_COUNT_CONSTRAINTS` before constructing a `Person`; the storage layer handles this as a data-loading failure.
+The `find KEYWORD [MORE_KEYWORDS]...` command displays contacts whose names contain any of the given
+keywords as substrings, ignoring case, and returns the number of matches in the result box.
+It searches all stored contacts and changes the display filter without modifying stored contacts.
 
-On loading, `JsonAdaptedTag.toModelType` validates the stored value directly, without trimming or case conversion. An invalid string raises `IllegalValueException`, which `JsonAddressBookStorage` wraps in `DataLoadingException`. `MainApp` then starts with an empty contact list and displays the data-loading failure message. The invalid file remains until a command changes contacts and saves over it.
+The sequence diagram below shows a successful `find ali` command. A successful search may return zero
+matches; partial searches are allowed, so `ali` matches names such as `Ali` and `Alice`.
+The diagram focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
 
-There is no automatic migration of old free-form tags. Users must back up older data and keep at most one valid priority per contact or remove all tags before loading the file. Existing files with multiple distinct priorities are rejected rather than automatically choosing a priority.
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find ali command" />
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `find`
+   and creates a `FindCommandParser`.
+2. `FindCommandParser#parse()` trims the arguments and splits them on whitespace. It creates a
+   `NameContainsKeywordsPredicate` containing the keywords, then creates a `FindCommand` with that predicate.
+3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
+   `NameContainsKeywordsPredicate#test()` checks whether each contact's name contains any keyword,
+   ignoring case and allowing partial matches. The UI observes the filtered list and updates the contact cards.
+4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
+   `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
+5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
+   `MainWindow` displays the returned feedback in `ResultDisplay`.
+
+**Error handling:** Missing or whitespace-only arguments cause `FindCommandParser#parse()` to throw a
+`ParseException` with the command usage. This leaves both the stored contacts and the display filter unchanged.
+A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
+Use `list` to display all contacts again after a successful `find` command.
 
 
 ### \[Proposed\] Undo/redo feature
@@ -350,6 +380,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | user                                       | add a new patient       |                                                            |
 | `* * *`  | user                                       | delete a patient        | remove entries who have completed their recovery           |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
+| `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
+
 
 *{More to be added}*
 
@@ -512,6 +544,24 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     *3a2. User submits a corrected update request to the contact list.
     
         Use case resumes at step 4.
+
+**Use case: Find contacts**
+
+**MSS:**
+
+1. User requests to find contacts with names matching the input
+2. CareBook validates the command format
+3. CareBook searches for contacts whose names contain the matching substring
+4. CareBook displays the matching contact cards 
+
+   Use case ends.
+
+**Extensions**
+
+*2a. User input is empty 
+
+    *2a1. Carebook displays an error message and the displayed contacts do not change.
+
       
 ### Non-Functional Requirements
 
