@@ -76,12 +76,12 @@ public class MainApp extends Application {
             addressBookOptional = storage.readAddressBook();
             if (addressBookOptional.isEmpty()) {
                 logger.info("No data file found at " + storage.getAddressBookFilePath()
-                        + ". Starting with an empty AddressBook.");
+                        + ". Starting with an empty contact list.");
             }
             initialData = addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
-                    + " Will be starting with an empty AddressBook.");
+                    + " Starting with an empty contact list.");
             startupMessage = MESSAGE_DATA_LOADING_FAILED;
             initialData = new AddressBook();
         }
