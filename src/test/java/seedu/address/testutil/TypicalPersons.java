@@ -18,7 +18,6 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
-import seedu.address.model.util.SampleDataUtil;
 
 /**
  * A utility class containing a list of {@code Person} objects to be used in tests.
@@ -65,7 +64,7 @@ public class TypicalPersons {
                 new Phone(patientNo),
                 new Phone(familyNo),
                 new Address(address),
-                SampleDataUtil.getTagSet(tags));
+                PersonBuilder.getTagSet(tags));
     }
 
     /**
