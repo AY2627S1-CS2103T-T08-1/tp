@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_LEGACY_EMAIL_PREFIX;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
@@ -225,7 +226,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_legacyEmailPrefix_failure() {
-        assertParseFailure(parser, "1" + EMAIL_DESC_AMY, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1" + EMAIL_DESC_AMY, MESSAGE_LEGACY_EMAIL_PREFIX);
+        assertParseFailure(parser, "1" + NAME_DESC_AMY + EMAIL_DESC_AMY, MESSAGE_LEGACY_EMAIL_PREFIX);
     }
 
     @Test
