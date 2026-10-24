@@ -172,6 +172,44 @@ Examples:
 | `edit 1 /name Bernice Yu` (another person already has this name) | `This person already exists in CareBook.` | Use a name that no other person in CareBook has. |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
 
+### Keeping care notes on a person: `remark`
+
+Keeps numbered notes on a person, such as allergies, medication times or visiting rules.
+
+Format:
+* `remark INDEX NOTE` adds `NOTE` after the person's last note.
+* `remark INDEX /edit NOTE_NUMBER NOTE` replaces note `NOTE_NUMBER` with `NOTE`.
+* `remark INDEX /delete NOTE_NUMBER` deletes note `NOTE_NUMBER`.
+* `remark INDEX /clear` deletes all of the person's notes.
+
+* The index refers to the index number shown in the displayed person list. The index and note number **must be positive integers** 1, 2, 3, ...
+* The notes appear on the person's card under `Remark:`, numbered 1., 2., 3., ... A person with no notes shows no `Remark:` line.
+* Everything after the index is kept exactly as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note.
+* `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case.
+* `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
+* A person's notes can have at most 500 characters in total.
+* `edit` does not change a person's notes.
+
+Examples:
+* `remark 1 Allergic to penicillin` adds the note `Allergic to penicillin` to the 1st person.
+* `remark 1 Visits after 3pm only` adds a 2nd note to the 1st person.
+* `remark 1 /edit 2 Visits after 4pm only` replaces the 1st person's 2nd note.
+* `remark 1 /delete 1` deletes the 1st person's 1st note, so `Visits after 4pm only` becomes note 1.
+* `remark 3 /clear` deletes all notes of the 3rd person.
+
+**Common errors:**
+
+| Incorrect input | Error message | How to correct it |
+| --- | --- | --- |
+| `remark 1` (no note) | `Invalid command format!` followed by the correct usage | Add a note, e.g. `remark 1 Allergic to penicillin`, or use `remark 1 /clear` to delete all notes. |
+| `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
+| `remark 99 Diabetic` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
+| `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
+| `remark 1 /delete abc` | `Note number must be a positive integer.` | Use the number shown before the note, e.g. `remark 1 /delete 2`. |
+| `remark 1 /edit 2` (no new note) | `Invalid command format!` followed by the correct usage | Add the new note, e.g. `remark 1 /edit 2 Visits after 4pm`. |
+| `remark 1 /clear all` | `Invalid command format!` followed by the correct usage | Enter `remark 1 /clear` with nothing after it. |
+| A note that takes the person's notes past 500 characters | `A contact's notes can be at most 500 characters in total. Use /delete to remove a note or /clear to remove them all.` | Shorten the note, or delete notes you no longer need. |
+
 ### Locating persons by name: `find`
 
 Finds persons whose names contain any of the given keywords. Partial matches are now supported.
@@ -290,6 +328,7 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
+| `remarks`   | No       | A list of the contact's notes in order, e.g. `[ "Allergic to penicillin" ]`. Each note must not be blank or start with a space, and the notes can have at most 500 characters in total. Leave it out or use `[]` for no notes. |
 
 Example:
 
@@ -346,5 +385,6 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
 **List**   | `list`
+**Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
