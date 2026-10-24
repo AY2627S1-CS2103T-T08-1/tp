@@ -43,6 +43,8 @@ public class PersonCard extends UiPart<Region> {
     private Label address;
     @FXML
     private FlowPane tags;
+    @FXML
+    private Label remark;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -57,6 +59,10 @@ public class PersonCard extends UiPart<Region> {
         email.setText(getEmailText(person));
         address.setText(person.getAddress().value);
         getTagTexts(person).forEach(tagName -> tags.getChildren().add(new Label(tagName)));
+        remark.setText(getRemarkText(person));
+        // an empty remark takes up no space on the card
+        remark.setManaged(!person.getRemark().isEmpty());
+        remark.setVisible(!person.getRemark().isEmpty());
     }
 
     static String getPatientNoText(Person person) {
@@ -85,5 +91,12 @@ public class PersonCard extends UiPart<Region> {
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .map(tag -> tag.tagName)
                 .toList();
+    }
+
+    static String getRemarkText(Person person) {
+        if (person.getRemark().isEmpty()) {
+            return "";
+        }
+        return "Remark:\n" + String.join("\n", person.getRemark().getNumberedNotes());
     }
 }

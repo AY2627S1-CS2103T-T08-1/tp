@@ -6,6 +6,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,8 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Remark;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
     private static final String INVALID_NAME = "R@chel";
@@ -38,6 +41,37 @@ public class JsonAdaptedPersonTest {
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(BENSON);
         assertEquals(BENSON, person.toModelType());
+    }
+
+    @Test
+    public void toModelType_personWithRemarks_returnsPerson() throws Exception {
+        Person withRemarks = new PersonBuilder(BENSON).withRemarks("Allergic to penicillin", "Visits after 3pm")
+                .build();
+        assertEquals(withRemarks, new JsonAdaptedPerson(withRemarks).toModelType());
+    }
+
+    @Test
+    public void toModelType_noRemarksField_returnsPersonWithoutNotes() throws Exception {
+        // data files from v1.4 and earlier have no remarks field
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, VALID_ADDRESS, VALID_TAGS);
+        assertEquals(Remark.EMPTY, person.toModelType().getRemark());
+    }
+
+    @Test
+    public void toModelType_invalidRemarks_throwsIllegalValueException() {
+        for (List<String> invalidNotes : List.of(List.of(" "), Arrays.asList("note", null))) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                    VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, invalidNotes);
+            assertThrows(IllegalValueException.class, Remark.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+    }
+
+    @Test
+    public void toModelType_remarksTooLong_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, List.of("a".repeat(300), "b".repeat(201)));
+        assertThrows(IllegalValueException.class, Remark.MESSAGE_TOO_LONG, person::toModelType);
     }
 
     @Test
