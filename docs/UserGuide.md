@@ -172,20 +172,41 @@ Examples:
 | `edit 1 /name Bernice Yu` (another person already has this name) | `This person already exists in CareBook.` | Use a name that no other person in CareBook has. |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
 
-### Locating persons by name: `find`
+### Locating persons: `find`
 
-Finds persons whose names contain any of the given keywords. Partial matches are now supported.
+Finds persons by the selected contact field using partial matches.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Format: `find /CRITERION INPUT`
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`
-* The search considers only names.
-* Partial finds are supported; for example, `ha` matches `Hans`, `Johan` and `Anne Ha`.
-* The substring must match; for example, `ha` will not match `Henry Avril`.
+| Criterion | Searches |
+|-----------|----------|
+| `/name` | Contact name |
+| `/patientNo` | Patient phone number |
+| `/familyNo` | Family phone number |
+| `/address` | Address |
+| `/pEmail` | Patient email |
+| `/fEmail` | Family email |
+| `/email` | Either patient or family email |
+| `/tag` | Priority tag |
+
+* Use exactly one criterion, spelled as shown above, and provide a non-empty input.
+* Phone searches require one sequence of at least **two digits**, with no spaces or other characters.
+  The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
+* Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
+  `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
+* For non-phone searches, whitespace separates keywords. A contact matches if the selected field contains
+  at least one keyword (an `OR` search); keyword order does not matter.
+* Contacts without an optional email or tag do not match searches on that absent field.
+* Searches consider all stored contacts, replacing the current display filter without changing stored data.
+  Use `list` to display all contacts again. A search with no matches displays an empty list.
+* Missing input, an unknown criterion, multiple criteria, or invalid phone input produces an error and
+  leaves the displayed list unchanged.
+* Existing `find KEYWORD [MORE_KEYWORDS]...` name searches remain supported.
 
 Examples:
+* `find /patientNo 87` finds patient numbers containing `87` consecutively.
+* `find /email gmail` searches both email fields for `gmail`.
+* `find /address street` searches addresses for `street`.
 * `find John` returns `john` and `John Doe`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
@@ -343,7 +364,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
 **Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
 **List**   | `list`
 **View**   | `view INDEX`<br> e.g., `view 2`

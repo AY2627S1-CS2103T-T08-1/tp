@@ -2,32 +2,35 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.function.Predicate;
+
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 
 /**
- * Finds and lists all persons in the address book whose name contains any of the argument keywords.
+ * Finds and lists persons whose selected field contains any of the argument keywords.
  * Keyword matching is case insensitive and allows partial matches.
  */
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons whose names contain any of "
-            + "the specified keywords (case-insensitive, partial matches allowed) "
-            + "and displays them as a list with index numbers.\n"
-            + "Parameters: INPUT\n"
-            + "Example: " + COMMAND_WORD + " ali";
+    public static final String MESSAGE_USAGE = "find /CRITERION INPUT: Finds contacts by a field "
+            + "using case-insensitive partial matches.\n"
+            + "Criteria: /name, /patientNo, /familyNo, /address, /pEmail, /fEmail, /email, /tag.\n"
+            + "Phone input must be one sequence of at least 2 digits; digits must occur consecutively.\n"
+            + "Example: find /patientNo 87\n"
+            + "Name searches also support: find KEYWORD [MORE_KEYWORDS]...";
 
-    private final NameContainsKeywordsPredicate predicate;
+    private final Predicate<Person> predicate;
 
     /**
      * Creates a command that filters persons using {@code predicate}.
      */
-    public FindCommand(NameContainsKeywordsPredicate predicate) {
-        this.predicate = predicate;
+    public FindCommand(Predicate<Person> predicate) {
+        this.predicate = requireNonNull(predicate);
     }
 
     /**
