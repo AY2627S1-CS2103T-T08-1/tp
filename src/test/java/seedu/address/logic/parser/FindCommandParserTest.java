@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.PersonContainsKeywordsPredicate;
 
 public class FindCommandParserTest {
 
@@ -29,6 +30,26 @@ public class FindCommandParserTest {
 
         // multiple whitespaces between keywords
         assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+    }
+
+    @Test
+    public void parse_fieldCriteria_returnsFindCommand() {
+        for (String criterion : PersonContainsKeywordsPredicate.SUPPORTED_CRITERIA) {
+            assertParseSuccess(parser, " /" + criterion + " 87 ",
+                    new FindCommand(new PersonContainsKeywordsPredicate(criterion, List.of("87"))));
+        }
+        assertParseSuccess(parser, "/address \n Main \t Street",
+                new FindCommand(new PersonContainsKeywordsPredicate("address", List.of("Main", "Street"))));
+    }
+
+    @Test
+    public void parse_invalidCriteriaOrInput_throwsParseException() {
+        for (String input : List.of("/unknown abc", "/patientNo", "/name   ", "/address", "/email",
+                "/patientNo 8", "/familyNo 8", "/patientNo 8a", "/familyNo 8 7", "/patientNo +87",
+                "/patientNo 87.0", "/patientNo ８７", "/name Alice /address Main")) {
+            assertParseFailure(parser, input,
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
     }
 
 }

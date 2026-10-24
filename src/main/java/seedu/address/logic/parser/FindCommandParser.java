@@ -7,6 +7,7 @@ import java.util.List;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.PersonContainsKeywordsPredicate;
 
 /**
  * Parses input arguments and creates a new FindCommand object
@@ -25,9 +26,26 @@ public class FindCommandParser implements Parser<FindCommand> {
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
 
-        String[] nameKeywords = trimmedArgs.split("\\s+");
+        String[] tokens = trimmedArgs.split("\\s+", 2);
+        if (!tokens[0].startsWith("/")) {
+            return new FindCommand(new NameContainsKeywordsPredicate(List.of(trimmedArgs.split("\\s+"))));
+        }
 
-        return new FindCommand(new NameContainsKeywordsPredicate(List.of(nameKeywords)));
+        String criterion = tokens[0].substring(1);
+        if (!PersonContainsKeywordsPredicate.SUPPORTED_CRITERIA.contains(criterion) || tokens.length < 2) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
+
+        String input = tokens[1];
+        if ((criterion.equals("patientNo") || criterion.equals("familyNo")) && !input.matches("[0-9]{2,}")) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
+
+        List<String> keywords = List.of(input.split("\\s+"));
+        if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
+        return new FindCommand(new PersonContainsKeywordsPredicate(criterion, keywords));
     }
 
 }

@@ -239,32 +239,39 @@ For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edi
 ### Find command
 
 
-The `find KEYWORD [MORE_KEYWORDS]...` command displays contacts whose names contain any of the given
-keywords as substrings, ignoring case, and returns the number of matches in the result box.
+The `find /CRITERION INPUT` command searches one selected contact field and returns the number of
+matches in the result box. Supported criteria are `/name`, `/patientNo`, `/familyNo`, `/address`,
+`/pEmail`, `/fEmail`, `/email` (either email), and `/tag`. Text searches match any whitespace-separated
+keyword as a case-insensitive substring. Phone searches require one sequence of at least two digits and
+match those digits consecutively: `87` matches `900087000`, but not `89700000`.
 It searches all stored contacts and changes the display filter without modifying stored contacts.
 
-The sequence diagram below shows a successful `find ali` command. A successful search may return zero
-matches; partial searches are allowed, so `ali` matches names such as `Ali` and `Alice`.
-The diagram focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
+The previous `find KEYWORD [MORE_KEYWORDS]...` name searches remain supported, of which any name matching 
+the case-insensitive substring is given.
 
-<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find ali command" />
+The sequence diagram below shows a successful `find /patientNo 87` command. A successful search may
+return zero matches. It focuses on parsing and execution; helper calls and UI updates are omitted for clarity.
 
-1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `find`
-   and creates a `FindCommandParser`.
-2. `FindCommandParser#parse()` trims the arguments and splits them on whitespace. It creates a
-   `NameContainsKeywordsPredicate` containing the keywords, then creates a `FindCommand` with that predicate.
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find /patientNo 87 command" />
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises
+   `find` and creates a `FindCommandParser`.
+2. `FindCommandParser#parse()` extracts the slash-prefixed criterion and validates the input. It creates a
+   `PersonContainsKeywordsPredicate` containing the criterion and keywords, then a `FindCommand` using that
+   predicate. Legacy name searches continue to use `NameContainsKeywordsPredicate`.
 3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
-   `NameContainsKeywordsPredicate#test()` checks whether each contact's name contains any keyword,
-   ignoring case and allowing partial matches. The UI observes the filtered list and updates the contact cards.
+   `PersonContainsKeywordsPredicate#test()` selects the requested field and checks for matching substrings.
+   Absent optional emails or tags do not match. The UI observes the filtered list and updates the contact cards.
 4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
    `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
 5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
    `MainWindow` displays the returned feedback in `ResultDisplay`.
 
-**Error handling:** Missing or whitespace-only arguments cause `FindCommandParser#parse()` to throw a
-`ParseException` with the command usage. This leaves both the stored contacts and the display filter unchanged.
+**Error handling:** Missing or whitespace-only input, an unknown slash-prefixed criterion, multiple criteria,
+or phone input other than a single sequence of at least two digits causes `FindCommandParser#parse()` to
+throw a `ParseException` with the command usage. This leaves stored contacts and the display filter unchanged.
 A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
-Use `list` to display all contacts again after a successful `find` command.
+Use `list` to display all contacts again after a successful search.
 
 
 ### \[Proposed\] Undo/redo feature
