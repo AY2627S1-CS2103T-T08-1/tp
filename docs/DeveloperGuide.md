@@ -245,7 +245,9 @@ matches in the result box. Supported criteria are `/name`, `/patientNo`, `/famil
 keyword as a case-insensitive substring. Phone searches require one sequence of at least two digits and
 match those digits consecutively: `87` matches `900087000`, but not `89700000`.
 It searches all stored contacts and changes the display filter without modifying stored contacts.
-Existing `find KEYWORD [MORE_KEYWORDS]...` name searches remain supported.
+
+The previous `find KEYWORD [MORE_KEYWORDS]...` name searches remain supported, of which any name matching 
+the case-insensitive substring is given.
 
 The sequence diagram below shows a successful `find /patientNo 87` command. A successful search may
 return zero matches. It focuses on parsing and execution; helper calls and UI updates are omitted for clarity.

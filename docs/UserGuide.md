@@ -176,7 +176,7 @@ Examples:
 
 Finds persons by the selected contact field using partial matches.
 
-Format: `find /CRITERION INPUT`
+Format: `find /CRITERION INPUT` and `find INPUT`
 
 | Criterion | Searches |
 |-----------|----------|
@@ -188,6 +188,10 @@ Format: `find /CRITERION INPUT`
 | `/fEmail` | Family email |
 | `/email` | Either patient or family email |
 | `/tag` | Priority tag |
+
+* `find INPUT` searches by name. Any name containing the input substring, case insensitive, will be returned.
+
+For `find /CRITERA INPUT`:
 
 * Use exactly one criterion, spelled as shown above, and provide a non-empty input.
 * Phone searches require one sequence of at least **two digits**, with no spaces or other characters.
@@ -201,7 +205,6 @@ Format: `find /CRITERION INPUT`
   Use `list` to display all contacts again. A search with no matches displays an empty list.
 * Missing input, an unknown criterion, multiple criteria, or invalid phone input produces an error and
   leaves the displayed list unchanged.
-* Existing `find KEYWORD [MORE_KEYWORDS]...` name searches remain supported.
 
 Examples:
 * `find /patientNo 87` finds patient numbers containing `87` consecutively.
