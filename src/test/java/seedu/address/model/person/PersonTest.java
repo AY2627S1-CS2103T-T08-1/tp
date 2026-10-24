@@ -105,6 +105,18 @@ public class PersonTest {
         // different tags -> returns false
         editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_LOW).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // different remark -> returns false, but still the same person
+        editedAlice = new PersonBuilder(ALICE).withRemarks("Allergic to penicillin").build();
+        assertFalse(ALICE.equals(editedAlice));
+        assertTrue(ALICE.isSamePerson(editedAlice));
+    }
+
+    @Test
+    public void withRemark_newRemark_keepsOtherFields() {
+        Person withNotes = new PersonBuilder(ALICE).withRemarks("Visits after 3pm").build();
+        assertEquals(withNotes, ALICE.withRemark(withNotes.getRemark()));
+        assertEquals(ALICE, withNotes.withRemark(Remark.EMPTY));
     }
 
     @Test
@@ -114,7 +126,8 @@ public class PersonTest {
                 + ", familyNo=" + ALICE.getFamilyNo()
                 + ", patientEmail=" + ALICE.getPatientEmail().orElse(null)
                 + ", familyEmail=" + ALICE.getFamilyEmail().orElse(null)
-                + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
+                + ", remark=" + ALICE.getRemark() + "}";
         assertEquals(expected, ALICE.toString());
     }
 }

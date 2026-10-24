@@ -30,6 +30,7 @@ public class Person {
     private final Email familyEmail;
     private final Address address;
     private final Set<Tag> tags = new HashSet<>();
+    private final Remark remark;
 
     /**
      * Every field must be present and not null.
@@ -45,7 +46,16 @@ public class Person {
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags) {
-        requireAllNonNull(name, patientNo, familyNo, address, tags);
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, Remark.EMPTY);
+    }
+
+    /**
+     * Every field except emails must be present and not null.
+     * The tag set must contain at most one priority and may be empty, and the remark may have no notes.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
+            Address address, Set<Tag> tags, Remark remark) {
+        requireAllNonNull(name, patientNo, familyNo, address, tags, remark);
         checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
         this.name = name;
         this.patientNo = patientNo;
@@ -54,6 +64,7 @@ public class Person {
         this.familyEmail = familyEmail;
         this.address = address;
         this.tags.addAll(tags);
+        this.remark = remark;
     }
 
     public Name getName() {
@@ -87,6 +98,17 @@ public class Person {
      */
     public Set<Tag> getTags() {
         return Collections.unmodifiableSet(tags);
+    }
+
+    public Remark getRemark() {
+        return remark;
+    }
+
+    /**
+     * Returns a copy of this person with {@code remark} in place of the current remark.
+     */
+    public Person withRemark(Remark remark) {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, remark);
     }
 
     /**
@@ -123,13 +145,14 @@ public class Person {
                 && Objects.equals(patientEmail, otherPerson.patientEmail)
                 && Objects.equals(familyEmail, otherPerson.familyEmail)
                 && address.equals(otherPerson.address)
-                && tags.equals(otherPerson.tags);
+                && tags.equals(otherPerson.tags)
+                && remark.equals(otherPerson.remark);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags);
+        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, remark);
     }
 
     @Override
@@ -142,6 +165,7 @@ public class Person {
                 .add("familyEmail", familyEmail)
                 .add("address", address)
                 .add("tags", tags)
+                .add("remark", remark)
                 .toString();
     }
 

@@ -15,6 +15,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Remark;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -31,6 +32,7 @@ class JsonAdaptedPerson {
     private final String familyEmail;
     private final String address;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
+    private final List<String> remarks = new ArrayList<>();
 
     /**
      * Constructs a {@code JsonAdaptedPerson} with the given person details.
@@ -39,7 +41,8 @@ class JsonAdaptedPerson {
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("patientNo") String patientNo,
             @JsonProperty("familyNo") String familyNo, @JsonProperty("pEmail") String patientEmail,
             @JsonProperty("fEmail") String familyEmail, @JsonProperty("email") String legacyEmail,
-            @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+            @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("remarks") List<String> remarks) {
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
@@ -49,14 +52,18 @@ class JsonAdaptedPerson {
         if (tags != null) {
             this.tags.addAll(tags);
         }
+        // data files from v1.4 and earlier have no remarks
+        if (remarks != null) {
+            this.remarks.addAll(remarks);
+        }
     }
 
     /**
-     * Constructs a {@code JsonAdaptedPerson} with one legacy email.
+     * Constructs a {@code JsonAdaptedPerson} with one legacy email and no remarks.
      */
     public JsonAdaptedPerson(String name, String patientNo, String familyNo, String email, String address,
             List<JsonAdaptedTag> tags) {
-        this(name, patientNo, familyNo, email, null, null, address, tags);
+        this(name, patientNo, familyNo, email, null, null, address, tags, null);
     }
 
     /**
@@ -72,6 +79,7 @@ class JsonAdaptedPerson {
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
+        remarks.addAll(source.getRemark().getNotes());
     }
 
     /**
@@ -143,7 +151,24 @@ class JsonAdaptedPerson {
             throw new IllegalValueException(Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
         }
         return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
-                modelAddress, modelTags);
+                modelAddress, modelTags, toModelRemark());
+    }
+
+    /**
+     * Converts the adapted notes into the model's {@code Remark} object.
+     *
+     * @throws IllegalValueException if a note is missing or blank, or the notes are too long in total.
+     */
+    private Remark toModelRemark() throws IllegalValueException {
+        for (String note : remarks) {
+            if (note == null || !Remark.isValidNote(note)) {
+                throw new IllegalValueException(Remark.MESSAGE_CONSTRAINTS);
+            }
+        }
+        if (!Remark.isWithinLengthLimit(remarks)) {
+            throw new IllegalValueException(Remark.MESSAGE_TOO_LONG);
+        }
+        return new Remark(remarks);
     }
 
 }
