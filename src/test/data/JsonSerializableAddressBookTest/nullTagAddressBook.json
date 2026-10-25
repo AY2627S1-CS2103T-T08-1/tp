@@ -1,0 +1,9 @@
+{
+  "contacts": [ {
+    "name": "Hans Muster",
+    "patientNo": "94824240",
+    "familyNo": "81234567",
+    "address": "4th street",
+    "tags": [ null ]
+  } ]
+}
