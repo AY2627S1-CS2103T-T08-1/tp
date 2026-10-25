@@ -4,18 +4,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -27,6 +33,92 @@ import seedu.address.testutil.PersonBuilder;
 public class ArchiveCommandTest {
     private final AddressBookParser parser = new AddressBookParser();
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_lastDisplayedContact_archivesOnlyTarget() {
+        int lastIndex = model.getFilteredPersonList().size();
+        Person target = model.getFilteredPersonList().get(lastIndex - 1);
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expectedModel.setPerson(target, target.copyWithArchivedStatus(true));
+
+        String expectedMessage = String.format(ArchiveCommand.MESSAGE_ARCHIVE_PERSON_SUCCESS, Messages.format(target));
+        assertCommandSuccess(new ArchiveCommand(Index.fromOneBased(lastIndex)), model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_onlyContact_leavesActiveListEmpty() throws Exception {
+        Person target = model.getFilteredPersonList().get(0);
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(target);
+        Model singleContactModel = new ModelManager(addressBook, new UserPrefs());
+
+        new ArchiveCommand(Index.fromOneBased(1)).execute(singleContactModel);
+
+        assertTrue(singleContactModel.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(target.copyWithArchivedStatus(true)), singleContactModel.getAddressBook().getPersonList());
+        new ListCommand(true).execute(singleContactModel);
+        assertEquals(List.of(target.copyWithArchivedStatus(true)), singleContactModel.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_sortedList_usesDisplayedIndex() throws Exception {
+        model.updateSortedPersonList(Comparator.comparing((Person person) -> person.getName().fullName).reversed());
+        Person target = model.getFilteredPersonList().get(0);
+        List<Person> remainingPersons = new ArrayList<>(model.getFilteredPersonList());
+        remainingPersons.remove(0);
+
+        new ArchiveCommand(Index.fromOneBased(1)).execute(model);
+
+        assertEquals(remainingPersons, model.getFilteredPersonList());
+        new ListCommand(true).execute(model);
+        assertEquals(List.of(target.copyWithArchivedStatus(true)), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_repeatedFirstIndex_archivesAllContactsWithoutDeleting() throws Exception {
+        List<Person> originalPersons = List.copyOf(model.getFilteredPersonList());
+        ArchiveCommand command = new ArchiveCommand(Index.fromOneBased(1));
+        for (int i = 0; i < originalPersons.size(); i++) {
+            assertEquals(originalPersons.get(i), model.getFilteredPersonList().get(0));
+            command.execute(model);
+            assertEquals(originalPersons.size() - i - 1, model.getFilteredPersonList().size());
+        }
+
+        assertCommandFailure(command, model, ArchiveCommand.MESSAGE_EMPTY_LIST);
+        new ListCommand(true).execute(model);
+        assertEquals(originalPersons.stream().map(person -> person.copyWithArchivedStatus(true)).toList(),
+                model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_indexOutsideFilteredList_preservesModel() {
+        Person target = model.getFilteredPersonList().get(0);
+        model.updateFilteredPersonList(target::equals);
+
+        assertCommandFailure(new ArchiveCommand(Index.fromOneBased(2)), model,
+                String.format(ArchiveCommand.MESSAGE_INDEX_OUT_OF_RANGE, 1));
+    }
+
+    @Test
+    public void execute_emptySearchResults_preservesStoredContacts() {
+        model.updateFilteredPersonList(person -> false);
+
+        assertCommandFailure(new ArchiveCommand(Index.fromOneBased(1)), model, ArchiveCommand.MESSAGE_EMPTY_LIST);
+    }
+
+    @Test
+    public void execute_emptyAddressBook_reportsEmptyList() {
+        assertCommandFailure(new ArchiveCommand(Index.fromOneBased(1)), new ModelManager(),
+                ArchiveCommand.MESSAGE_EMPTY_LIST);
+    }
+
+    @Test
+    public void execute_alreadyArchivedContact_preservesModel() throws Exception {
+        new ArchiveCommand(Index.fromOneBased(1)).execute(model);
+        new ListCommand(true).execute(model);
+
+        assertCommandFailure(new ArchiveCommand(Index.fromOneBased(1)), model, ArchiveCommand.MESSAGE_ALREADY_ARCHIVED);
+    }
 
     @Test
     public void execute_contactWithAppointmentAndRemarks_preservesDetails() throws Exception {
