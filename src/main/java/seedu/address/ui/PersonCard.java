@@ -55,6 +55,8 @@ public class PersonCard extends UiPart<Region> {
         patientNo.setText(getPatientNoText(person));
         familyNo.setText(getFamilyNoText(person));
         email.setText(getEmailText(person));
+        email.setVisible(!email.getText().isEmpty());
+        email.setManaged(!email.getText().isEmpty());
         address.setText(person.getAddress().value);
         getTagTexts(person).forEach(tagName -> tags.getChildren().add(new Label(tagName)));
     }
