@@ -19,6 +19,7 @@ import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonHasTagPredicate;
+import seedu.address.model.person.PersonMatchesFilterPredicate;
 import seedu.address.testutil.PersonBuilder;
 
 public class CheckupCommandTest {
@@ -57,7 +58,7 @@ public class CheckupCommandTest {
     public void execute_filteredList_usesDisplayedIndexAndPreservesFilter() throws Exception {
         model.addPerson(alice);
         model.addPerson(bob);
-        new FilterCommand(new PersonHasTagPredicate("HIGH")).execute(model);
+        new FilterCommand(new PersonMatchesFilterPredicate(List.of(), List.of("HIGH"), List.of())).execute(model);
         new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
         Person updatedBob = new PersonBuilder(bob).withCheckupAppointment(appointment.toString()).build();
         assertEquals(List.of(updatedBob), model.getFilteredPersonList());

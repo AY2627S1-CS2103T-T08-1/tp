@@ -33,7 +33,7 @@ import seedu.address.model.person.FindCriterion;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonContainsKeywordsPredicate;
-import seedu.address.model.person.PersonHasTagPredicate;
+import seedu.address.model.person.PersonMatchesFilterPredicate;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -103,8 +103,9 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_filter() throws Exception {
         FilterCommand command = (FilterCommand) parser.parseCommand(
-                FilterCommand.COMMAND_WORD + " medium");
-        assertEquals(new FilterCommand(new PersonHasTagPredicate("MEDIUM")), command);
+                FilterCommand.COMMAND_WORD + " /tag medium");
+        assertEquals(new FilterCommand(
+                new PersonMatchesFilterPredicate(List.of(), List.of("MEDIUM"), List.of())), command);
     }
 
     @Test
