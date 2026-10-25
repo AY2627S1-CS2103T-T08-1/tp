@@ -79,7 +79,12 @@ public class AddressBookParser {
                 yield new ListCommand();
             }
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
-            case ExitCommand.COMMAND_WORD -> new ExitCommand();
+            case ExitCommand.COMMAND_WORD -> {
+                if (!arguments.isBlank()) {
+                    throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, ExitCommand.MESSAGE_USAGE));
+                }
+                yield new ExitCommand();
+            }
             case HelpCommand.COMMAND_WORD -> new HelpCommand();
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
