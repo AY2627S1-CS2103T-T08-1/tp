@@ -61,20 +61,30 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
-* Extraneous parameters for `help` and `exit` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list` and `clear` commands reject extra parameters;
-  enter either command on its own.
+* Extraneous parameters for `exit` are ignored.<br>
+  The `help`, `list`, and `clear` commands reject extra parameters; enter these commands on their own.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
-
-![help message](images/helpMessage.png)
+Opens a resizable, scrollable Help window listing the available commands, their usage, and examples.
+The window also provides the user guide URL and a **Copy URL** button.
 
 Format: `help`
+
+* The command is case-insensitive: `help`, `HELP`, and `HeLp` all open the same window.
+* Whitespace before and after the command is allowed.
+* Additional text is rejected: `help 123`, `help me`, `abc help`, and `helpabc` are invalid.
+* You can also open the window using **Help > Help** in the menu or pressing **F1**.
+* If the Help window is already open, running `help` focuses that window.
+
+Examples:
+
+* `help` — displays the command list.
+* `HELP` — displays the same command list.
+* `help 123` — displays an invalid command format error; use `help` on its own.
 
 
 ### Adding a person: `add`
