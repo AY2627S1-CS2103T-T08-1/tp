@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
@@ -34,6 +35,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label id;
     @FXML
+    private Label checkupAppointment;
+    @FXML
     private Label patientNo;
     @FXML
     private Label familyNo;
@@ -43,6 +46,8 @@ public class PersonCard extends UiPart<Region> {
     private Label address;
     @FXML
     private FlowPane tags;
+    @FXML
+    private Label remark;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
@@ -52,11 +57,32 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
+        checkupAppointment.setText(getCheckupAppointmentText(person));
+        checkupAppointment.setVisible(person.getCheckupAppointment().isPresent());
+        checkupAppointment.setManaged(person.getCheckupAppointment().isPresent());
         patientNo.setText(getPatientNoText(person));
         familyNo.setText(getFamilyNoText(person));
         email.setText(getEmailText(person));
+        updateEmailVisibility(email, email.getText());
         address.setText(person.getAddress().value);
         getTagTexts(person).forEach(tagName -> tags.getChildren().add(new Label(tagName)));
+        remark.setText(getRemarkText(person));
+        // an empty remark takes up no space on the card
+        remark.setManaged(!person.getRemark().isEmpty());
+        remark.setVisible(!person.getRemark().isEmpty());
+    }
+
+    static String getCheckupAppointmentText(Person person) {
+        return person.getCheckupAppointment().map(appointment -> "Check up Appointment: " + appointment).orElse("");
+    }
+
+    /**
+     * Removes an empty email row from the layout and restores it when email text is present.
+     */
+    static void updateEmailVisibility(Node emailRow, String emailText) {
+        boolean hasEmail = !emailText.isEmpty();
+        emailRow.setVisible(hasEmail);
+        emailRow.setManaged(hasEmail);
     }
 
     static String getPatientNoText(Person person) {
@@ -85,5 +111,12 @@ public class PersonCard extends UiPart<Region> {
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .map(tag -> tag.tagName)
                 .toList();
+    }
+
+    static String getRemarkText(Person person) {
+        if (person.getRemark().isEmpty()) {
+            return "";
+        }
+        return "Remark:\n" + String.join("\n", person.getRemark().getNumberedNotes());
     }
 }
