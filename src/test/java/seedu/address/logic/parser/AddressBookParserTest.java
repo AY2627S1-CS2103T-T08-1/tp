@@ -24,6 +24,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.FindCriterion;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonContainsKeywordsPredicate;
@@ -103,7 +104,8 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_findWithCriterion() throws Exception {
-        FindCommand expected = new FindCommand(new PersonContainsKeywordsPredicate("patientNo", List.of("87")));
+        FindCommand expected =
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.PATIENT_PHONE, List.of("87")));
         assertEquals(expected, parser.parseCommand("find /patientNo 87"));
     }
 

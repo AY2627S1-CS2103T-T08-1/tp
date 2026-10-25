@@ -1,8 +1,18 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
@@ -19,9 +29,11 @@ public class FindCommand extends Command {
 
     public static final String MESSAGE_USAGE = "find /CRITERION INPUT: Finds contacts by a field "
             + "using case-insensitive partial matches.\n"
-            + "Criteria: /name, /patientNo, /familyNo, /address, /pEmail, /fEmail, /email, /tag.\n"
+            + "Criteria: " + Stream.of(PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE, PREFIX_ADDRESS,
+                    PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_TAG)
+                    .map(Object::toString).collect(Collectors.joining(", ")) + ".\n"
             + "Phone input must be one sequence of at least 2 digits; digits must occur consecutively.\n"
-            + "Example: find /patientNo 87\n"
+            + "Example: " + COMMAND_WORD + " " + PREFIX_PATIENT_PHONE + " 87\n"
             + "Name searches also support: find KEYWORD [MORE_KEYWORDS]...";
 
     private final Predicate<Person> predicate;

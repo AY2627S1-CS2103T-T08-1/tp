@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.FindCriterion;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonContainsKeywordsPredicate;
@@ -37,7 +38,8 @@ public class FindCommandTest {
         phoneModel.addPerson(match);
         phoneModel.addPerson(nonMatch);
         phoneModel.updateFilteredPersonList(person -> false);
-        FindCommand command = new FindCommand(new PersonContainsKeywordsPredicate("patientNo", List.of("87")));
+        FindCommand command =
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.PATIENT_PHONE, List.of("87")));
         assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1),
                 command.execute(phoneModel).getFeedbackToUser());
         assertEquals(List.of(match), phoneModel.getFilteredPersonList());

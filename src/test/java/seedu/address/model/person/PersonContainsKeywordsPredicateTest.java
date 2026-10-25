@@ -13,7 +13,7 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonContainsKeywordsPredicateTest {
     @Test
     public void test_phoneDigitsMustBeConsecutive() {
-        PersonContainsKeywordsPredicate patientPredicate = predicate("patientNo", "87");
+        PersonContainsKeywordsPredicate patientPredicate = predicate(FindCriterion.PATIENT_PHONE, "87");
         assertTrue(patientPredicate.test(new PersonBuilder().withPatientNo("900087000").build()));
         assertTrue(patientPredicate.test(new PersonBuilder().withPatientNo("87000000").build()));
         assertTrue(patientPredicate.test(new PersonBuilder().withPatientNo("90000087").build()));
@@ -22,55 +22,56 @@ public class PersonContainsKeywordsPredicateTest {
         assertFalse(patientPredicate.test(new PersonBuilder().withPatientNo("99999999")
                 .withFamilyNo("900087000").build()));
 
-        PersonContainsKeywordsPredicate familyPredicate = predicate("familyNo", "87");
+        PersonContainsKeywordsPredicate familyPredicate = predicate(FindCriterion.FAMILY_PHONE, "87");
         assertTrue(familyPredicate.test(new PersonBuilder().withFamilyNo("900087000").build()));
         assertFalse(familyPredicate.test(new PersonBuilder().withFamilyNo("89700000").build()));
         assertFalse(familyPredicate.test(new PersonBuilder().withFamilyNo("99999999")
                 .withPatientNo("900087000").build()));
-        assertTrue(predicate("patientNo", "00").test(new PersonBuilder().withPatientNo("87000000").build()));
+        assertTrue(predicate(FindCriterion.PATIENT_PHONE, "00")
+                .test(new PersonBuilder().withPatientNo("87000000").build()));
     }
 
     @Test
     public void test_textFieldsAllowCaseInsensitivePartialMatches() {
         Person person = new PersonBuilder().withName("Alice Bob").withAddress("123 Main Street")
                 .withPatientEmail("alice@patient.com").withFamilyEmail("bob@family.com").withTags("HIGH").build();
-        assertTrue(predicate("name", "LIC").test(person));
-        assertTrue(predicate("address", "AIN").test(person));
-        assertTrue(predicate("pEmail", "PAT").test(person));
-        assertTrue(predicate("fEmail", "FAM").test(person));
-        assertTrue(predicate("email", "PAT").test(person));
-        assertTrue(predicate("email", "FAM").test(person));
-        assertTrue(predicate("tag", "igh").test(person));
-        assertTrue(new PersonContainsKeywordsPredicate("address", List.of("missing", "AIN")).test(person));
-        assertFalse(predicate("name", "Main").test(person));
-        assertFalse(predicate("address", "Alice").test(person));
-        assertFalse(predicate("pEmail", "family").test(person));
-        assertFalse(predicate("fEmail", "patient").test(person));
-        assertFalse(predicate("tag", "missing").test(person));
-        assertFalse(new PersonContainsKeywordsPredicate("name", List.of()).test(person));
+        assertTrue(predicate(FindCriterion.NAME, "LIC").test(person));
+        assertTrue(predicate(FindCriterion.ADDRESS, "AIN").test(person));
+        assertTrue(predicate(FindCriterion.PATIENT_EMAIL, "PAT").test(person));
+        assertTrue(predicate(FindCriterion.FAMILY_EMAIL, "FAM").test(person));
+        assertTrue(predicate(FindCriterion.EMAIL, "PAT").test(person));
+        assertTrue(predicate(FindCriterion.EMAIL, "FAM").test(person));
+        assertTrue(predicate(FindCriterion.TAG, "igh").test(person));
+        assertTrue(new PersonContainsKeywordsPredicate(FindCriterion.ADDRESS, List.of("missing", "AIN")).test(person));
+        assertFalse(predicate(FindCriterion.NAME, "Main").test(person));
+        assertFalse(predicate(FindCriterion.ADDRESS, "Alice").test(person));
+        assertFalse(predicate(FindCriterion.PATIENT_EMAIL, "family").test(person));
+        assertFalse(predicate(FindCriterion.FAMILY_EMAIL, "patient").test(person));
+        assertFalse(predicate(FindCriterion.TAG, "missing").test(person));
+        assertFalse(new PersonContainsKeywordsPredicate(FindCriterion.NAME, List.of()).test(person));
     }
 
     @Test
     public void test_missingOptionalEmailsAndTags_doNotMatch() {
         Person person = new PersonBuilder().withoutEmail().build();
-        assertFalse(predicate("pEmail", "com").test(person));
-        assertFalse(predicate("fEmail", "com").test(person));
-        assertFalse(predicate("email", "com").test(person));
-        assertFalse(predicate("tag", "igh").test(person));
+        assertFalse(predicate(FindCriterion.PATIENT_EMAIL, "com").test(person));
+        assertFalse(predicate(FindCriterion.FAMILY_EMAIL, "com").test(person));
+        assertFalse(predicate(FindCriterion.EMAIL, "com").test(person));
+        assertFalse(predicate(FindCriterion.TAG, "igh").test(person));
     }
 
     @Test
     public void equals_comparesCriterionAndKeywords() {
-        PersonContainsKeywordsPredicate predicate = predicate("patientNo", "87");
+        PersonContainsKeywordsPredicate predicate = predicate(FindCriterion.PATIENT_PHONE, "87");
         assertEquals(predicate, predicate);
-        assertEquals(predicate, predicate("patientNo", "87"));
-        assertFalse(predicate.equals(predicate("familyNo", "87")));
-        assertFalse(predicate.equals(predicate("patientNo", "88")));
+        assertEquals(predicate, predicate(FindCriterion.PATIENT_PHONE, "87"));
+        assertFalse(predicate.equals(predicate(FindCriterion.FAMILY_PHONE, "87")));
+        assertFalse(predicate.equals(predicate(FindCriterion.PATIENT_PHONE, "88")));
         assertFalse(predicate.equals(null));
         assertFalse(predicate.equals("87"));
     }
 
-    private PersonContainsKeywordsPredicate predicate(String criterion, String keyword) {
+    private PersonContainsKeywordsPredicate predicate(FindCriterion criterion, String keyword) {
         return new PersonContainsKeywordsPredicate(criterion, List.of(keyword));
     }
 }

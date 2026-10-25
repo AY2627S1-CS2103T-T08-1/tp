@@ -1,19 +1,39 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.FindCommand;
+import seedu.address.model.person.FindCriterion;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.PersonContainsKeywordsPredicate;
 
 public class FindCommandParserTest {
+
+    private static final Map<Prefix, FindCriterion> CRITERIA = Map.of(
+            PREFIX_NAME, FindCriterion.NAME,
+            PREFIX_PATIENT_PHONE, FindCriterion.PATIENT_PHONE,
+            PREFIX_FAMILY_PHONE, FindCriterion.FAMILY_PHONE,
+            PREFIX_ADDRESS, FindCriterion.ADDRESS,
+            PREFIX_PATIENT_EMAIL, FindCriterion.PATIENT_EMAIL,
+            PREFIX_FAMILY_EMAIL, FindCriterion.FAMILY_EMAIL,
+            PREFIX_LEGACY_EMAIL, FindCriterion.EMAIL,
+            PREFIX_TAG, FindCriterion.TAG);
 
     private FindCommandParser parser = new FindCommandParser();
 
@@ -35,26 +55,28 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_fieldCriteria_returnsFindCommand() {
-        for (String criterion : PersonContainsKeywordsPredicate.SUPPORTED_CRITERIA) {
-            assertParseSuccess(parser, " /" + criterion + " 87 ",
-                    new FindCommand(new PersonContainsKeywordsPredicate(criterion, List.of("87"))));
+        for (Map.Entry<Prefix, FindCriterion> entry : CRITERIA.entrySet()) {
+            assertParseSuccess(parser, " " + entry.getKey() + " 87 ",
+                    new FindCommand(new PersonContainsKeywordsPredicate(entry.getValue(), List.of("87"))));
         }
         assertParseSuccess(parser, "/address \n Main \t Street",
-                new FindCommand(new PersonContainsKeywordsPredicate("address", List.of("Main", "Street"))));
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.ADDRESS, List.of("Main", "Street"))));
     }
 
     @Test
     public void parse_fieldCriteriaIgnoreCase_returnsCanonicalFindCommand() {
-        for (String criterion : PersonContainsKeywordsPredicate.SUPPORTED_CRITERIA) {
-            FindCommand expected = new FindCommand(new PersonContainsKeywordsPredicate(criterion, List.of("87")));
-            assertParseSuccess(parser, "/" + criterion.toUpperCase(Locale.ROOT) + " 87", expected);
-            assertParseSuccess(parser, "/" + criterion.toLowerCase(Locale.ROOT) + " 87", expected);
+        for (Map.Entry<Prefix, FindCriterion> entry : CRITERIA.entrySet()) {
+            FindCommand expected =
+                    new FindCommand(new PersonContainsKeywordsPredicate(entry.getValue(), List.of("87")));
+            assertParseSuccess(parser, entry.getKey().getPrefix().toUpperCase(Locale.ROOT) + " 87", expected);
+            assertParseSuccess(parser, entry.getKey().getPrefix().toLowerCase(Locale.ROOT) + " 87", expected);
         }
-        FindCommand expectedTag = new FindCommand(new PersonContainsKeywordsPredicate("tag", List.of("HIGH")));
+        FindCommand expectedTag =
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.TAG, List.of("HIGH")));
         assertParseSuccess(parser, "/TAG HIGH", expectedTag);
         assertParseSuccess(parser, "/TaG HIGH", expectedTag);
         assertParseSuccess(parser, "/PaTiEnTnO 87",
-                new FindCommand(new PersonContainsKeywordsPredicate("patientNo", List.of("87"))));
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.PATIENT_PHONE, List.of("87"))));
     }
 
     @Test
