@@ -20,12 +20,9 @@ public class PersonDetailsFormatterTest {
                 .withPatientEmail("patient@example.com").withFamilyEmail("family@example.com")
                 .withAddress("123 Long Road").withTags("HIGH").build();
         String details = PersonDetailsFormatter.format(person);
-        assertTrue(details.contains("Patient phone: 91234567"));
-        assertTrue(details.contains("Family phone: 81234567"));
-        assertTrue(details.contains("Patient email: patient@example.com"));
-        assertTrue(details.contains("Family email: family@example.com"));
-        assertTrue(details.contains("Address: 123 Long Road"));
-        assertTrue(details.contains("Priority: HIGH"));
+        assertEquals("Patient phone: 91234567\nFamily phone: 81234567"
+                + "\nPatient email: patient@example.com\nFamily email: family@example.com"
+                + "\nAddress: 123 Long Road\nPriority: HIGH", details);
     }
 
     @Test

@@ -32,20 +32,41 @@ public class PersonListPanel extends UiPart<Region> {
         this(personList, new ReadOnlyObjectWrapper<Person>().getReadOnlyProperty());
     }
 
-    /** Creates the list with a highlight driven by the contact selected using {@code view INDEX}. */
+    /**
+     * Creates the list with a highlight driven by the contact selected using {@code view INDEX}.
+     */
     public PersonListPanel(ObservableList<Person> personList, ReadOnlyObjectProperty<Person> selectedPerson) {
         super(FXML);
         this.selectedPerson = selectedPerson;
+        configureList(personList);
+        observeSelection();
+    }
+
+    /**
+     * Configures contact cards while leaving selection ownership with the model.
+     */
+    private void configureList(ObservableList<Person> personList) {
         personListView.setItems(personList);
         // Selection belongs to the model, not to a row number which can change after filtering.
         personListView.setSelectionModel(null);
         personListView.setCellFactory(listView -> new PersonListViewCell());
-        selectedPerson.addListener((observable, previous, current) -> {
-            personListView.refresh();
-            if (current != null) {
-                personListView.scrollTo(current);
-            }
-        });
+    }
+
+    /**
+     * Keeps highlighting and scrolling synchronized with the model's selected contact.
+     */
+    private void observeSelection() {
+        selectedPerson.addListener((observable, previous, current) -> refreshSelection(current));
+    }
+
+    /**
+     * Refreshes card highlights and brings a selected contact into view, if there is one.
+     */
+    private void refreshSelection(Person person) {
+        personListView.refresh();
+        if (person != null) {
+            personListView.scrollTo(person);
+        }
     }
 
     /**
