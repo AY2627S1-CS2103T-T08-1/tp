@@ -12,6 +12,13 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonCardTest {
 
     @Test
+    public void getCheckupAppointmentText_formatsAppointmentAndOmitsAbsentAppointment() {
+        assertEquals("", PersonCard.getCheckupAppointmentText(new PersonBuilder().build()));
+        assertEquals("Check up Appointment: 01/01/2030 09:05", PersonCard.getCheckupAppointmentText(
+                new PersonBuilder().withCheckupAppointment("01/01/2030 09:05").build()));
+    }
+
+    @Test
     public void getPhoneText_validPerson_returnsFormattedPhoneTexts() {
         Person person = new PersonBuilder()
                 .withPatientNo("91234567")
@@ -57,6 +64,18 @@ public class PersonCardTest {
         Person person = new PersonBuilder().withoutEmail().build();
 
         assertEquals("", PersonCard.getEmailText(person));
+    }
+
+    @Test
+    public void getRemarkText_notes_returnsNumberedNotesOnSeparateLines() {
+        Person person = new PersonBuilder().withRemarks("Allergic to penicillin", "Visits after 3pm").build();
+
+        assertEquals("Remark:\n1. Allergic to penicillin\n2. Visits after 3pm", PersonCard.getRemarkText(person));
+    }
+
+    @Test
+    public void getRemarkText_noNotes_returnsEmptyText() {
+        assertEquals("", PersonCard.getRemarkText(new PersonBuilder().build()));
     }
 
     @Test

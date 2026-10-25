@@ -135,6 +135,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores each person's care notes as a `Remark`, which may have no notes.
 * stores each person's priority tags as a `Set<Tag>`. Valid names are `HIGH`, `MEDIUM`, and `LOW`; the set must be empty or contain one priority.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
@@ -236,35 +237,110 @@ Priority tags use the existing `/tag` prefix and `Tag` model, with names restric
 
 For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` is rejected, and `edit 1 /tag` clears them.
 
+### Remarks
+
+The `remark` command keeps numbered care notes on a contact, such as allergies or visiting rules. One command
+word accepts four formats:
+
+* `remark INDEX NOTE` adds a note after the contact's last note.
+* `remark INDEX /edit NOTE_NUMBER NOTE` replaces the note with that number.
+* `remark INDEX /delete NOTE_NUMBER` deletes the note with that number.
+* `remark INDEX /clear` deletes all of the contact's notes.
+
+#### Model and storage
+
+`Remark` is an immutable list of notes held by every `Person`. A person with no notes holds `Remark.EMPTY`, so
+`Person#getRemark()` never returns `null`. Each note must not be blank, and the notes can have at most
+`Remark.MAX_TOTAL_LENGTH` (500) characters in total, which stops one contact's card from filling the list.
+The `Remark` constructor enforces both rules, so an invalid remark cannot exist in the model.
+
+The notes count towards `Person#equals()` but not `Person#isSamePerson()`, so two contacts with the same name are
+still duplicates whatever their notes. `EditCommand` copies the remark unchanged into the edited person.
+`JsonAdaptedPerson` stores the notes as a `remarks` list of strings. A missing `remarks` field loads as no notes,
+so data files saved by v1.4 and earlier still load.
+
+#### Parsing and execution
+
+The sequence diagram below shows a successful `remark 1 Diabetic` command.
+
+<puml src="diagrams/RemarkSequenceDiagram.puml" alt="Sequence of parsing and executing a successful remark 1 Diabetic command" />
+
+1. `RemarkCommandParser#parse()` takes the first word as the index. It then looks at the next word: `/edit`,
+   `/delete` and `/clear`, in any letter case, select those actions. Anything else means the whole rest of the
+   input is a new note.
+1. The parser does not use `ArgumentTokenizer`, so a note is kept exactly as typed even when it contains text
+   such as `/tag`. Prefixes would split such a note into fields.
+1. The parser creates the command through a factory method: `RemarkCommand#add()`, `#edit()`, `#delete()` or
+   `#clear()`. Each stores the action and only the values that action needs.
+1. `RemarkCommand#execute()` checks the index against the displayed list and that the note number exists.
+   It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
+   `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
+   `Model#setPerson()`.
+1. If the displayed list no longer contains the person, which happens after `view` because `view` matches every
+   field, the command shows that person again. This lets the user add several notes in a row after `view`.
+
+**Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
+are never lost because of a missing argument. A missing or invalid index or note number causes a
+`ParseException`. An index outside the displayed list, a note number the person does not have, or notes that
+would be too long cause a `CommandException`. In each case the person is unchanged.
+
+#### Design considerations
+
+**Aspect: how a note is entered**
+
+* **Alternative 1 (current choice):** Everything after the index is the note, with keywords only straight after
+  the index.
+  * Pros: Fast to type, and a note can contain `/` without being split.
+  * Cons: A note cannot start with `/edit`, `/delete` or `/clear` as its own word.
+* **Alternative 2:** A prefix such as `/note NOTE`, parsed by `ArgumentTokenizer` like other commands.
+  * Pros: Consistent with `add` and `edit`.
+  * Cons: Longer to type, and a note containing a prefix such as `/tag` would be split or rejected.
+
+**Aspect: how notes are stored**
+
+* **Alternative 1 (current choice):** A list of separate notes.
+  * Pros: Each note can be edited or deleted by its number, without retyping the others.
+  * Cons: Needs a note number for `/edit` and `/delete`.
+* **Alternative 2:** One block of free text that `remark` replaces.
+  * Pros: Simpler model.
+  * Cons: Changing one detail means retyping the whole remark.
+
 ### Find command
 
 
-The `find KEYWORD [MORE_KEYWORDS]...` command displays contacts whose names contain any of the given
-keywords as substrings, ignoring case, and returns the number of matches in the result box.
+The `find /CRITERION INPUT` command searches one selected contact field and returns the number of
+matches in the result box. Supported criteria are `/name`, `/patientNo`, `/familyNo`, `/address`,
+`/pEmail`, `/fEmail`, `/email` (either email), and `/tag`. Text searches match any whitespace-separated
+keyword as a case-insensitive substring. Phone searches require one sequence of at least two digits and
+match those digits consecutively: `87` matches `900087000`, but not `89700000`.
 It searches all stored contacts and changes the display filter without modifying stored contacts.
 
-The sequence diagram below shows a successful `find ali` command. A successful search may return zero
-matches; partial searches are allowed, so `ali` matches names such as `Ali` and `Alice`.
-The diagram focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
+The  `find KEYWORD [MORE_KEYWORDS]...` command only does name searches, of which any name matching 
+the case-insensitive substring is given.
 
-<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find ali command" />
+The sequence diagram below shows a successful `find /patientNo 87` command. A successful search may
+return zero matches. It focuses on parsing and execution; helper calls and UI updates are omitted for clarity.
 
-1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `find`
-   and creates a `FindCommandParser`.
-2. `FindCommandParser#parse()` trims the arguments and splits them on whitespace. It creates a
-   `NameContainsKeywordsPredicate` containing the keywords, then creates a `FindCommand` with that predicate.
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find /patientNo 87 command" />
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises
+   `find` and creates a `FindCommandParser`.
+2. `FindCommandParser#parse()` extracts the slash-prefixed criterion and validates the input. It creates a
+   `PersonContainsKeywordsPredicate` containing the criterion and keywords, then a `FindCommand` using that
+   predicate. Legacy name searches continue to use `NameContainsKeywordsPredicate`.
 3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
-   `NameContainsKeywordsPredicate#test()` checks whether each contact's name contains any keyword,
-   ignoring case and allowing partial matches. The UI observes the filtered list and updates the contact cards.
+   `PersonContainsKeywordsPredicate#test()` selects the requested field and checks for matching substrings.
+   Absent optional emails or tags do not match. The UI observes the filtered list and updates the contact cards.
 4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
    `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
 5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
    `MainWindow` displays the returned feedback in `ResultDisplay`.
 
-**Error handling:** Missing or whitespace-only arguments cause `FindCommandParser#parse()` to throw a
-`ParseException` with the command usage. This leaves both the stored contacts and the display filter unchanged.
+**Error handling:** Missing or whitespace-only input, an unknown slash-prefixed criterion, multiple criteria,
+or phone input other than a single sequence of at least two digits causes `FindCommandParser#parse()` to
+throw a `ParseException` with the command usage. This leaves stored contacts and the display filter unchanged.
 A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
-Use `list` to display all contacts again after a successful `find` command.
+Use `list` to display all contacts again after a successful search.
 
 
 ### \[Proposed\] Undo/redo feature
@@ -399,6 +475,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
+| `* * *`  | caregiver                                  | keep care notes on a contact | remember allergies, medication times and visiting rules |
+| `* *`    | caregiver                                  | edit or delete one care note | keep notes up to date without retyping the others |
 
 
 *{More to be added}*
@@ -513,6 +591,59 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3e1. CareBook removes that email from the person.
 
       Use case resumes at step 4.
+
+**Use case: Keep a care note on a contact**
+
+**MSS**
+
+1.  User requests to list persons
+2.  CareBook shows a list of persons
+3.  User requests to add a note to a specific person in the list
+4.  CareBook adds the note after the person's last note and shows it with its number
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The given index is invalid.
+
+    * 3a1. CareBook shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. No note is given.
+
+    * 3b1. CareBook shows the correct usage and leaves the person's notes unchanged.
+
+      Use case resumes at step 2.
+
+* 3c. The note would make the person's notes longer than 500 characters in total.
+
+    * 3c1. CareBook shows an error message suggesting to delete notes, and leaves the notes unchanged.
+
+      Use case resumes at step 2.
+
+* 3d. The user requests to edit or delete one of the person's notes by its number instead.
+
+    * 3d1. CareBook replaces or deletes that note and shows the result.
+
+      Use case ends.
+
+* 3e. The user requests to edit or delete a note number the person does not have.
+
+    * 3e1. CareBook shows an error message with the number of notes the person has.
+
+      Use case resumes at step 2.
+
+* 3f. The user requests to clear the person's notes instead.
+
+    * 3f1. CareBook deletes all of the person's notes, and the card no longer shows a `Remark:` line.
+
+      Use case ends.
 
 **Use case: List all contacts**
 
@@ -724,6 +855,44 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `edit 1 /address 1 Test Street`<br>
       Expected: The first person in the filtered list is edited, and the full list is shown again.
+
+### Keeping care notes
+
+1. Adding, editing and deleting notes
+
+   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+
+   1. Test case: `remark 1 Allergic to penicillin`<br>
+      Expected: The first contact's card shows `Remark:` and `1. Allergic to penicillin`. The status message shows the added note.
+
+   1. Test case: `remark 1 Takes /tag pills at 9am`<br>
+      Expected: The card shows the note as typed, including `/tag`, as note 2.
+
+   1. Test case: `remark 1 /edit 2 Takes pills at 10am`<br>
+      Expected: Note 2 changes. Note 1 is unchanged.
+
+   1. Test case: `remark 1 /delete 1`<br>
+      Expected: The allergy note is deleted, and the pills note becomes note 1.
+
+   1. Test case: `remark 1 /clear`<br>
+      Expected: The card no longer shows a `Remark:` line.
+
+   1. Test case: `remark 1`<br>
+      Expected: No note changes. The status message shows the correct usage.
+
+   1. Other incorrect remark commands to try: `remark 0 note`, `remark x note` (where x is larger than the list size), `remark 1 /delete 9` and `remark 1 /edit 1`<br>
+      Expected: No note changes. The status message shows error details.
+
+1. Keeping notes after other commands
+
+   1. Test case: `remark 1 Visits after 3pm`, then `edit 1 /address 1 Test Street`<br>
+      Expected: The address changes and the note is still shown.
+
+   1. Test case: `view 2`, then `remark 1 Diabetic` and `remark 1 Uses a wheelchair`<br>
+      Expected: The second contact stays on screen and has both notes.
+
+   1. Test case: Add a note, close CareBook and relaunch it.<br>
+      Expected: The note is still shown.
 
 ### Priority tags
 
