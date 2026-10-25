@@ -15,6 +15,7 @@ class JsonAdaptedTag {
 
     /**
      * Constructs a {@code JsonAdaptedTag} with the given {@code tagName}.
+     * Validation is deferred until {@link #toModelType()} is called.
      */
     @JsonCreator
     public JsonAdaptedTag(String tagName) {
@@ -23,11 +24,17 @@ class JsonAdaptedTag {
 
     /**
      * Converts a given {@code Tag} into this class for Jackson use.
+     *
+     * @param source The tag to serialize.
+     * @throws NullPointerException If {@code source} is null.
      */
     public JsonAdaptedTag(Tag source) {
         tagName = source.tagName;
     }
 
+    /**
+     * Returns the stored tag name as the JSON string value.
+     */
     @JsonValue
     public String getTagName() {
         return tagName;
@@ -36,10 +43,11 @@ class JsonAdaptedTag {
     /**
      * Converts this Jackson-friendly adapted tag object into the model's {@code Tag} object.
      *
-     * @throws IllegalValueException if there were any data constraints violated in the adapted tag.
+     * @return A tag with the stored priority name.
+     * @throws IllegalValueException If the stored name is missing or not exactly HIGH, MEDIUM, or LOW.
      */
     public Tag toModelType() throws IllegalValueException {
-        if (!Tag.isValidTagName(tagName)) {
+        if (tagName == null || !Tag.isValidTagName(tagName)) {
             throw new IllegalValueException(Tag.MESSAGE_CONSTRAINTS);
         }
         return new Tag(tagName);

@@ -1,9 +1,11 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.model.Model.PREDICATE_SHOW_NO_PERSONS;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
@@ -61,7 +63,7 @@ public class ListCommandTest {
         addressBook.addPerson(model.getAddressBook().getPersonList().get(0));
         model = new ModelManager(addressBook, new UserPrefs());
         expectedModel = new ModelManager(addressBook, new UserPrefs());
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
     }
@@ -85,6 +87,16 @@ public class ListCommandTest {
     }
 
     @Test
+    public void execute_afterSort_restoresAddedOrder() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("sort name desc").execute(model);
+        assertNotEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
+
+        assertCommandSuccess(parser.parseCommand("list"), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
+        assertEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
+    }
+
+    @Test
     public void execute_repeatedly_showsSameList() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
         ListCommand command = new ListCommand();
@@ -98,7 +110,7 @@ public class ListCommandTest {
         var deletedPerson = model.getFilteredPersonList().get(0);
         model.deletePerson(deletedPerson);
         expectedModel.deletePerson(deletedPerson);
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
     }
@@ -112,7 +124,7 @@ public class ListCommandTest {
         addressBook.addPerson(persons.get(1));
         model = new ModelManager(addressBook, new UserPrefs());
         expectedModel = new ModelManager(addressBook, new UserPrefs());
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS);
 
         assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
         assertEquals(addressBook.getPersonList(), model.getFilteredPersonList());

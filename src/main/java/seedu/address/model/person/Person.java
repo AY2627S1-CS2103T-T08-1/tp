@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Collections;
@@ -17,6 +18,8 @@ import seedu.address.model.tag.Tag;
  */
 public class Person {
 
+    public static final String MESSAGE_TAG_COUNT_CONSTRAINTS = "A contact can have at most one priority tag.";
+
     // Identity fields
     private final Name name;
     private final Phone patientNo;
@@ -27,37 +30,46 @@ public class Person {
     private final Email familyEmail;
     private final Address address;
     private final boolean archived;
+    private final CheckupAppointment checkupAppointment;
     private final Set<Tag> tags = new HashSet<>();
+    private final Remark remark;
 
     /**
      * Every field must be present and not null.
+     * The tag set must contain at most one priority and may be empty.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Address address, Set<Tag> tags) {
         this(name, patientNo, familyNo, null, null, address, tags);
     }
 
     /**
-     * Every field except email must be present and not null.
-     */
-    public Person(Name name, Phone patientNo, Phone familyNo, Email email, Address address, Set<Tag> tags) {
-        this(name, patientNo, familyNo, email, null, address, tags);
-    }
-
-    /**
      * Every field except emails must be present and not null.
+     * The tag set must contain at most one priority and may be empty.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags) {
-        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, false);
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, null, Remark.EMPTY);
+    }
+
+    /**
+     * Creates a contact with optional emails, an optional checkup appointment and a remark.
+     * The tag set must contain at most one priority and may be empty, and the remark may have no notes.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
+            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment, 
+              remark, false);
     }
 
     /**
      * Creates a person with the given details and archived status.
-     * Every field except emails must be present and not null.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
-            Address address, Set<Tag> tags, boolean archived) {
-        requireAllNonNull(name, patientNo, familyNo, address, tags);
+            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark, 
+            boolean archived) {
+        requireAllNonNull(name, patientNo, familyNo, address, tags, remark);
+        checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
+      
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
@@ -65,7 +77,9 @@ public class Person {
         this.familyEmail = familyEmail;
         this.address = address;
         this.archived = archived;
+        this.checkupAppointment = checkupAppointment;
         this.tags.addAll(tags);
+        this.remark = remark;
     }
 
     /**
@@ -94,10 +108,6 @@ public class Person {
         return familyNo;
     }
 
-    public Optional<Email> getEmail() {
-        return getPatientEmail();
-    }
-
     public Optional<Email> getPatientEmail() {
         return Optional.ofNullable(patientEmail);
     }
@@ -110,12 +120,29 @@ public class Person {
         return address;
     }
 
+    public Optional<CheckupAppointment> getCheckupAppointment() {
+        return Optional.ofNullable(checkupAppointment);
+    }
+
     /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
+     * Returns an empty set when the person has no assigned tags.
      */
     public Set<Tag> getTags() {
         return Collections.unmodifiableSet(tags);
+    }
+
+    public Remark getRemark() {
+        return remark;
+    }
+
+    /**
+     * Returns a copy of this person with {@code remark} in place of the current remark.
+     */
+    public Person withRemark(Remark remark) {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark);
     }
 
     /**
@@ -154,12 +181,15 @@ public class Person {
                 && address.equals(otherPerson.address)
                 && tags.equals(otherPerson.tags)
                 && archived == otherPerson.archived;
+                && Objects.equals(checkupAppointment, otherPerson.checkupAppointment)
+                && remark.equals(otherPerson.remark);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, archived);
+        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, archived);
     }
 
     @Override
@@ -172,6 +202,8 @@ public class Person {
                 .add("familyEmail", familyEmail)
                 .add("address", address)
                 .add("tags", tags)
+                .add("checkupAppointment", checkupAppointment)
+                .add("remark", remark)
                 .toString();
     }
 

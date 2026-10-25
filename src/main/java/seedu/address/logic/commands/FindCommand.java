@@ -1,36 +1,61 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
+
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.model.Model;
-import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 
 /**
- * Finds and lists all persons in the address book whose name contains any of the argument keywords.
- * Keyword matching is case insensitive.
+ * Finds and lists persons whose selected field contains any of the argument keywords.
+ * Keyword matching is case insensitive and allows partial matches.
  */
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Finds all persons whose names contain any of "
-            + "the specified keywords (case-insensitive) and displays them as a list with index numbers.\n"
-            + "Parameters: KEYWORD [MORE_KEYWORDS]...\n"
-            + "Example: " + COMMAND_WORD + " alice bob charlie";
+    public static final String MESSAGE_USAGE = "find /CRITERION INPUT: Finds contacts by a field "
+            + "using case-insensitive partial matches.\n"
+            + "Criteria: " + Stream.of(PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE, PREFIX_ADDRESS,
+                    PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_TAG)
+                    .map(Object::toString).collect(Collectors.joining(", ")) + ".\n"
+            + "Phone input must be one sequence of at least 2 digits; digits must occur consecutively.\n"
+            + "Example: " + COMMAND_WORD + " " + PREFIX_PATIENT_PHONE + " 87\n"
+            + "Name searches also support: find KEYWORD [MORE_KEYWORDS]...";
 
-    private final NameContainsKeywordsPredicate predicate;
+    private final Predicate<Person> predicate;
 
-    public FindCommand(NameContainsKeywordsPredicate predicate) {
-        this.predicate = predicate;
+    /**
+     * Creates a command that filters persons using {@code predicate}.
+     */
+    public FindCommand(Predicate<Person> predicate) {
+        this.predicate = requireNonNull(predicate);
     }
 
+    /**
+     * Returns false because finding persons only changes the displayed list.
+     */
     @Override
     public boolean modifiesData() {
         return false;
     }
 
+    /**
+     * Filters the displayed persons and returns the number of matches.
+     */
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
@@ -39,6 +64,9 @@ public class FindCommand extends Command {
                 String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
     }
 
+    /**
+     * Returns whether {@code other} is a find command with the same predicate.
+     */
     @Override
     public boolean equals(Object other) {
         if (other == this) {
@@ -53,6 +81,9 @@ public class FindCommand extends Command {
         return predicate.equals(otherFindCommand.predicate);
     }
 
+    /**
+     * Returns a string representation of this command and its predicate.
+     */
     @Override
     public String toString() {
         return new ToStringBuilder(this)

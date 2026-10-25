@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.TextArea?>
-<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
 
-<StackPane fx:id="placeHolder" styleClass="pane-with-border" xmlns="http://javafx.com/javafx/17"
+<VBox fx:id="placeHolder" styleClass="pane-with-border" xmlns="http://javafx.com/javafx/17"
     xmlns:fx="http://javafx.com/fxml/1">
-  <TextArea fx:id="resultDisplay" editable="false" styleClass="result-display"/>
-</StackPane>
+  <TextArea fx:id="resultDisplay" editable="false" wrapText="true" styleClass="result-display"
+            minHeight="0" VBox.vgrow="ALWAYS" />
+  <Region fx:id="resizeHandle" styleClass="panel-resize-handle" minHeight="6" prefHeight="6" maxHeight="6" />
+</VBox>

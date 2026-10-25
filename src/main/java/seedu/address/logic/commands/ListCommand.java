@@ -7,7 +7,8 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ARCHIVED_PERSONS;
 import seedu.address.model.Model;
 
 /**
- * Lists active or archived persons in the address book to the user.
+ * Lists active or archived persons in the address book to the user, in the order they were added.
+ * Clears any filter and any sort order.
  */
 public class ListCommand extends Command {
 
@@ -40,6 +41,7 @@ public class ListCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(showArchive ? PREDICATE_SHOW_ARCHIVED_PERSONS : PREDICATE_SHOW_ALL_PERSONS);
+        model.resetSortedPersonList();
         return new CommandResult(showArchive ? MESSAGE_ARCHIVE_SUCCESS : MESSAGE_SUCCESS);
     }
 }

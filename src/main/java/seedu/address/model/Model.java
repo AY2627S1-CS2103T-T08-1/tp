@@ -1,7 +1,9 @@
 package seedu.address.model;
 
+import java.util.Comparator;
 import java.util.function.Predicate;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
@@ -15,6 +17,9 @@ public interface Model {
 
     /** Predicate that selects archived persons. */
     Predicate<Person> PREDICATE_SHOW_ARCHIVED_PERSONS = Person::isArchived;
+
+    /** {@code Predicate} that always evaluates to false, hiding all persons without deleting them. */
+    Predicate<Person> PREDICATE_SHOW_NO_PERSONS = unused -> false;
 
     /**
      * Returns the user prefs.
@@ -63,12 +68,35 @@ public interface Model {
      */
     void setPerson(Person target, Person editedPerson);
 
-    /** Returns an unmodifiable view of the filtered person list */
+    /** Returns an unmodifiable view of the filtered person list, in the current sort order */
     ObservableList<Person> getFilteredPersonList();
+
+    /** Returns the selected contact, or null when no contact is selected, as a read-only property. */
+    ReadOnlyObjectProperty<Person> selectedPersonProperty();
+
+    /** Selects a contact in the displayed list, or clears selection when {@code person} is null. */
+    void selectPerson(Person person);
 
     /**
      * Updates the filter of the filtered person list to filter by the given {@code predicate}.
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
+    /**
+     * Orders the displayed person list by {@code comparator}. The stored data is not reordered.
+     * @throws NullPointerException if {@code comparator} is null.
+     */
+    void updateSortedPersonList(Comparator<Person> comparator);
+
+    /**
+     * Orders the displayed person list with the most recently added person first.
+     * The stored data is not reordered.
+     */
+    void sortPersonsByMostRecent();
+
+    /**
+     * Restores the displayed person list to the order in which persons were added.
+     */
+    void resetSortedPersonList();
 }
