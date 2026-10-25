@@ -34,6 +34,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label id;
     @FXML
+    private Label checkupAppointment;
+    @FXML
     private Label patientNo;
     @FXML
     private Label familyNo;
@@ -52,11 +54,18 @@ public class PersonCard extends UiPart<Region> {
         this.person = person;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
+        checkupAppointment.setText(getCheckupAppointmentText(person));
+        checkupAppointment.setVisible(person.getCheckupAppointment().isPresent());
+        checkupAppointment.setManaged(person.getCheckupAppointment().isPresent());
         patientNo.setText(getPatientNoText(person));
         familyNo.setText(getFamilyNoText(person));
         email.setText(getEmailText(person));
         address.setText(person.getAddress().value);
         getTagTexts(person).forEach(tagName -> tags.getChildren().add(new Label(tagName)));
+    }
+
+    static String getCheckupAppointmentText(Person person) {
+        return person.getCheckupAppointment().map(appointment -> "Check up Appointment: " + appointment).orElse("");
     }
 
     static String getPatientNoText(Person person) {
