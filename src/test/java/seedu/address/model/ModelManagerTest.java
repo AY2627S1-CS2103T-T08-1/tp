@@ -7,6 +7,9 @@ import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
+import static seedu.address.testutil.TypicalPersons.CARL;
+import static seedu.address.testutil.TypicalPersons.DANIEL;
+import static seedu.address.testutil.TypicalPersons.GEORGE;
 
 import java.util.List;
 
@@ -14,7 +17,10 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.PersonComparators;
+import seedu.address.model.person.PersonHasTagPredicate;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.PersonBuilder;
 
 public class ModelManagerTest {
 
@@ -71,6 +77,80 @@ public class ModelManagerTest {
     @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> modelManager.getFilteredPersonList().remove(0));
+    }
+
+    @Test
+    public void updateSortedPersonList_nullComparator_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> modelManager.updateSortedPersonList(null));
+    }
+
+    @Test
+    public void updateSortedPersonList_ordersDisplayedListOnly() {
+        // added in the order DANIEL, ALICE, CARL, BENSON
+        modelManager = modelWithPersonsAddedInOrder();
+
+        modelManager.updateSortedPersonList(PersonComparators.byName(true));
+        assertEquals(List.of(ALICE, BENSON, CARL, DANIEL), modelManager.getFilteredPersonList());
+
+        modelManager.updateSortedPersonList(PersonComparators.byName(false));
+        assertEquals(List.of(DANIEL, CARL, BENSON, ALICE), modelManager.getFilteredPersonList());
+
+        // stored order is untouched
+        assertEquals(List.of(DANIEL, ALICE, CARL, BENSON), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void sortPersonsByMostRecent_newestFirst() {
+        modelManager = modelWithPersonsAddedInOrder();
+
+        modelManager.sortPersonsByMostRecent();
+        assertEquals(List.of(BENSON, CARL, ALICE, DANIEL), modelManager.getFilteredPersonList());
+
+        // a person added afterwards appears first
+        modelManager.addPerson(GEORGE);
+        assertEquals(GEORGE, modelManager.getFilteredPersonList().get(0));
+
+        // stored order is untouched
+        assertEquals(List.of(DANIEL, ALICE, CARL, BENSON, GEORGE),
+                modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void sortPersonsByMostRecent_editedPersonKeepsPosition() {
+        modelManager = modelWithPersonsAddedInOrder();
+        modelManager.setPerson(ALICE, new PersonBuilder(ALICE).withTags("LOW").build());
+
+        modelManager.sortPersonsByMostRecent();
+        assertEquals(BENSON, modelManager.getFilteredPersonList().get(0));
+        assertEquals(DANIEL, modelManager.getFilteredPersonList().get(3));
+    }
+
+    @Test
+    public void sort_combinedWithFilter_sortsOnlyMatchingPersons() {
+        modelManager = modelWithPersonsAddedInOrder();
+
+        modelManager.updateFilteredPersonList(new PersonHasTagPredicate("HIGH"));
+        modelManager.updateSortedPersonList(PersonComparators.byName(true));
+        assertEquals(List.of(ALICE, DANIEL), modelManager.getFilteredPersonList());
+
+        // clearing the filter keeps the sort
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        assertEquals(List.of(ALICE, BENSON, CARL, DANIEL), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void resetSortedPersonList_restoresAddedOrder() {
+        modelManager = modelWithPersonsAddedInOrder();
+        modelManager.updateSortedPersonList(PersonComparators.byName(true));
+
+        modelManager.resetSortedPersonList();
+        assertEquals(List.of(DANIEL, ALICE, CARL, BENSON), modelManager.getFilteredPersonList());
+    }
+
+    private static ModelManager modelWithPersonsAddedInOrder() {
+        AddressBook addressBook = new AddressBookBuilder()
+                .withPerson(DANIEL).withPerson(ALICE).withPerson(CARL).withPerson(BENSON).build();
+        return new ModelManager(addressBook, new UserPrefs());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package seedu.address.model;
 
+import java.util.Comparator;
 import java.util.function.Predicate;
 
 import javafx.collections.ObservableList;
@@ -63,7 +64,7 @@ public interface Model {
      */
     void setPerson(Person target, Person editedPerson);
 
-    /** Returns an unmodifiable view of the filtered person list */
+    /** Returns an unmodifiable view of the filtered person list, in the current sort order */
     ObservableList<Person> getFilteredPersonList();
 
     /**
@@ -71,4 +72,21 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
+    /**
+     * Orders the displayed person list by {@code comparator}. The stored data is not reordered.
+     * @throws NullPointerException if {@code comparator} is null.
+     */
+    void updateSortedPersonList(Comparator<Person> comparator);
+
+    /**
+     * Orders the displayed person list with the most recently added person first.
+     * The stored data is not reordered.
+     */
+    void sortPersonsByMostRecent();
+
+    /**
+     * Restores the displayed person list to the order in which persons were added.
+     */
+    void resetSortedPersonList();
 }
