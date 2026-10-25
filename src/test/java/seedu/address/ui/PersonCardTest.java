@@ -1,15 +1,47 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.scene.Group;
+import javafx.scene.Node;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonCardTest {
+
+    @Test
+    public void updateEmailVisibility_noEmail_hidesRowAndRemovesLayoutSpace() {
+        Node emailRow = new Group();
+        Person person = new PersonBuilder().withoutEmail().build();
+
+        PersonCard.updateEmailVisibility(emailRow, PersonCard.getEmailText(person));
+
+        assertFalse(emailRow.isVisible());
+        assertFalse(emailRow.isManaged());
+    }
+
+    @Test
+    public void updateEmailVisibility_eitherEmailPresent_restoresRowAndLayoutSpace() {
+        Node emailRow = new Group();
+        List<Person> persons = List.of(
+                new PersonBuilder().withPatientEmail("patient@example.com").build(),
+                new PersonBuilder().withoutEmail().withFamilyEmail("family@example.com").build(),
+                new PersonBuilder().withPatientEmail("patient@example.com")
+                        .withFamilyEmail("family@example.com").build());
+        for (Person person : persons) {
+            PersonCard.updateEmailVisibility(emailRow, "");
+            PersonCard.updateEmailVisibility(emailRow, PersonCard.getEmailText(person));
+
+            assertTrue(emailRow.isVisible());
+            assertTrue(emailRow.isManaged());
+        }
+    }
 
     @Test
     public void getPhoneText_validPerson_returnsFormattedPhoneTexts() {

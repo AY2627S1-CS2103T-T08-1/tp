@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
@@ -55,10 +56,18 @@ public class PersonCard extends UiPart<Region> {
         patientNo.setText(getPatientNoText(person));
         familyNo.setText(getFamilyNoText(person));
         email.setText(getEmailText(person));
-        email.setVisible(!email.getText().isEmpty());
-        email.setManaged(!email.getText().isEmpty());
+        updateEmailVisibility(email, email.getText());
         address.setText(person.getAddress().value);
         getTagTexts(person).forEach(tagName -> tags.getChildren().add(new Label(tagName)));
+    }
+
+    /**
+     * Removes an empty email row from the layout and restores it when email text is present.
+     */
+    static void updateEmailVisibility(Node emailRow, String emailText) {
+        boolean hasEmail = !emailText.isEmpty();
+        emailRow.setVisible(hasEmail);
+        emailRow.setManaged(hasEmail);
     }
 
     static String getPatientNoText(Person person) {
