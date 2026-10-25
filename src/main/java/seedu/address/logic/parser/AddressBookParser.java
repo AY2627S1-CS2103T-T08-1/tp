@@ -45,10 +45,13 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        // the delete command word is case-insensitive
-        final String commandWord = matcher.group("commandWord").equalsIgnoreCase(DeleteCommand.COMMAND_WORD)
-                ? DeleteCommand.COMMAND_WORD
-                : matcher.group("commandWord");
+        // The delete and help command words are case-insensitive.
+        String commandWord = matcher.group("commandWord");
+        if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
+            commandWord = DeleteCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(HelpCommand.COMMAND_WORD)) {
+            commandWord = HelpCommand.COMMAND_WORD;
+        }
         final String arguments = matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
@@ -69,7 +72,12 @@ public class AddressBookParser {
                 yield new ListCommand();
             }
             case ExitCommand.COMMAND_WORD -> new ExitCommand();
-            case HelpCommand.COMMAND_WORD -> new HelpCommand();
+            case HelpCommand.COMMAND_WORD -> {
+                if (!arguments.trim().isEmpty()) {
+                    throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
+                }
+                yield new HelpCommand();
+            }
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             default -> {
