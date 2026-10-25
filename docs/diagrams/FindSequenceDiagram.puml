@@ -11,14 +11,14 @@ participant "r:CommandResult" as CommandResult LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
-participant "p:NameContainsKeywordsPredicate" as Predicate MODEL_COLOR
+participant "p:PersonContainsKeywordsPredicate" as Predicate MODEL_COLOR
 participant "m:Model" as Model MODEL_COLOR
 end box
 
-[-> LogicManager : execute("find ali")
+[-> LogicManager : execute("find /patientNo 87")
 activate LogicManager
 
-LogicManager -> AddressBookParser : parseCommand("find ali")
+LogicManager -> AddressBookParser : parseCommand("find /patientNo 87")
 activate AddressBookParser
 
 create FindCommandParser
@@ -28,11 +28,11 @@ activate FindCommandParser
 FindCommandParser --> AddressBookParser
 deactivate FindCommandParser
 
-AddressBookParser -> FindCommandParser : parse(" ali")
+AddressBookParser -> FindCommandParser : parse(" /patientNo 87")
 activate FindCommandParser
 
 create Predicate
-FindCommandParser -> Predicate : ["ali"]
+FindCommandParser -> Predicate : "patientNo", ["87"]
 activate Predicate
 
 Predicate --> FindCommandParser
