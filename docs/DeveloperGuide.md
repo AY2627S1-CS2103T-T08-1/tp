@@ -343,6 +343,39 @@ A search with no matches succeeds, displays an empty list, and reports `0 person
 Use `list` to display all contacts again after a successful search.
 
 
+### Sort command
+
+The `sort` command changes the order in which contacts are displayed. It supports three criteria:
+`sort priority [asc|desc]`, `sort name [asc|desc]` and `sort recent`.
+
+**Design.** `ModelManager` keeps a `SortedList` that wraps the `FilteredList`, and
+`Model#getFilteredPersonList()` returns the sorted list. This means:
+
+* A sort is applied on top of the current filter, so `filter` and `sort` combine in either order.
+* The stored contact order is never changed. `recent` depends on this: the address book keeps contacts in the
+  order they were added, so `recent` is the reverse of that order and needs no timestamp.
+* Commands that take an `INDEX` (`delete`, `edit`, `view`) read the displayed list, so the index shown on screen
+  always refers to the contact that is acted on.
+* `list` calls `Model#resetSortedPersonList()`, which restores the order contacts were added.
+
+`PersonComparators` provides the orderings:
+
+* `byName(ascending)` compares names ignoring case.
+* `byPriority(mostUrgentFirst)` orders `HIGH`, `MEDIUM`, `LOW` (or the reverse). Contacts without a priority tag
+  are always last in both directions, and ties are ordered by name. In the user-facing command, `desc` means most
+  urgent first, so `SortCommand` passes `!ascending` as `mostUrgentFirst`.
+
+How the `sort` command works:
+
+1. `AddressBookParser` recognises `sort` and creates a `SortCommandParser`.
+2. `SortCommandParser#parse()` lowercases and splits the arguments. It throws a `ParseException` if there is no
+   criterion, the criterion or direction is unknown, `recent` is given a direction, or there are extra arguments.
+   Priority defaults to descending and name defaults to ascending. It creates a `SortCommand`.
+3. `SortCommand#execute()` calls `Model#updateSortedPersonList(comparator)` (or `Model#sortPersonsByMostRecent()`
+   for `recent`) and returns a `CommandResult` describing the order.
+4. `SortCommand#modifiesData()` returns `false`, so `LogicManager` does not save. The UI observes the sorted list
+   and reorders the contact cards.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation

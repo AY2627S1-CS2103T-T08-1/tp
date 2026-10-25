@@ -123,6 +123,42 @@ Format: `list`
 The `list` command accepts no arguments. Leading and trailing spaces are allowed.
 If all persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command, use `list` to display all persons again.
+`list` also clears any `sort`, so persons are shown in the order they were added.
+
+### Sorting persons: `sort`
+
+Changes the order in which persons are displayed. Sorting only changes what you see; it does not
+reorder the saved data, and it works on top of any `find` or `filter` result.
+
+Format: `sort priority [asc|desc]`, `sort name [asc|desc]` or `sort recent`
+
+* `sort priority` orders by priority tag.
+  * `desc` (the default) shows `HIGH`, then `MEDIUM`, then `LOW`.
+  * `asc` is the reverse: `LOW`, then `MEDIUM`, then `HIGH`.
+  * Persons without a priority tag are always shown last, in either direction.
+  * Persons with the same priority are ordered by name, A to Z.
+* `sort name` orders alphabetically by name, ignoring case.
+  * `asc` (the default) shows A to Z; `desc` shows Z to A.
+* `sort recent` shows the most recently added person first. It takes no direction.
+* The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
+  lowercase.
+* Use `list` to show all persons again in the order they were added.
+
+Examples:
+* `sort priority` lists `HIGH` persons first.
+* `sort priority asc` lists `LOW` persons first.
+* `sort name desc` lists persons from Z to A.
+* `filter /tag HIGH` followed by `sort name` lists only `HIGH` persons, from A to Z.
+* `sort recent` lists the most recently added person at the top.
+
+**Common errors:**
+
+| Incorrect input | Error message | How to correct it |
+| --- | --- | --- |
+| `sort` (no criterion) | `Invalid command format!` followed by the correct usage | Give a criterion, e.g. `sort priority`. |
+| `sort address` (unknown criterion) | `Invalid command format!` followed by the correct usage | Use `priority`, `name` or `recent`. |
+| `sort priority up` (unknown direction) | `Invalid command format!` followed by the correct usage | Use `asc` or `desc`. |
+| `sort recent desc` (direction with `recent`) | `Invalid command format!` followed by the correct usage | Use `sort recent` on its own. |
 
 ### Viewing a person's full details: `view`
 
@@ -411,6 +447,7 @@ Action     | Format, Examples
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
 **Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
 **List**   | `list`
+**Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
 **Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
