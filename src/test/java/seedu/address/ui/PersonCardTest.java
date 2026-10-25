@@ -41,6 +41,9 @@ public class PersonCardTest {
             assertTrue(emailRow.isVisible());
             assertTrue(emailRow.isManaged());
         }
+    }
+
+    @Test
     public void getCheckupAppointmentText_formatsAppointmentAndOmitsAbsentAppointment() {
         assertEquals("", PersonCard.getCheckupAppointmentText(new PersonBuilder().build()));
         assertEquals("Check up Appointment: 01/01/2030 09:05", PersonCard.getCheckupAppointmentText(
