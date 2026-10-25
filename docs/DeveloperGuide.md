@@ -107,15 +107,16 @@ How the `Logic` component works, using `delete 1` as the example:
 1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex` and calls `Model#deletePerson(personToDelete)`.
 1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
 
-The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter HIGH")`.
+The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter /tag HIGH")`.
 
-<puml src="diagrams/FilterSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `filter HIGH` Command" />
+<puml src="diagrams/FilterSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `filter /tag HIGH` Command" />
 
 How the `filter` command works:
 
-1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse("HIGH")`.
-1. `FilterCommandParser` checks that the argument is one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive), and throws a `ParseException` otherwise. If valid, it creates a `PersonHasTagPredicate` for the tag, and a `FilterCommand` that holds this predicate.
-1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons with a matching tag. It does not modify the address book data.
+1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse(" /tag HIGH")`.
+1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
+1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND).
+1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons matching the criteria. It does not modify the address book data.
 1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:

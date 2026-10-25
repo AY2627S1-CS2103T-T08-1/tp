@@ -291,28 +291,35 @@ Examples:
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 * `find j` returns `John Doe`<br> ![result for 'find j'](images/findJ.png)
 
-### Filtering persons by tag: `filter`
+### Filtering persons by name, tag and address: `filter`
 
-Shows only the persons who are tagged with the given tag.
+Shows only the persons who match all the criteria you give.
 
-Format: `filter TAG`
+Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
-* `TAG` must be one of `HIGH`, `MEDIUM` or `LOW`.
-* The tag is case-insensitive; for example, `medium` matches persons tagged `MEDIUM`.
-* Only persons who have the exact tag are returned.
-* Exactly one tag must be given.
+* At least one of `/name`, `/tag` or `/address` must be given.
+* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`.
+* **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
+* **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases.
+  * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
+* When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
-* `filter MEDIUM` lists all persons tagged as `MEDIUM`.
-* `filter high` lists all persons tagged as `HIGH`.
+* `filter /tag MEDIUM` lists all persons tagged as `MEDIUM`.
+* `filter /tag HIGH /tag MEDIUM` lists all persons tagged as `HIGH` or `MEDIUM`.
+* `filter /name ali bob` lists all persons whose name contains `ali` or `bob`.
+* `filter /address clementi ave /address jurong` lists all persons whose address contains `clementi ave` or `jurong`.
+* `filter /name meier /tag HIGH /address street` lists all persons whose name contains `meier`, who are tagged `HIGH`, and whose address contains `street`.
 
 **Common errors:**
 
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
-| `filter` (no tag) | `Invalid command format!` followed by the correct usage | Supply a tag, e.g. `filter MEDIUM`. |
-| `filter URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
-| `filter HIGH LOW` (more than one tag) | `Invalid command format!` followed by the correct usage | Give only one tag per command. |
+| `filter` (no criteria) | `Invalid command format!` followed by the correct usage | Give at least one criterion, e.g. `filter /tag MEDIUM`. |
+| `filter MEDIUM` (no prefix) | `Invalid command format!` followed by the correct usage | Start each criterion with its prefix, e.g. `filter /tag MEDIUM`. |
+| `filter /name` (empty value) | `Invalid command format!` followed by the correct usage | Put a value after each prefix, e.g. `filter /name ali`. |
+| `filter /tag URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
+| `filter /tag HIGH LOW` (several tags in one prefix) | `Invalid command format!` followed by the correct usage | Repeat the prefix: `filter /tag HIGH /tag LOW`. |
 
 After a `filter` command, use `list` to display all persons again.
 
@@ -444,6 +451,8 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
+**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
 **Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
 **List**   | `list`
