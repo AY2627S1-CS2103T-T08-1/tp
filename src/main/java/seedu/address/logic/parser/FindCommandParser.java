@@ -31,8 +31,10 @@ public class FindCommandParser implements Parser<FindCommand> {
             return new FindCommand(new NameContainsKeywordsPredicate(List.of(trimmedArgs.split("\\s+"))));
         }
 
-        String criterion = tokens[0].substring(1);
-        if (!PersonContainsKeywordsPredicate.SUPPORTED_CRITERIA.contains(criterion) || tokens.length < 2) {
+        String criterion = PersonContainsKeywordsPredicate.SUPPORTED_CRITERIA.stream()
+                .filter(supported -> supported.equalsIgnoreCase(tokens[0].substring(1)))
+                .findFirst().orElse(null);
+        if (criterion == null || tokens.length < 2) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
 

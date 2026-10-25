@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -43,10 +44,25 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_fieldCriteriaIgnoreCase_returnsCanonicalFindCommand() {
+        for (String criterion : PersonContainsKeywordsPredicate.SUPPORTED_CRITERIA) {
+            FindCommand expected = new FindCommand(new PersonContainsKeywordsPredicate(criterion, List.of("87")));
+            assertParseSuccess(parser, "/" + criterion.toUpperCase(Locale.ROOT) + " 87", expected);
+            assertParseSuccess(parser, "/" + criterion.toLowerCase(Locale.ROOT) + " 87", expected);
+        }
+        FindCommand expectedTag = new FindCommand(new PersonContainsKeywordsPredicate("tag", List.of("HIGH")));
+        assertParseSuccess(parser, "/TAG HIGH", expectedTag);
+        assertParseSuccess(parser, "/TaG HIGH", expectedTag);
+        assertParseSuccess(parser, "/PaTiEnTnO 87",
+                new FindCommand(new PersonContainsKeywordsPredicate("patientNo", List.of("87"))));
+    }
+
+    @Test
     public void parse_invalidCriteriaOrInput_throwsParseException() {
         for (String input : List.of("/unknown abc", "/patientNo", "/name   ", "/address", "/email",
                 "/patientNo 8", "/familyNo 8", "/patientNo 8a", "/familyNo 8 7", "/patientNo +87",
-                "/patientNo 87.0", "/patientNo ８７", "/name Alice /address Main")) {
+                "/patientNo 87.0", "/patientNo ８７", "/name Alice /address Main", "/UNKNOWN abc",
+                "/TAG", "/PATIENTNO 8", "/FaMiLyNo 8 7", "/PATIENTNO ab")) {
             assertParseFailure(parser, input,
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
