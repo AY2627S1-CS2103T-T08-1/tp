@@ -10,8 +10,11 @@ import seedu.address.model.person.Person;
  * The API of the Model component.
  */
 public interface Model {
-    /** {@code Predicate} that always evaluates to true */
-    Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
+    /** Predicate that selects all active persons. */
+    Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = person -> !person.isArchived();
+
+    /** Predicate that selects archived persons. */
+    Predicate<Person> PREDICATE_SHOW_ARCHIVED_PERSONS = Person::isArchived;
 
     /**
      * Returns the user prefs.

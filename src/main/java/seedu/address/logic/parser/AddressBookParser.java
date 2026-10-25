@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.DeleteCommand;
@@ -58,11 +59,15 @@ public class AddressBookParser {
 
         return switch (commandWord) {
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
+            case ArchiveCommand.COMMAND_WORD -> new ArchiveCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
             case ClearCommand.COMMAND_WORD -> new ClearCommand();
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
-            case ListCommand.COMMAND_WORD -> { // Update Parser to only accept the command if only `list` is the inputi
+            case ListCommand.COMMAND_WORD -> {
+                if (arguments.trim().equals("archive")) {
+                    yield new ListCommand(true);
+                }
                 if (!arguments.trim().isEmpty()) {
                     throw new ParseException(ListCommand.MESSAGE_INVALID_FORMAT);
                 }

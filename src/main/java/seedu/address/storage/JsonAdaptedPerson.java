@@ -30,6 +30,7 @@ class JsonAdaptedPerson {
     private final String patientEmail;
     private final String familyEmail;
     private final String address;
+    private final boolean archived;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
@@ -39,16 +40,26 @@ class JsonAdaptedPerson {
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("patientNo") String patientNo,
             @JsonProperty("familyNo") String familyNo, @JsonProperty("pEmail") String patientEmail,
             @JsonProperty("fEmail") String familyEmail, @JsonProperty("email") String legacyEmail,
-            @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags) {
+            @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("archived") boolean archived) {
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
         this.patientEmail = patientEmail != null ? patientEmail : legacyEmail;
         this.familyEmail = familyEmail;
         this.address = address;
+        this.archived = archived;
         if (tags != null) {
             this.tags.addAll(tags);
         }
+    }
+
+    /**
+     * Constructs an active contact with the given details.
+     */
+    public JsonAdaptedPerson(String name, String patientNo, String familyNo, String patientEmail,
+            String familyEmail, String legacyEmail, String address, List<JsonAdaptedTag> tags) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, legacyEmail, address, tags, false);
     }
 
     /**
@@ -69,6 +80,7 @@ class JsonAdaptedPerson {
         patientEmail = source.getPatientEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         familyEmail = source.getFamilyEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         address = source.getAddress().value;
+        archived = source.isArchived();
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -140,7 +152,7 @@ class JsonAdaptedPerson {
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
         return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
-                modelAddress, modelTags);
+                modelAddress, modelTags, archived);
     }
 
 }

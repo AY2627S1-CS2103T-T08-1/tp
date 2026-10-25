@@ -105,7 +105,8 @@ public class EditCommand extends Command {
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
-        return new Person(updatedName, updatedPatientNo, updatedFamilyNo, updatedEmail, updatedAddress, updatedTags);
+        return new Person(updatedName, updatedPatientNo, updatedFamilyNo, updatedEmail,
+                personToEdit.getFamilyEmail().orElse(null), updatedAddress, updatedTags, personToEdit.isArchived());
     }
 
     @Override

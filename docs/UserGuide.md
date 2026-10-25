@@ -29,7 +29,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists all active contacts. Use `list archive` for archived contacts.
 
    * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to the CareBook.
 
@@ -62,7 +62,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
 * Extraneous parameters for commands that take no parameters, such as `help`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list` command rejects extra parameters; enter `list` on its own.
+  For example, `help 123` is interpreted as `help`. The `list` command accepts only the optional `archive` argument.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -93,21 +93,35 @@ Examples:
 * `add /name Aunty Rosalind /patientNo 81268767 /familyNo 90783658 /address Goonvale Street Block 2 #01-09`
 * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01 /tag friend`
 
-### Listing all persons: `list`
+### Archiving a contact: `archive`
 
-Shows a list of all persons in CareBook.
+Archives the contact at the displayed index, keeping its details saved while removing it from the active list.
 
-Format: `list`
+Format: `archive INDEX`
+
+* `INDEX` must be a positive integer shown in the current list, including a filtered list after `find`.
+* Example: `archive 3` archives the third displayed contact.
+* `list archive` shows archived contacts. Use `list` to return to active contacts.
+* `find` searches active contacts. Archived contacts remain archived when edited.
+* Archiving an already archived contact reports an error without changing it.
+* Archived status is saved automatically and survives restarting CareBook.
+* Archived contacts retain their identity, so adding a duplicate is still rejected.
+
+### Listing persons: `list`
+
+Shows all active (non-archived) persons in CareBook.
+
+Format: `list` or `list archive`
 
 **Common errors:**
 
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
-| `list 3` | `Invalid command format. List command format: list` | Remove the index. Use `list` to show all persons. |
-| `list Alice` or `list n/Alice` | `Invalid command format. List command format: list` | Use `find Alice` to search by name, or `list` to show all persons. |
+| `list 3` | `Invalid command format. List command format: list [archive]` | Remove the index. Use `list` to show all persons. |
+| `list Alice` or `list n/Alice` | `Invalid command format. List command format: list [archive]` | Use `find Alice` to search by name, or `list` to show all persons. |
 | `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
 
-The `list` command accepts no arguments. Leading and trailing spaces are allowed.
+The `list` command accepts only the optional `archive` argument. Leading and trailing spaces are allowed.
 If all persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command, use `list` to display all persons again.
 
@@ -198,7 +212,7 @@ Format: `exit`
 
 ### Saving the data
 
-CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
+CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit`, `archive` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
 
 ### Editing the data file
 
@@ -213,6 +227,7 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `familyNo`  | Yes      | The family member's phone number.            |
 | `email`     | No       | Leave it out if the contact has no email.    |
 | `address`   | Yes      | The contact's address.                       |
+| `archived` | No | `true` for archived contacts; defaults to `false` when omitted. |
 | `tags`      | No       | A list of tags. Use `[ ]` for no tags.       |
 
 Example:
@@ -265,6 +280,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/email EMAIL] [/address ADDRESS] [/tag TAG]... `<br> e.g.,`edit 2 /name James Lee /email jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
-**List**   | `list`
+**Archive** | `archive INDEX`<br> e.g., `archive 3`
+**List**   | `list` or `list archive`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`

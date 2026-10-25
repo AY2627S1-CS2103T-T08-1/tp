@@ -26,6 +26,7 @@ public class Person {
     private final Email patientEmail;
     private final Email familyEmail;
     private final Address address;
+    private final boolean archived;
     private final Set<Tag> tags = new HashSet<>();
 
     /**
@@ -47,6 +48,15 @@ public class Person {
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, false);
+    }
+
+    /**
+     * Creates a person with the given details and archived status.
+     * Every field except emails must be present and not null.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
+            Address address, Set<Tag> tags, boolean archived) {
         requireAllNonNull(name, patientNo, familyNo, address, tags);
         this.name = name;
         this.patientNo = patientNo;
@@ -54,7 +64,22 @@ public class Person {
         this.patientEmail = patientEmail;
         this.familyEmail = familyEmail;
         this.address = address;
+        this.archived = archived;
         this.tags.addAll(tags);
+    }
+
+    /**
+     * Returns whether this person is archived.
+     */
+    public boolean isArchived() {
+        return archived;
+    }
+
+    /**
+     * Returns a copy of this person with the given archived status.
+     */
+    public Person copyWithArchivedStatus(boolean archived) {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, archived);
     }
 
     public Name getName() {
@@ -127,13 +152,14 @@ public class Person {
                 && Objects.equals(patientEmail, otherPerson.patientEmail)
                 && Objects.equals(familyEmail, otherPerson.familyEmail)
                 && address.equals(otherPerson.address)
-                && tags.equals(otherPerson.tags);
+                && tags.equals(otherPerson.tags)
+                && archived == otherPerson.archived;
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags);
+        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, archived);
     }
 
     @Override
