@@ -240,8 +240,12 @@ For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edi
 ### Remarks
 
 The `remark` command keeps numbered care notes on a contact, such as allergies or visiting rules. One command
-word handles four actions: `remark INDEX NOTE` adds a note, and `/edit NOTE_NUMBER NOTE`, `/delete NOTE_NUMBER`
-and `/clear` after the index change existing notes.
+word accepts four formats:
+
+* `remark INDEX NOTE` adds a note after the contact's last note.
+* `remark INDEX /edit NOTE_NUMBER NOTE` replaces the note with that number.
+* `remark INDEX /delete NOTE_NUMBER` deletes the note with that number.
+* `remark INDEX /clear` deletes all of the contact's notes.
 
 #### Model and storage
 
