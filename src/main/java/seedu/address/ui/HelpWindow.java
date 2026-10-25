@@ -15,10 +15,10 @@ import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExitCommand;
+import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
-import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 
 /**
@@ -34,13 +34,12 @@ public class HelpWindow extends UiPart<Stage> {
             EditCommand.MESSAGE_USAGE,
             DeleteCommand.MESSAGE_USAGE,
             FindCommand.MESSAGE_USAGE,
+            FilterCommand.MESSAGE_USAGE,
             ListCommand.COMMAND_WORD + ": Lists all persons in the address book.\nExample: " + ListCommand.COMMAND_WORD,
             ViewCommand.MESSAGE_USAGE,
-            ClearCommand.COMMAND_WORD + ": Removes all persons from the address book.\nExample: "
-                    + ClearCommand.COMMAND_WORD,
+            ClearCommand.MESSAGE_USAGE,
             HelpCommand.MESSAGE_USAGE,
-            ExitCommand.COMMAND_WORD + ": Exits the application.\nExample: " + ExitCommand.COMMAND_WORD,
-            RemarkCommand.COMMAND_WORD + ": Not implemented yet.");
+            ExitCommand.COMMAND_WORD + ": Exits the application.\nExample: " + ExitCommand.COMMAND_WORD);
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";

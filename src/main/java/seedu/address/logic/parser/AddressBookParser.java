@@ -84,7 +84,6 @@ public class AddressBookParser {
                 }
                 yield new HelpCommand();
             }
-            case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
