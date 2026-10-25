@@ -189,7 +189,7 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 ### Viewing a contact's full details
 
 The `view INDEX` command displays one contact from the currently displayed list and returns their full details
-in the result box. It changes the display filter without modifying stored contacts.
+in a dedicated scrollable panel. It preserves the current display filter without modifying stored contacts.
 
 The sequence diagram below shows a successful `view 1` command, assuming at least one contact is displayed.
 It focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
@@ -203,18 +203,30 @@ It focuses on command parsing and execution; helper calls and UI updates are omi
    to the corresponding Java list index during execution.
 1. `ViewCommand#execute()` obtains `Model#getFilteredPersonList()` and checks that the index is in range.
    The index refers to the displayed list, so after `find Alice`, `view 1` selects the first search result.
-1. The command retrieves `personToView` before changing the filter, then calls
-   `Model#updateFilteredPersonList(person -> person.equals(personToView))` to display only that contact.
-   The UI observes the filtered list and updates the contact cards.
-1. `Messages#format()` formats the contact's details for the feedback in a new `CommandResult`.
+1. The command retrieves `personToView`, then calls `Model#selectPerson(personToView)` without changing the filter.
+   The UI observes the read-only `selectedPersonProperty()` through `Logic` to refresh `PersonDetailsPanel`
+   and highlight the selected contact in `PersonListPanel`.
+1. A new `CommandResult` confirms the selected contact's name; full details appear in the dedicated panel.
    `LogicManager` checks `ViewCommand#modifiesData()`, which returns `false`, and skips saving.
    `MainWindow` displays the returned feedback in `ResultDisplay`.
 
 **Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
 with the command usage. A parsed index outside the displayed list, including any index when that list is
 empty, causes `ViewCommand#execute()` to throw a `CommandException` with the invalid-index message.
-These errors leave both the stored contacts and the display filter unchanged. Use `list` to display all
-contacts again after a successful `view` command.
+These errors leave stored contacts, selection and the display filter unchanged.
+
+**Selection lifecycle:** `ModelManager` stores a transient contact reference, not its displayed index.
+`setPerson` replaces that reference when the selected contact is edited, including a name change.
+Deleting that contact or replacing the address book clears selection. Editing or deleting a different
+contact leaves selection unchanged. Updating a filter clears selection only if it hides the contact;
+therefore `clear` also hides the details panel. With no selection, the panel and its placeholder are
+invisible and unmanaged, so they reserve no layout space. Selection is never serialized.
+
+**Design rationale:** a separate details panel lets caregivers read complete contact information while
+retaining their position in a search or filtered list. Content-sized panels grow up to height caps, with
+vertical scrolling and bounded bottom-edge resize handles for longer content. The feedback panel uses
+the same sizing behaviour for every command. A coloured card border and a `Selected contact` heading link the
+details to the list without treating a changing list index as a permanent contact identifier.
 
 ### Priority tags
 

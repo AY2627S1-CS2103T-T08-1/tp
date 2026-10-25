@@ -2,6 +2,7 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
@@ -9,6 +10,8 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,12 +31,14 @@ public class ViewCommandTest {
         Person personToView = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         ViewCommand viewCommand = new ViewCommand(INDEX_FIRST_PERSON);
         String expectedMessage = String.format(ViewCommand.MESSAGE_VIEW_PERSON_SUCCESS,
-                Messages.format(personToView));
+                personToView.getName().fullName);
 
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(person -> person.equals(personToView));
+        expectedModel.selectPerson(personToView);
 
         assertCommandSuccess(viewCommand, model, expectedMessage, expectedModel);
+        assertEquals(personToView, model.selectedPersonProperty().get());
+        assertEquals(expectedModel.getFilteredPersonList(), model.getFilteredPersonList());
     }
 
     @Test
@@ -50,12 +55,50 @@ public class ViewCommandTest {
         Person personToView = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         ViewCommand viewCommand = new ViewCommand(INDEX_FIRST_PERSON);
         String expectedMessage = String.format(ViewCommand.MESSAGE_VIEW_PERSON_SUCCESS,
-                Messages.format(personToView));
+                personToView.getName().fullName);
 
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         expectedModel.updateFilteredPersonList(person -> person.equals(personToView));
+        expectedModel.selectPerson(personToView);
 
         assertCommandSuccess(viewCommand, model, expectedMessage, expectedModel);
+        assertEquals(personToView, model.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void execute_repeatedViews_preservesListAndChangesSelection() throws Exception {
+        List<Person> original = List.copyOf(model.getFilteredPersonList());
+        new ViewCommand(INDEX_FIRST_PERSON).execute(model);
+        new ViewCommand(INDEX_SECOND_PERSON).execute(model);
+        assertEquals(original.get(1), model.selectedPersonProperty().get());
+        assertEquals(original, model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_filteredSecondIndex_selectsSecondMatchWithoutResettingFilter() throws Exception {
+        List<Person> original = List.copyOf(model.getFilteredPersonList());
+        model.updateFilteredPersonList(person -> !person.equals(original.getFirst()));
+        List<Person> matches = List.copyOf(model.getFilteredPersonList());
+        new ViewCommand(INDEX_SECOND_PERSON).execute(model);
+        assertEquals(matches.get(1), model.selectedPersonProperty().get());
+        assertEquals(matches, model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_invalidIndex_preservesExistingSelection() throws Exception {
+        new ViewCommand(INDEX_FIRST_PERSON).execute(model);
+        Person selected = model.selectedPersonProperty().get();
+        Index invalid = Index.fromZeroBased(model.getFilteredPersonList().size());
+        assertCommandFailure(new ViewCommand(invalid), model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertEquals(selected, model.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void execute_emptyList_hasNoSelection() {
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_NO_PERSONS);
+        assertCommandFailure(new ViewCommand(INDEX_FIRST_PERSON), model,
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertNull(model.selectedPersonProperty().get());
     }
 
     @Test

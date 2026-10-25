@@ -126,14 +126,23 @@ this is normal behavior. After a `find` command, use `list` to display all perso
 
 ### Viewing a person's full details: `view`
 
-Displays only the specified person and shows their full details in the result box.
+Shows the specified person's full details in a dedicated panel above the contact list.
+The current list stays visible, so you can read details without losing your search or filter context.
 
 Format: `view INDEX`
 
 * Displays the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* Use `list` to display all persons again.
+* The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
+* The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
+  Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
+  resize it within its limit; double-click the handle to fit its contents again. New content or a change
+  in window width restores automatic sizing. With no selection, the details panel is hidden entirely.
+* Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
+* Editing the selected contact refreshes the details. Deleting it clears the panel.
+* A new search or filter clears selection if it hides the selected contact. `clear` clears both panels
+  without deleting any contacts. `list` restores the contact list, but does not reselect a contact.
 
 Example:
 * `view 2` displays the full details of the 2nd person in the displayed list.
