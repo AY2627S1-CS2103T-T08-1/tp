@@ -27,6 +27,7 @@
         </Label>
         <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
       </HBox>
+      <Label fx:id="checkupAppointment" styleClass="cell_small_label" text="\$checkupAppointment" />
       <Label fx:id="patientNo" styleClass="cell_small_label" text="\$patientNo" />
       <Label fx:id="familyNo" styleClass="cell_small_label" text="\$familyNo" />
       <Label fx:id="email" styleClass="cell_small_label" text="\$email" />

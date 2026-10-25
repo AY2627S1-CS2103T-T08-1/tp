@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
+import seedu.address.model.tag.Tag;
 import seedu.address.testutil.TypicalPersons;
 
 public class JsonSerializableAddressBookTest {
@@ -19,6 +20,9 @@ public class JsonSerializableAddressBookTest {
     private static final Path TYPICAL_PERSONS_FILE = TEST_DATA_FOLDER.resolve("typicalPersonsAddressBook.json");
     private static final Path INVALID_PERSON_FILE = TEST_DATA_FOLDER.resolve("invalidPersonAddressBook.json");
     private static final Path DUPLICATE_PERSON_FILE = TEST_DATA_FOLDER.resolve("duplicatePersonAddressBook.json");
+    private static final Path NULL_PERSON_FILE = TEST_DATA_FOLDER.resolve("nullPersonAddressBook.json");
+    private static final Path NULL_TAG_FILE = TEST_DATA_FOLDER.resolve("nullTagAddressBook.json");
+    private static final Path NO_CONTACTS_FILE = TEST_DATA_FOLDER.resolve("noContactsAddressBook.json");
 
     @Test
     public void toModelType_typicalPersonsFile_success() throws Exception {
@@ -42,6 +46,28 @@ public class JsonSerializableAddressBookTest {
                 JsonSerializableAddressBook.class).get();
         assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_DUPLICATE_PERSON,
                 dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullPerson_throwsIllegalValueException() throws Exception {
+        JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(NULL_PERSON_FILE,
+                JsonSerializableAddressBook.class).get();
+        assertThrows(IllegalValueException.class, JsonSerializableAddressBook.MESSAGE_MISSING_PERSON,
+                dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullTag_throwsIllegalValueException() throws Exception {
+        JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(NULL_TAG_FILE,
+                JsonSerializableAddressBook.class).get();
+        assertThrows(IllegalValueException.class, Tag.MESSAGE_CONSTRAINTS, dataFromFile::toModelType);
+    }
+
+    @Test
+    public void toModelType_noContactsList_returnsEmptyAddressBook() throws Exception {
+        JsonSerializableAddressBook dataFromFile = JsonUtil.readJsonFile(NO_CONTACTS_FILE,
+                JsonSerializableAddressBook.class).get();
+        assertEquals(new AddressBook(), dataFromFile.toModelType());
     }
 
 }

@@ -29,6 +29,7 @@ public class Person {
     private final Email patientEmail;
     private final Email familyEmail;
     private final Address address;
+    private final CheckupAppointment checkupAppointment;
     private final Set<Tag> tags = new HashSet<>();
     private final Remark remark;
 
@@ -46,15 +47,15 @@ public class Person {
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags) {
-        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, Remark.EMPTY);
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, null, Remark.EMPTY);
     }
 
     /**
-     * Every field except emails must be present and not null.
+     * Creates a contact with optional emails, an optional checkup appointment and a remark.
      * The tag set must contain at most one priority and may be empty, and the remark may have no notes.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
-            Address address, Set<Tag> tags, Remark remark) {
+            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark) {
         requireAllNonNull(name, patientNo, familyNo, address, tags, remark);
         checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
         this.name = name;
@@ -63,6 +64,7 @@ public class Person {
         this.patientEmail = patientEmail;
         this.familyEmail = familyEmail;
         this.address = address;
+        this.checkupAppointment = checkupAppointment;
         this.tags.addAll(tags);
         this.remark = remark;
     }
@@ -91,6 +93,10 @@ public class Person {
         return address;
     }
 
+    public Optional<CheckupAppointment> getCheckupAppointment() {
+        return Optional.ofNullable(checkupAppointment);
+    }
+
     /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
@@ -108,7 +114,8 @@ public class Person {
      * Returns a copy of this person with {@code remark} in place of the current remark.
      */
     public Person withRemark(Remark remark) {
-        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, remark);
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark);
     }
 
     /**
@@ -145,6 +152,7 @@ public class Person {
                 && Objects.equals(patientEmail, otherPerson.patientEmail)
                 && Objects.equals(familyEmail, otherPerson.familyEmail)
                 && address.equals(otherPerson.address)
+                && Objects.equals(checkupAppointment, otherPerson.checkupAppointment)
                 && tags.equals(otherPerson.tags)
                 && remark.equals(otherPerson.remark);
     }
@@ -152,7 +160,8 @@ public class Person {
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, remark);
+        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark);
     }
 
     @Override
@@ -165,6 +174,7 @@ public class Person {
                 .add("familyEmail", familyEmail)
                 .add("address", address)
                 .add("tags", tags)
+                .add("checkupAppointment", checkupAppointment)
                 .add("remark", remark)
                 .toString();
     }

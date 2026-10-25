@@ -13,7 +13,9 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.exceptions.IllegalValueException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -36,6 +38,27 @@ public class JsonAdaptedPersonTest {
     private static final List<JsonAdaptedTag> VALID_TAGS = BENSON.getTags().stream()
             .map(JsonAdaptedTag::new)
             .collect(Collectors.toList());
+
+    @Test
+    public void jsonRoundTrip_preservesCheckupIncludingPastAppointments() throws Exception {
+        Person scheduled = new PersonBuilder(BENSON).withCheckupAppointment("01/01/2000 09:05").build();
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(scheduled));
+        assertEquals(scheduled, JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
+    public void jsonWithoutCheckup_loadsExistingContacts() throws Exception {
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(BENSON));
+        json = json.replaceAll(",\\s*\"checkupAppointment\"\\s*:\\s*null", "");
+        assertEquals(BENSON, JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
+    public void toModelType_invalidCheckup_rejectsMalformedSavedDate() {
+        JsonAdaptedPerson adapted = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, "31/02/2030 12:00", null);
+        assertThrows(IllegalValueException.class, CheckupAppointment.MESSAGE_CONSTRAINTS, adapted::toModelType);
+    }
 
     @Test
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
@@ -62,7 +85,7 @@ public class JsonAdaptedPersonTest {
     public void toModelType_invalidRemarks_throwsIllegalValueException() {
         for (List<String> invalidNotes : List.of(List.of(" "), Arrays.asList("note", null))) {
             JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
-                    VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, invalidNotes);
+                    VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, null, invalidNotes);
             assertThrows(IllegalValueException.class, Remark.MESSAGE_CONSTRAINTS, person::toModelType);
         }
     }
@@ -70,7 +93,8 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_remarksTooLong_throwsIllegalValueException() {
         JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
-                VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, List.of("a".repeat(300), "b".repeat(201)));
+                VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, null,
+                List.of("a".repeat(300), "b".repeat(201)));
         assertThrows(IllegalValueException.class, Remark.MESSAGE_TOO_LONG, person::toModelType);
     }
 

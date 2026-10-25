@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.person.Address;
+import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
@@ -31,6 +32,7 @@ class JsonAdaptedPerson {
     private final String patientEmail;
     private final String familyEmail;
     private final String address;
+    private final String checkupAppointment;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final List<String> remarks = new ArrayList<>();
 
@@ -42,6 +44,7 @@ class JsonAdaptedPerson {
             @JsonProperty("familyNo") String familyNo, @JsonProperty("pEmail") String patientEmail,
             @JsonProperty("fEmail") String familyEmail, @JsonProperty("email") String legacyEmail,
             @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags,
+            @JsonProperty("checkupAppointment") String checkupAppointment,
             @JsonProperty("remarks") List<String> remarks) {
         this.name = name;
         this.patientNo = patientNo;
@@ -49,6 +52,7 @@ class JsonAdaptedPerson {
         this.patientEmail = patientEmail != null ? patientEmail : legacyEmail;
         this.familyEmail = familyEmail;
         this.address = address;
+        this.checkupAppointment = checkupAppointment;
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -59,11 +63,19 @@ class JsonAdaptedPerson {
     }
 
     /**
-     * Constructs a {@code JsonAdaptedPerson} with one legacy email and no remarks.
+     * Constructs an adapted contact without a checkup appointment or remarks.
+     */
+    public JsonAdaptedPerson(String name, String patientNo, String familyNo, String patientEmail,
+            String familyEmail, String legacyEmail, String address, List<JsonAdaptedTag> tags) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, legacyEmail, address, tags, null, null);
+    }
+
+    /**
+     * Constructs a {@code JsonAdaptedPerson} with one legacy email, and no checkup appointment or remarks.
      */
     public JsonAdaptedPerson(String name, String patientNo, String familyNo, String email, String address,
             List<JsonAdaptedTag> tags) {
-        this(name, patientNo, familyNo, email, null, null, address, tags, null);
+        this(name, patientNo, familyNo, email, null, null, address, tags);
     }
 
     /**
@@ -76,6 +88,7 @@ class JsonAdaptedPerson {
         patientEmail = source.getPatientEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         familyEmail = source.getFamilyEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         address = source.getAddress().value;
+        checkupAppointment = source.getCheckupAppointment().map(CheckupAppointment::toString).orElse(null);
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -90,6 +103,10 @@ class JsonAdaptedPerson {
     public Person toModelType() throws IllegalValueException {
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
+            // a hand-edited file may contain null in the tag list
+            if (tag == null) {
+                throw new IllegalValueException(Tag.MESSAGE_CONSTRAINTS);
+            }
             personTags.add(tag.toModelType());
         }
 
@@ -150,8 +167,14 @@ class JsonAdaptedPerson {
         if (modelTags.size() > 1) {
             throw new IllegalValueException(Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
         }
+        final CheckupAppointment modelAppointment;
+        try {
+            modelAppointment = checkupAppointment == null ? null : new CheckupAppointment(checkupAppointment);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalValueException(CheckupAppointment.MESSAGE_CONSTRAINTS);
+        }
         return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
-                modelAddress, modelTags, toModelRemark());
+                modelAddress, modelTags, modelAppointment, toModelRemark());
     }
 
     /**
