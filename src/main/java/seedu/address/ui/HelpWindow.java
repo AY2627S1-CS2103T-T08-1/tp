@@ -35,11 +35,11 @@ public class HelpWindow extends UiPart<Stage> {
             DeleteCommand.MESSAGE_USAGE,
             FindCommand.MESSAGE_USAGE,
             FilterCommand.MESSAGE_USAGE,
-            ListCommand.COMMAND_WORD + ": Lists all persons in the address book.\nExample: " + ListCommand.COMMAND_WORD,
+            ListCommand.MESSAGE_USAGE,
             ViewCommand.MESSAGE_USAGE,
             ClearCommand.MESSAGE_USAGE,
             HelpCommand.MESSAGE_USAGE,
-            ExitCommand.COMMAND_WORD + ": Exits the application.\nExample: " + ExitCommand.COMMAND_WORD);
+            ExitCommand.MESSAGE_USAGE);
 
     private static final Logger logger = LogsCenter.getLogger(HelpWindow.class);
     private static final String FXML = "HelpWindow.fxml";
