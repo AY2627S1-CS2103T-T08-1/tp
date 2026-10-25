@@ -96,8 +96,18 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_exit() throws Exception {
-        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
-        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
+        for (String input : List.of("exit", "exit   ", "  exit  ", "\texit\t", "\nexit\r\n")) {
+            assertTrue(parser.parseCommand(input) instanceof ExitCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_exitWithArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ExitCommand.MESSAGE_USAGE);
+        for (String input : List.of("exit 1", "exit Alice", "exit /name Alice", "exit --help",
+                "exit\tAlice", "  exit Alice  ", "exit Alice Bob", "exit !")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
+        }
     }
 
     @Test

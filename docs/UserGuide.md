@@ -61,9 +61,9 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
-* Extraneous parameters for `help` and `exit` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list` and `clear` commands reject extra parameters;
-  enter either command on its own.
+* Extraneous parameters for `help` are ignored.<br>
+  For example, `help 123` is interpreted as `help`. The `list`, `clear` and `exit` commands reject extra parameters;
+  enter these commands on their own.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -400,6 +400,16 @@ Input | Error message shown | How to fix
 Exits the program.
 
 Format: `exit`
+
+Trailing whitespace is allowed. Extra arguments are rejected to prevent accidental exits:
+`exit Alice` or `exit 1` leaves CareBook open without changing any contacts and shows:
+
+```text
+Invalid command format!
+Exit takes no arguments.
+To close CareBook, enter: exit
+No contacts have been changed.
+```
 
 ### Saving the data
 
