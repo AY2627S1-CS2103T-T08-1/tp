@@ -162,17 +162,40 @@ Examples:
 
 ### Viewing a person's full details: `view`
 
-Displays only the specified person and shows their full details in the result box.
+Shows the specified person's full details in a dedicated panel above the contact list.
+The current list stays visible, so you can read details without losing your search or filter context.
 
 Format: `view INDEX`
 
 * Displays the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* Use `list` to display all persons again.
+* The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
+* The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
+  Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
+  resize it within its limit; double-click the handle to fit its contents again. New content or a change
+  in window width restores automatic sizing. With no selection, the details panel is hidden entirely.
+* Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
+* The details panel also shows the checkup appointment (`Not scheduled` if absent) and all numbered
+  remarks (`None` if absent). Updating the selected contact's appointment or remarks refreshes the panel.
+* After filtering or sorting, use the index in the list currently on screen. For example,
+  `filter /tag HIGH`, `sort name desc`, then `view 1` selects the first contact in those sorted results.
+* Editing the selected contact refreshes the details. Deleting it clears the panel.
+* A new search or filter clears selection if it hides the selected contact. `clear` clears both panels
+  without deleting any contacts. `list` restores the contact list, but does not reselect a contact.
 
 Example:
 * `view 2` displays the full details of the 2nd person in the displayed list.
+
+Common errors:
+
+| Input | Error message shown | How to fix |
+| --- | --- | --- |
+| `view 3` when 2 contacts are displayed | `Index 3 is out of range. The displayed list has 2 contacts. Enter an index from 1 to 2.` | Use an index shown in the current list. |
+| `view 1` when no contacts are displayed, including after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. If no contacts are saved, add one. |
+
+These errors leave contacts, the current list and selection unchanged. `view` never falls back to
+selecting a contact from the full stored list when that contact is not currently displayed.
 
 ### Editing a person: `edit`
 

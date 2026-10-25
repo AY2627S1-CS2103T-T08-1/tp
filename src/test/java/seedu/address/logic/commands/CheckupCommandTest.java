@@ -86,10 +86,11 @@ public class CheckupCommandTest {
         model.addPerson(alice);
         model.addPerson(bob);
         new ViewCommand(Index.fromOneBased(2)).execute(model);
-        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+        new CheckupCommand(Index.fromOneBased(2), appointment).execute(model);
         Person updatedBob = new PersonBuilder(bob).withCheckupAppointment(appointment.toString()).build();
-        assertEquals(List.of(updatedBob), model.getFilteredPersonList());
+        assertEquals(List.of(alice, updatedBob), model.getFilteredPersonList());
         assertEquals(List.of(alice, updatedBob), model.getAddressBook().getPersonList());
+        assertEquals(updatedBob, model.selectedPersonProperty().get());
     }
 
     @Test

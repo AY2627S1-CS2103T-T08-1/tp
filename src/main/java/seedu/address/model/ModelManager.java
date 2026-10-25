@@ -7,6 +7,8 @@ import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -24,6 +26,8 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
+    /** Transient display selection; never written to the address book file. */
+    private final ReadOnlyObjectWrapper<Person> selectedPerson = new ReadOnlyObjectWrapper<>();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -66,6 +70,7 @@ public class ModelManager implements Model {
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
         this.addressBook.resetData(addressBook);
+        selectedPerson.set(null);
     }
 
     @Override
@@ -82,6 +87,9 @@ public class ModelManager implements Model {
     @Override
     public void deletePerson(Person target) {
         addressBook.removePerson(target);
+        if (target.equals(selectedPerson.get())) {
+            selectedPerson.set(null);
+        }
     }
 
     @Override
@@ -95,6 +103,9 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         addressBook.setPerson(target, editedPerson);
+        if (target.equals(selectedPerson.get())) {
+            selectedPerson.set(editedPerson);
+        }
     }
 
     //=========== Filtered Person List Accessors =============================================================
@@ -109,9 +120,25 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public ReadOnlyObjectProperty<Person> selectedPersonProperty() {
+        return selectedPerson.getReadOnlyProperty();
+    }
+
+    @Override
+    public void selectPerson(Person person) {
+        if (person != null && !filteredPersons.contains(person)) {
+            throw new IllegalArgumentException("Only a displayed contact can be selected.");
+        }
+        selectedPerson.set(person);
+    }
+
+    @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
         filteredPersons.setPredicate(predicate);
+        if (!filteredPersons.contains(selectedPerson.get())) {
+            selectedPerson.set(null);
+        }
     }
 
     //=========== Sorted Person List Accessors ===============================================================

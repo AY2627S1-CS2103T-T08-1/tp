@@ -191,7 +191,7 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 ### Viewing a contact's full details
 
 The `view INDEX` command displays one contact from the currently displayed list and returns their full details
-in the result box. It changes the display filter without modifying stored contacts.
+in a dedicated scrollable panel. It preserves the current display filter without modifying stored contacts.
 
 The sequence diagram below shows a successful `view 1` command, assuming at least one contact is displayed.
 It focuses on command parsing and execution; helper calls and UI updates are omitted for clarity.
@@ -205,18 +205,38 @@ It focuses on command parsing and execution; helper calls and UI updates are omi
    to the corresponding Java list index during execution.
 1. `ViewCommand#execute()` obtains `Model#getFilteredPersonList()` and checks that the index is in range.
    The index refers to the displayed list, so after `find Alice`, `view 1` selects the first search result.
-1. The command retrieves `personToView` before changing the filter, then calls
-   `Model#updateFilteredPersonList(person -> person.equals(personToView))` to display only that contact.
-   The UI observes the filtered list and updates the contact cards.
-1. `Messages#format()` formats the contact's details for the feedback in a new `CommandResult`.
+1. The command retrieves `personToView`, then calls `Model#selectPerson(personToView)` without changing the filter.
+   The UI observes the read-only `selectedPersonProperty()` through `Logic` to refresh `PersonDetailsPanel`
+   and highlight the selected contact in `PersonListPanel`.
+1. A new `CommandResult` confirms the selected contact's name; full details appear in the dedicated panel.
    `LogicManager` checks `ViewCommand#modifiesData()`, which returns `false`, and skips saving.
    `MainWindow` displays the returned feedback in `ResultDisplay`.
 
 **Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
-with the command usage. A parsed index outside the displayed list, including any index when that list is
-empty, causes `ViewCommand#execute()` to throw a `CommandException` with the invalid-index message.
-These errors leave both the stored contacts and the display filter unchanged. Use `list` to display all
-contacts again after a successful `view` command.
+with the command usage. During execution, `ViewCommand#validateTargetIndex()` distinguishes an empty
+displayed list from an index outside a non-empty list. An empty display produces recovery instructions
+to use `list` or `find KEYWORD`; an out-of-range index reports the supplied index, displayed count and valid
+range. Both cases throw a `CommandException` and never select from the full stored list as a fallback.
+These errors leave stored contacts, selection and the display filter unchanged.
+
+**Selection lifecycle:** `ModelManager` stores a transient contact reference, not its displayed index.
+`setPerson` replaces that reference when the selected contact is edited, including a name change.
+Deleting that contact or replacing the address book clears selection. Editing or deleting a different
+contact leaves selection unchanged. Updating a filter clears selection only if it hides the contact;
+therefore `clear` also hides the details panel. With no selection, the panel and its placeholder are
+invisible and unmanaged, so they reserve no layout space. Selection is never serialized.
+
+**Cross-feature integration:** `getFilteredPersonList()` exposes the `SortedList` over the filtered
+contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
+contact rather than selecting whichever contact moves into its former row. `PersonDetailsFormatter`
+includes the optional checkup appointment and every numbered remark. Replacing the selected immutable
+`Person` through `setPerson()` refreshes these details without changing the current filter or sort.
+
+**Design rationale:** a separate details panel lets caregivers read complete contact information while
+retaining their position in a search or filtered list. Content-sized panels grow up to height caps, with
+vertical scrolling and bounded bottom-edge resize handles for longer content. The feedback panel uses
+the same sizing behaviour for every command. A coloured card border and a `Selected contact` heading link the
+details to the list without treating a changing list index as a permanent contact identifier.
 
 ### Priority tags
 
@@ -277,8 +297,11 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
    It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
    `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
    `Model#setPerson()`.
-1. If the displayed list no longer contains the person, which happens after `view` because `view` matches every
-   field, the command shows that person again. This lets the user add several notes in a row after `view`.
+1. `view` now selects a contact without narrowing the displayed list. `Model#setPerson()` updates the
+   selected contact reference, so changes to its notes appear immediately in the details panel while
+   the current filter and sort order are preserved. The command retains a fallback for a predicate that
+   no longer contains the replaced person; ordinary name, address and priority filters are unaffected
+   by changes to notes.
 
 **Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
 are never lost because of a missing argument. A missing or invalid index or note number causes a
@@ -316,7 +339,7 @@ keyword as a case-insensitive substring. Phone searches require one sequence of 
 match those digits consecutively: `87` matches `900087000`, but not `89700000`.
 It searches all stored contacts and changes the display filter without modifying stored contacts.
 
-The  `find KEYWORD [MORE_KEYWORDS]...` command only does name searches, of which any name matching 
+The  `find KEYWORD [MORE_KEYWORDS]...` command only does name searches, of which any name matching
 the case-insensitive substring is given.
 
 The sequence diagram below shows a successful `find /patientNo 87` command. A successful search may
@@ -714,44 +737,43 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS:**
 
-1. User requests to view contact details 
-2. CareBook validates the command format
-3. CareBook searches for contacts whose full name matches the given name exactly 
-4. CareBook displays the matching contact’s name, patient phone number, family phone number, and address
+1. User requests to view a contact using its index in the currently displayed list.
+2. CareBook validates the command format.
+3. CareBook retrieves the contact at the specified index in the currently displayed list.
+4. CareBook shows the contact's full details in the details panel and highlights the contact in the list.
+   The current list and stored contact details remain unchanged.
 
    Use case ends.
 
 **Extensions**
 
-*1a. User enters details without contact name. 
+* 2a. The command word is invalid.
 
-    *1a1. CareBook displays error message. 
-        
-        Use case ends. 
+    * 2a1. CareBook displays an unknown-command error.
 
-*1b. The user enters extra spaces between the name and details.
+      Use case ends.
 
-    *1b1. CareBook ignores the extra spaces and processes request. 
-        
-        User case resumes at step 2. 
+* 2b. The index is missing, non-numeric, non-positive, or followed by extra arguments.
 
-*2a. The command word is invalid.
-    
-    *2a1. CareBook displays error message. 
+    * 2b1. CareBook displays an invalid-format error with the correct usage and an example.
 
-        Use case ends. 
+      Use case ends.
 
-*3a. No contact matches given name.
+* 3a. The currently displayed list is empty, including after `clear` or a search with no matches.
 
-    *3a1. CareBook displays error message.
+    * 3a1. CareBook explains that no contacts are displayed and suggests using `list` or `find KEYWORD`.
 
-        Use case ends.
+      Use case ends.
 
-*3b. Multiple contacts have the same name 
+* 3b. The index exceeds the number of contacts in the currently displayed list.
 
-    *3b1. CareBook displays details of all matching contacts 
+    * 3b1. CareBook reports the entered index, displayed contact count and valid index range.
 
-        Use case ends. 
+      Use case ends.
+
+Leading and trailing whitespace is ignored during command validation. After filtering, the index refers
+to a position in the filtered results, not the full stored list. Unsuccessful requests leave stored
+contacts, selection and the displayed list unchanged; there is no fallback to the full stored list.
 
 **Use case: Save contact list after an update**
 
