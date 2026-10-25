@@ -44,11 +44,10 @@ class JsonAdaptedTag {
      * Converts this Jackson-friendly adapted tag object into the model's {@code Tag} object.
      *
      * @return A tag with the stored priority name.
-     * @throws IllegalValueException If the stored name is not exactly HIGH, MEDIUM, or LOW.
-     * @throws NullPointerException If the stored name is null.
+     * @throws IllegalValueException If the stored name is missing or not exactly HIGH, MEDIUM, or LOW.
      */
     public Tag toModelType() throws IllegalValueException {
-        if (!Tag.isValidTagName(tagName)) {
+        if (tagName == null || !Tag.isValidTagName(tagName)) {
             throw new IllegalValueException(Tag.MESSAGE_CONSTRAINTS);
         }
         return new Tag(tagName);

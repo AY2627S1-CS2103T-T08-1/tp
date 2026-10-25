@@ -123,6 +123,42 @@ Format: `list`
 The `list` command accepts no arguments. Leading and trailing spaces are allowed.
 If all persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command, use `list` to display all persons again.
+`list` also clears any `sort`, so persons are shown in the order they were added.
+
+### Sorting persons: `sort`
+
+Changes the order in which persons are displayed. Sorting only changes what you see; it does not
+reorder the saved data, and it works on top of any `find` or `filter` result.
+
+Format: `sort priority [asc|desc]`, `sort name [asc|desc]` or `sort recent`
+
+* `sort priority` orders by priority tag.
+  * `desc` (the default) shows `HIGH`, then `MEDIUM`, then `LOW`.
+  * `asc` is the reverse: `LOW`, then `MEDIUM`, then `HIGH`.
+  * Persons without a priority tag are always shown last, in either direction.
+  * Persons with the same priority are ordered by name, A to Z.
+* `sort name` orders alphabetically by name, ignoring case.
+  * `asc` (the default) shows A to Z; `desc` shows Z to A.
+* `sort recent` shows the most recently added person first. It takes no direction.
+* The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
+  lowercase.
+* Use `list` to show all persons again in the order they were added.
+
+Examples:
+* `sort priority` lists `HIGH` persons first.
+* `sort priority asc` lists `LOW` persons first.
+* `sort name desc` lists persons from Z to A.
+* `filter /tag HIGH` followed by `sort name` lists only `HIGH` persons, from A to Z.
+* `sort recent` lists the most recently added person at the top.
+
+**Common errors:**
+
+| Incorrect input | Error message | How to correct it |
+| --- | --- | --- |
+| `sort` (no criterion) | `Invalid command format!` followed by the correct usage | Give a criterion, e.g. `sort priority`. |
+| `sort address` (unknown criterion) | `Invalid command format!` followed by the correct usage | Use `priority`, `name` or `recent`. |
+| `sort priority up` (unknown direction) | `Invalid command format!` followed by the correct usage | Use `asc` or `desc`. |
+| `sort recent desc` (direction with `recent`) | `Invalid command format!` followed by the correct usage | Use `sort recent` on its own. |
 
 ### Viewing a person's full details: `view`
 
@@ -172,20 +208,84 @@ Examples:
 | `edit 1 /name Bernice Yu` (another person already has this name) | `This person already exists in CareBook.` | Use a name that no other person in CareBook has. |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
 
-### Locating persons by name: `find`
+### Keeping care notes on a person: `remark`
 
-Finds persons whose names contain any of the given keywords. Partial matches are now supported.
+Keeps numbered notes on a person, such as allergies, medication times or visiting rules.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Format:
+* `remark INDEX NOTE` adds `NOTE` after the person's last note.
+* `remark INDEX /edit NOTE_NUMBER NOTE` replaces note `NOTE_NUMBER` with `NOTE`.
+* `remark INDEX /delete NOTE_NUMBER` deletes note `NOTE_NUMBER`.
+* `remark INDEX /clear` deletes all of the person's notes.
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* Persons matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`
-* The search considers only names.
-* Partial finds are supported; for example, `ha` matches `Hans`, `Johan` and `Anne Ha`.
-* The substring must match; for example, `ha` will not match `Henry Avril`.
+* The index refers to the index number shown in the displayed person list. The index and note number **must be positive integers** 1, 2, 3, ...
+* The notes appear on the person's card under `Remark:`, numbered 1., 2., 3., ... A person with no notes shows no `Remark:` line.
+* Everything after the index is kept exactly as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note.
+* `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case.
+* `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
+* A person's notes can have at most 500 characters in total.
+* `edit` does not change a person's notes.
 
 Examples:
+* `remark 1 Allergic to penicillin` adds the note `Allergic to penicillin` to the 1st person.
+* `remark 1 Visits after 3pm only` adds a 2nd note to the 1st person.
+* `remark 1 /edit 2 Visits after 4pm only` replaces the 1st person's 2nd note.
+* `remark 1 /delete 1` deletes the 1st person's 1st note, so `Visits after 4pm only` becomes note 1.
+* `remark 3 /clear` deletes all notes of the 3rd person.
+
+**Common errors:**
+
+| Incorrect input | Error message | How to correct it |
+| --- | --- | --- |
+| `remark 1` (no note) | `Invalid command format!` followed by the correct usage | Add a note, e.g. `remark 1 Allergic to penicillin`, or use `remark 1 /clear` to delete all notes. |
+| `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
+| `remark 99 Diabetic` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
+| `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
+| `remark 1 /delete abc` | `Note number must be a positive integer.` | Use the number shown before the note, e.g. `remark 1 /delete 2`. |
+| `remark 1 /edit 2` (no new note) | `Invalid command format!` followed by the correct usage | Add the new note, e.g. `remark 1 /edit 2 Visits after 4pm`. |
+| `remark 1 /clear all` | `Invalid command format!` followed by the correct usage | Enter `remark 1 /clear` with nothing after it. |
+| A note that takes the person's notes past 500 characters | `A contact's notes can be at most 500 characters in total. Use /delete to remove a note or /clear to remove them all.` | Shorten the note, or delete notes you no longer need. |
+
+### Locating persons: `find`
+
+Finds persons by the selected contact field using partial matches.
+
+Format: `find /CRITERION INPUT` and `find KEYWORD`
+
+For `find /CRITERION INPUT`:
+
+| Criterion | Searches |
+|-----------|----------|
+| `/name` | Contact name |
+| `/patientNo` | Patient phone number |
+| `/familyNo` | Family phone number |
+| `/address` | Address |
+| `/pEmail` | Patient email |
+| `/fEmail` | Family email |
+| `/email` | Either patient or family email |
+| `/tag` | Priority tag |
+
+* `find KEYWORD` searches by name. Any name containing the input substring, case-insensitive, will be returned.
+
+For `find /CRITERION INPUT`:
+
+* Use exactly one criterion, spelled as shown above, and provide a non-empty input.
+* Phone searches require one sequence of at least **two digits**, with no spaces or other characters.
+  The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
+* Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
+  `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
+* For non-phone searches, whitespace separates keywords. A contact matches if the selected field contains
+  at least one keyword (an `OR` search); keyword order does not matter.
+* Contacts without an optional email or tag do not match searches on that absent field.
+* Searches consider all stored contacts, replacing the current display filter without changing stored data.
+  Use `list` to display all contacts again. A search with no matches displays an empty list.
+* Missing input, an unknown criterion, multiple criteria, or invalid phone input produces an error and
+  leaves the displayed list unchanged.
+
+Examples:
+* `find /patientNo 87` finds patient numbers containing `87` consecutively.
+* `find /email gmail` searches both email fields for `gmail`.
+* `find /address street` searches addresses for `street`.
 * `find John` returns `john` and `John Doe`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
@@ -297,6 +397,7 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
+| `remarks`   | No       | A list of the contact's notes in order, e.g. `[ "Allergic to penicillin" ]`. Each note must not be blank or start with a space, and the notes can have at most 500 characters in total. Leave it out or use `[]` for no notes. |
 
 Example:
 
@@ -352,6 +453,10 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
+**Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
+**Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
 **List**   | `list`
+**Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
+**Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`
