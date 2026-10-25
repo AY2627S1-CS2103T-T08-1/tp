@@ -44,6 +44,7 @@ public class FilterCommand extends Command {
      * Creates a command that filters persons using {@code predicate}.
      */
     public FilterCommand(PersonMatchesFilterPredicate predicate) {
+        requireNonNull(predicate);
         this.predicate = predicate;
     }
 
