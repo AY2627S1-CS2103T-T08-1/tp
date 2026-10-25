@@ -101,7 +101,21 @@ public class ContactDetailsUiTest {
             assertFalse(window.detailsPanel().isVisible());
             window.enter("view 99");
             assertFalse(window.detailsPanel().isVisible());
-            assertTrue(window.feedback().getText().contains("invalid"));
+            assertEquals("Index 99 is out of range. The displayed list has 1 contact. Enter an index from 1 to 1.",
+                    window.feedback().getText());
+        });
+    }
+
+    @Test
+    public void viewAfterClear_explainsRecoveryWithoutOpeningDetails() throws Exception {
+        withWindow(window -> {
+            window.enter("view 1");
+            window.enter("clear");
+            window.enter("view 1");
+            assertFalse(window.detailsPanel().isVisible());
+            assertTrue(window.model.getFilteredPersonList().isEmpty());
+            assertEquals("No contacts are currently displayed. "
+                    + "Use list to show all contacts, or find KEYWORD to search.", window.feedback().getText());
         });
     }
 

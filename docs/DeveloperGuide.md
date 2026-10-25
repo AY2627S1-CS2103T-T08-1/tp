@@ -211,8 +211,10 @@ It focuses on command parsing and execution; helper calls and UI updates are omi
    `MainWindow` displays the returned feedback in `ResultDisplay`.
 
 **Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
-with the command usage. A parsed index outside the displayed list, including any index when that list is
-empty, causes `ViewCommand#execute()` to throw a `CommandException` with the invalid-index message.
+with the command usage. During execution, `ViewCommand#validateTargetIndex()` distinguishes an empty
+displayed list from an index outside a non-empty list. An empty display produces recovery instructions
+to use `list` or `find KEYWORD`; an out-of-range index reports the supplied index, displayed count and valid
+range. Both cases throw a `CommandException` and never select from the full stored list as a fallback.
 These errors leave stored contacts, selection and the display filter unchanged.
 
 **Selection lifecycle:** `ModelManager` stores a transient contact reference, not its displayed index.

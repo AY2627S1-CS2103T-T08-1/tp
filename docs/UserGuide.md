@@ -147,6 +147,16 @@ Format: `view INDEX`
 Example:
 * `view 2` displays the full details of the 2nd person in the displayed list.
 
+Common errors:
+
+| Input | Error message shown | How to fix |
+| --- | --- | --- |
+| `view 3` when 2 contacts are displayed | `Index 3 is out of range. The displayed list has 2 contacts. Enter an index from 1 to 2.` | Use an index shown in the current list. |
+| `view 1` when no contacts are displayed, including after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. If no contacts are saved, add one. |
+
+These errors leave contacts, the current list and selection unchanged. `view` never falls back to
+selecting a contact from the full stored list when that contact is not currently displayed.
+
 ### Editing a person: `edit`
 
 Edits an existing person in CareBook.

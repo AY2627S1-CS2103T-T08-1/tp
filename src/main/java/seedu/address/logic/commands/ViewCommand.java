@@ -6,7 +6,6 @@ import java.util.List;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -24,6 +23,12 @@ public class ViewCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1";
 
     public static final String MESSAGE_VIEW_PERSON_SUCCESS = "Viewing person: %1$s";
+
+    public static final String MESSAGE_EMPTY_LIST = "No contacts are currently displayed. "
+            + "Use list to show all contacts, or find KEYWORD to search.";
+
+    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "Index %1$d is out of range. "
+            + "The displayed list has %2$d %3$s. Enter an index from 1 to %2$d.";
 
     private final Index targetIndex;
 
@@ -44,13 +49,27 @@ public class ViewCommand extends Command {
         requireNonNull(model);
         List<Person> lastShownList = model.getFilteredPersonList();
 
-        if (targetIndex.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
+        validateTargetIndex(lastShownList.size());
 
         Person personToView = lastShownList.get(targetIndex.getZeroBased());
         model.selectPerson(personToView);
         return new CommandResult(String.format(MESSAGE_VIEW_PERSON_SUCCESS, personToView.getName().fullName));
+    }
+
+    /**
+     * Checks the displayed index and explains how to recover when the contact cannot be selected.
+     *
+     * @throws CommandException if the list is empty or the index is outside its range.
+     */
+    private void validateTargetIndex(int displayedCount) throws CommandException {
+        if (displayedCount == 0) {
+            throw new CommandException(MESSAGE_EMPTY_LIST);
+        }
+        if (targetIndex.getZeroBased() >= displayedCount) {
+            String contactNoun = displayedCount == 1 ? "contact" : "contacts";
+            throw new CommandException(String.format(MESSAGE_INDEX_OUT_OF_RANGE,
+                    targetIndex.getOneBased(), displayedCount, contactNoun));
+        }
     }
 
     @Override
