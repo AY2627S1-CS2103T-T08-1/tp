@@ -3,8 +3,10 @@ package seedu.address.ui;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Remark;
 
 /**
  * Formats full contact details without abbreviating long values or omitting absent optional fields.
@@ -25,7 +27,9 @@ final class PersonDetailsFormatter {
                 + "\nPatient email: " + formatEmail(person.getPatientEmail())
                 + "\nFamily email: " + formatEmail(person.getFamilyEmail())
                 + "\nAddress: " + person.getAddress().value
-                + "\nPriority: " + formatPriority(person);
+                + "\nPriority: " + formatPriority(person)
+                + "\nCheckup appointment: " + formatAppointment(person.getCheckupAppointment())
+                + "\nRemarks: " + formatRemarks(person.getRemark());
     }
 
     /**
@@ -33,6 +37,20 @@ final class PersonDetailsFormatter {
      */
     private static String formatEmail(Optional<Email> email) {
         return email.map(value -> value.value).orElse("Not provided");
+    }
+
+    /**
+     * Returns the scheduled date and time, or the placeholder for a contact without an appointment.
+     */
+    private static String formatAppointment(Optional<CheckupAppointment> appointment) {
+        return appointment.map(CheckupAppointment::toString).orElse("Not scheduled");
+    }
+
+    /**
+     * Returns all numbered care notes on separate lines, or the placeholder for a contact without notes.
+     */
+    private static String formatRemarks(Remark remark) {
+        return remark.isEmpty() ? "None" : "\n" + String.join("\n", remark.getNumberedNotes());
     }
 
     /**

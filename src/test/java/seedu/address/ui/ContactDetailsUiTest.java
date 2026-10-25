@@ -8,6 +8,8 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,9 @@ import javafx.stage.Stage;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
+import seedu.address.storage.JsonAddressBookStorage;
+import seedu.address.storage.JsonUserPrefsStorage;
+import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 /** Exercises the actual FXML panels and model listeners on the JavaFX application thread. */
@@ -152,6 +157,49 @@ public class ContactDetailsUiTest {
         });
     }
 
+    @Test
+    public void sortedView_thenRemarkChanges_refreshesNumberedNotesAndClearsOldText() throws Exception {
+        withWindow(window -> {
+            window.enter("sort name desc");
+            window.enter("view 1");
+            assertTrue(window.title().getText().contains(BENSON.getName().fullName));
+            window.enter("remark 1 Bring medication list");
+            window.enter("remark 1 Call family /tag HIGH is literal text");
+            assertTrue(window.detailsText().getText().contains("1. Bring medication list"));
+            assertTrue(window.detailsText().getText().contains("2. Call family /tag HIGH is literal text"));
+            assertEquals(2, window.model.getFilteredPersonList().size());
+            window.enter("remark 1 /edit 1 Bring updated medication list");
+            assertTrue(window.detailsText().getText().contains("1. Bring updated medication list"));
+            window.enter("remark 1 /clear");
+            assertTrue(window.detailsText().getText().contains("Remarks: None"));
+            assertFalse(window.detailsText().getText().contains("Call family"));
+            assertTrue(window.detailsPanel().isVisible());
+        });
+    }
+
+    @Test
+    public void filterSortViewAndCheckup_useDisplayedIndexAndRefreshAppointment() throws Exception {
+        withWindow(window -> {
+            window.model.setPerson(ALICE, new PersonBuilder(ALICE).withTags("HIGH").build());
+            window.model.setPerson(BENSON, new PersonBuilder(BENSON).withTags("HIGH").build());
+            window.enter("filter /tag HIGH");
+            window.enter("sort name desc");
+            window.enter("view 1");
+            String appointment = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"))
+                    + " 09:30";
+            window.enter("checkup 1 " + appointment);
+            assertTrue(window.detailsText().getText().contains("Checkup appointment: " + appointment));
+            assertTrue(window.title().getText().contains(BENSON.getName().fullName));
+            assertEquals(BENSON.getName(), window.model.selectedPersonProperty().get().getName());
+            assertEquals(2, window.model.getFilteredPersonList().size());
+            window.enter("filter /name Alice");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
+            assertTrue(window.title().getText().contains(ALICE.getName().fullName));
+            assertTrue(window.detailsText().getText().contains("Checkup appointment: Not scheduled"));
+        });
+    }
+
     /** Creates and closes an isolated window; all contacts remain in memory and no user files are opened. */
     private void withWindow(java.util.function.Consumer<TestWindow> assertions) throws Exception {
         runOnFxThread(() -> {
@@ -169,7 +217,9 @@ public class ContactDetailsUiTest {
     /** Holds a fresh application window backed by two known contacts. */
     private class TestWindow {
         private final ModelManager model = new ModelManager();
-        private final LogicManager logic = new LogicManager(model, null);
+        private final LogicManager logic = new LogicManager(model, new StorageManager(
+                new JsonAddressBookStorage(temporaryFolder.resolve("contacts.json")),
+                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
         private final Stage stage = new Stage();
 
         TestWindow() {

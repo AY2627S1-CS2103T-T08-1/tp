@@ -2,14 +2,17 @@ package seedu.address.testutil;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import seedu.address.model.person.Address;
+import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Remark;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -28,7 +31,9 @@ public class PersonBuilder {
     private Email patientEmail;
     private Email familyEmail;
     private Address address;
+    private CheckupAppointment checkupAppointment;
     private Set<Tag> tags;
+    private Remark remark;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -41,6 +46,7 @@ public class PersonBuilder {
         familyEmail = null;
         address = new Address(DEFAULT_ADDRESS);
         tags = new HashSet<>();
+        remark = Remark.EMPTY;
     }
 
     /**
@@ -53,7 +59,9 @@ public class PersonBuilder {
         patientEmail = personToCopy.getPatientEmail().orElse(null);
         familyEmail = personToCopy.getFamilyEmail().orElse(null);
         address = personToCopy.getAddress();
+        checkupAppointment = personToCopy.getCheckupAppointment().orElse(null);
         tags = new HashSet<>(personToCopy.getTags());
+        remark = personToCopy.getRemark();
     }
 
     /**
@@ -146,8 +154,28 @@ public class PersonBuilder {
         return this;
     }
 
+    /**
+     * Sets the notes in the remark of the {@code Person} that we are building.
+     */
+    public PersonBuilder withRemarks(String... notes) {
+        this.remark = new Remark(List.of(notes));
+        return this;
+    }
+
+    /**
+     * Sets the checkup appointment of the contact being built.
+     */
+    public PersonBuilder withCheckupAppointment(String dateTime) {
+        checkupAppointment = new CheckupAppointment(dateTime);
+        return this;
+    }
+
+    /**
+     * Returns the {@code Person} with the details set so far.
+     */
     public Person build() {
-        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags);
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark);
     }
 
 }

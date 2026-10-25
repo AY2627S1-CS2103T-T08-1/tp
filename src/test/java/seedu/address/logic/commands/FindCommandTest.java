@@ -17,7 +17,11 @@ import org.junit.jupiter.api.Test;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.FindCriterion;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
+import seedu.address.model.person.PersonContainsKeywordsPredicate;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) for {@code FindCommand}.
@@ -25,6 +29,23 @@ import seedu.address.model.person.NameContainsKeywordsPredicate;
 public class FindCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
     private Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_phoneCriterion_filtersConsecutiveDigitsWithoutChangingStoredContacts() {
+        Model phoneModel = new ModelManager();
+        Person match = new PersonBuilder().withName("Alice").withPatientNo("900087000").build();
+        Person nonMatch = new PersonBuilder().withName("Bob").withPatientNo("89700000").build();
+        phoneModel.addPerson(match);
+        phoneModel.addPerson(nonMatch);
+        phoneModel.updateFilteredPersonList(person -> false);
+        FindCommand command =
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.PATIENT_PHONE, List.of("87")));
+        assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1),
+                command.execute(phoneModel).getFeedbackToUser());
+        assertEquals(List.of(match), phoneModel.getFilteredPersonList());
+        assertEquals(List.of(match, nonMatch), phoneModel.getAddressBook().getPersonList());
+        assertFalse(command.modifiesData());
+    }
 
     /**
      * Checks that command equality depends on the search predicate.

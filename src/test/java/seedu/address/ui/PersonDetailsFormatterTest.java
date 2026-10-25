@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Remark;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonDetailsFormatterTest {
@@ -22,7 +23,8 @@ public class PersonDetailsFormatterTest {
         String details = PersonDetailsFormatter.format(person);
         assertEquals("Patient phone: 91234567\nFamily phone: 81234567"
                 + "\nPatient email: patient@example.com\nFamily email: family@example.com"
-                + "\nAddress: 123 Long Road\nPriority: HIGH", details);
+                + "\nAddress: 123 Long Road\nPriority: HIGH"
+                + "\nCheckup appointment: Not scheduled\nRemarks: None", details);
     }
 
     @Test
@@ -31,6 +33,23 @@ public class PersonDetailsFormatterTest {
         assertTrue(details.contains("Patient email: Not provided"));
         assertTrue(details.contains("Family email: Not provided"));
         assertTrue(details.contains("Priority: Not assigned"));
+        assertTrue(details.contains("Checkup appointment: Not scheduled"));
+        assertTrue(details.contains("Remarks: None"));
+    }
+
+    @Test
+    public void format_appointmentAndNotes_showsCompleteNumberedDetails() {
+        Person person = new PersonBuilder().withCheckupAppointment("25/12/2030 14:30")
+                .withRemarks("Allergic to penicillin", "Literal /tag HIGH belongs to this note").build();
+        String details = PersonDetailsFormatter.format(person);
+        assertTrue(details.contains("Checkup appointment: 25/12/2030 14:30"));
+        assertTrue(details.contains("Remarks: \n1. Allergic to penicillin\n2. Literal /tag HIGH belongs to this note"));
+    }
+
+    @Test
+    public void format_maximumLengthNote_doesNotTruncateText() {
+        String note = "a".repeat(Remark.MAX_TOTAL_LENGTH);
+        assertTrue(PersonDetailsFormatter.format(new PersonBuilder().withRemarks(note).build()).contains(note));
     }
 
     @Test

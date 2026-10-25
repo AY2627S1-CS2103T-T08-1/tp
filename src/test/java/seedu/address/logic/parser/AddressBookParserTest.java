@@ -7,12 +7,15 @@ import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.CheckupCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
@@ -22,11 +25,15 @@ import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.CheckupAppointment;
+import seedu.address.model.person.FindCriterion;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
-import seedu.address.model.person.PersonHasTagPredicate;
+import seedu.address.model.person.PersonContainsKeywordsPredicate;
+import seedu.address.model.person.PersonMatchesFilterPredicate;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -34,6 +41,14 @@ import seedu.address.testutil.PersonUtil;
 public class AddressBookParserTest {
 
     private final AddressBookParser parser = new AddressBookParser();
+
+    @Test
+    public void parseCommand_checkup() throws Exception {
+        String value = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 00:00";
+        assertEquals(new CheckupCommand(INDEX_FIRST_PERSON, new CheckupAppointment(value)),
+                new AddressBookParser().parseCommand("checkup 1 " + value));
+    }
+
 
     @Test
     public void parseCommand_add() throws Exception {
@@ -88,8 +103,9 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_filter() throws Exception {
         FilterCommand command = (FilterCommand) parser.parseCommand(
-                FilterCommand.COMMAND_WORD + " medium");
-        assertEquals(new FilterCommand(new PersonHasTagPredicate("MEDIUM")), command);
+                FilterCommand.COMMAND_WORD + " /tag medium");
+        assertEquals(new FilterCommand(
+                new PersonMatchesFilterPredicate(List.of(), List.of("MEDIUM"), List.of())), command);
     }
 
     @Test
@@ -98,6 +114,13 @@ public class AddressBookParserTest {
         FindCommand command = (FindCommand) parser.parseCommand(
                 FindCommand.COMMAND_WORD + " " + keywords.stream().collect(Collectors.joining(" ")));
         assertEquals(new FindCommand(new NameContainsKeywordsPredicate(keywords)), command);
+    }
+
+    @Test
+    public void parseCommand_findWithCriterion() throws Exception {
+        FindCommand expected =
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.PATIENT_PHONE, List.of("87")));
+        assertEquals(expected, parser.parseCommand("find /patientNo 87"));
     }
 
     @Test
@@ -134,6 +157,14 @@ public class AddressBookParserTest {
         ViewCommand command = (ViewCommand) parser.parseCommand(
                 ViewCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
         assertEquals(new ViewCommand(INDEX_FIRST_PERSON), command);
+    }
+
+    @Test
+    public void parseCommand_remark() throws Exception {
+        assertEquals(RemarkCommand.add(INDEX_FIRST_PERSON, "Allergic to penicillin"),
+                parser.parseCommand(RemarkCommand.COMMAND_WORD + " 1 Allergic to penicillin"));
+        assertEquals(RemarkCommand.clear(INDEX_FIRST_PERSON),
+                parser.parseCommand(RemarkCommand.COMMAND_WORD + " 1 /clear"));
     }
 
     @Test
