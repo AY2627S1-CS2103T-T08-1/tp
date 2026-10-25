@@ -39,6 +39,17 @@ public class EditCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void execute_otherFields_preservesCheckupAppointment() throws Exception {
+        Model checkupModel = new ModelManager();
+        Person scheduled = new PersonBuilder().withCheckupAppointment("01/01/2030 12:00").build();
+        checkupModel.addPerson(scheduled);
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build())
+                .execute(checkupModel);
+        assertEquals(new PersonBuilder(scheduled).withName(VALID_NAME_BOB).build(),
+                checkupModel.getAddressBook().getPersonList().get(0));
+    }
+
+    @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Person editedPerson = new PersonBuilder().build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
@@ -48,6 +59,24 @@ public class EditCommandTest {
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_personWithRemark_keepsRemark() {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person withRemark = new PersonBuilder(firstPerson).withRemarks("Allergic to penicillin").build();
+        model.setPerson(firstPerson, withRemark);
+
+        Person editedPerson = new PersonBuilder(withRemark).withPhone(VALID_PHONE_BOB).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(withRemark, editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
     }
