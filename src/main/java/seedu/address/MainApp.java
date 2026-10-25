@@ -31,7 +31,7 @@ import seedu.address.ui.UiManager;
  */
 public class MainApp extends Application {
 
-    public static final String VERSION = "V0.5.1";
+    public static final String VERSION = "V1.4";
     public static final String MESSAGE_DATA_LOADING_FAILED =
             "Data file could not be loaded. Starting with an empty contact list.";
 
@@ -47,7 +47,7 @@ public class MainApp extends Application {
 
     @Override
     public void init() throws Exception {
-        logger.info("=============================[ Initializing AddressBook ]===========================");
+        logger.info("=============================[ Initializing CareBook ]===========================");
         super.init();
 
         JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
@@ -76,12 +76,12 @@ public class MainApp extends Application {
             addressBookOptional = storage.readAddressBook();
             if (addressBookOptional.isEmpty()) {
                 logger.info("No data file found at " + storage.getAddressBookFilePath()
-                        + ". Starting with an empty AddressBook.");
+                        + ". Starting with an empty contact list.");
             }
             initialData = addressBookOptional.orElseGet(AddressBook::new);
         } catch (DataLoadingException e) {
             logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
-                    + " Will be starting with an empty AddressBook.");
+                    + " Starting with an empty contact list.");
             startupMessage = MESSAGE_DATA_LOADING_FAILED;
             initialData = new AddressBook();
         }
@@ -130,13 +130,13 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        logger.info("Starting AddressBook " + MainApp.VERSION);
+        logger.info("Starting CareBook " + MainApp.VERSION);
         ui.start(primaryStage);
     }
 
     @Override
     public void stop() {
-        logger.info("============================ [ Stopping AddressBook ] =============================");
+        logger.info("============================ [ Stopping CareBook ] =============================");
         try {
             storage.saveUserPrefs(model.getUserPrefs());
         } catch (IOException e) {

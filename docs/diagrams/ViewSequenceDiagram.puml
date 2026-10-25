@@ -1,0 +1,77 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":ViewCommandParser" as ViewCommandParser LOGIC_COLOR
+participant "command:ViewCommand" as ViewCommand LOGIC_COLOR
+participant "model:Model" as Model MODEL_COLOR
+participant "result:CommandResult" as CommandResult LOGIC_COLOR
+
+[-> LogicManager : execute("view 1")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("view 1")
+activate AddressBookParser
+
+create ViewCommandParser
+AddressBookParser -> ViewCommandParser : ViewCommandParser()
+AddressBookParser -> ViewCommandParser : parse(" 1")
+activate ViewCommandParser
+
+note over ViewCommandParser
+  ParserUtil.parseIndex() validates the
+  argument and creates an Index.
+end note
+
+create ViewCommand
+ViewCommandParser -> ViewCommand : ViewCommand(index)
+activate ViewCommand
+ViewCommand --> ViewCommandParser
+deactivate ViewCommand
+
+ViewCommandParser --> AddressBookParser : command
+deactivate ViewCommandParser
+AddressBookParser --> LogicManager : command
+deactivate AddressBookParser
+
+LogicManager -> ViewCommand : execute(model)
+activate ViewCommand
+ViewCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> ViewCommand : lastShownList
+deactivate Model
+
+note over ViewCommand, Model
+  Validate the index and select personToView
+  from the currently displayed list.
+  For view 1, use list index 0.
+end note
+
+ViewCommand -> Model : updateFilteredPersonList(\nperson -> person.equals(personToView))
+activate Model
+Model --> ViewCommand
+deactivate Model
+
+create CommandResult
+ViewCommand -> CommandResult : CommandResult(feedback)
+activate CommandResult
+CommandResult --> ViewCommand
+deactivate CommandResult
+
+ViewCommand --> LogicManager : result
+deactivate ViewCommand
+
+LogicManager -> ViewCommand : modifiesData()
+activate ViewCommand
+ViewCommand --> LogicManager : false
+deactivate ViewCommand
+
+note over LogicManager, ViewCommand
+  Skip saving because view does not modify stored contacts.
+end note
+
+[<-- LogicManager : result
+deactivate LogicManager
+@enduml

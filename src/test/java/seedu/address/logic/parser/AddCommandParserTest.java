@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_LEGACY_EMAIL_PREFIX;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
@@ -22,10 +23,8 @@ import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_NON_EMPTY;
 import static seedu.address.logic.commands.CommandTestUtil.PREAMBLE_WHITESPACE;
-import static seedu.address.logic.commands.CommandTestUtil.PREFIX_FAMILY_EMAIL;
-import static seedu.address.logic.commands.CommandTestUtil.PREFIX_PATIENT_EMAIL;
-import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_FRIEND;
-import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_HUSBAND;
+import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_HIGH;
+import static seedu.address.logic.commands.CommandTestUtil.TAG_DESC_LOW;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_BOB;
@@ -33,11 +32,12 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_PHONE_AM
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_PHONE_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_PHONE_BOB;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_FRIEND;
-import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HIGH;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -63,28 +63,28 @@ public class AddCommandParserTest {
     public void parse_allFieldsPresent_success() {
         Person expectedPerson = new PersonBuilder(BOB).withFamilyNo(VALID_FAMILY_PHONE_BOB)
                 .withPatientEmail(VALID_EMAIL_BOB).withFamilyEmail(VALID_FAMILY_EMAIL_BOB)
-                .withTags(VALID_TAG_FRIEND).build();
+                .withTags(VALID_TAG_HIGH).build();
 
         // whitespace only preamble
         assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_FRIEND,
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HIGH,
                 new AddCommand(expectedPerson));
 
 
-        // multiple tags - all accepted
-        Person expectedPersonMultipleTags = new PersonBuilder(BOB).withFamilyNo(VALID_FAMILY_PHONE_BOB)
-                .withPatientEmail(VALID_EMAIL_BOB).withFamilyEmail(VALID_FAMILY_EMAIL_BOB)
-                .withTags(VALID_TAG_FRIEND, VALID_TAG_HUSBAND).build();
-        assertParseSuccess(parser,
-                NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB + PATIENT_EMAIL_DESC_BOB
-                        + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND,
-                new AddCommand(expectedPersonMultipleTags));
+        // repeated identical tags still represent one priority
+        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HIGH + TAG_DESC_HIGH,
+                new AddCommand(expectedPerson));
+
+        // different priorities are rejected
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                + ADDRESS_DESC_BOB + TAG_DESC_LOW + TAG_DESC_HIGH, Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
     }
 
     @Test
     public void parse_repeatedNonTagValue_failure() {
         String validExpectedPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_FRIEND;
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HIGH;
 
         // multiple names
         assertParseFailure(parser, NAME_DESC_AMY + validExpectedPersonString,
@@ -195,11 +195,6 @@ public class AddCommandParserTest {
                         + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + VALID_ADDRESS_BOB,
                 expectedMessage);
 
-        // old email prefix is not accepted by add command
-        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                        + EMAIL_DESC_AMY + ADDRESS_DESC_BOB,
-                expectedMessage);
-
         // all prefixes missing
         assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_FAMILY_PHONE_BOB
                         + VALID_EMAIL_BOB + VALID_ADDRESS_BOB,
@@ -207,39 +202,50 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_legacyEmailPrefix_failure() {
+        // all compulsory fields present
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                        + EMAIL_DESC_AMY + ADDRESS_DESC_BOB,
+                MESSAGE_LEGACY_EMAIL_PREFIX);
+
+        // compulsory field missing
+        assertParseFailure(parser, NAME_DESC_BOB + EMAIL_DESC_AMY, MESSAGE_LEGACY_EMAIL_PREFIX);
+    }
+
+    @Test
     public void parse_invalidValue_failure() {
         // invalid name
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND
-                + TAG_DESC_FRIEND, Name.MESSAGE_CONSTRAINTS);
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_LOW
+                + TAG_DESC_HIGH, Name.MESSAGE_CONSTRAINTS);
 
         // invalid phone
         assertParseFailure(parser, NAME_DESC_BOB + INVALID_PHONE_DESC + FAMILY_PHONE_DESC_BOB
-                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND
-                + TAG_DESC_FRIEND, Phone.MESSAGE_CONSTRAINTS);
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_LOW
+                + TAG_DESC_HIGH, Phone.MESSAGE_CONSTRAINTS);
 
         // invalid patient email
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                + INVALID_PATIENT_EMAIL_DESC + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND
-                + TAG_DESC_FRIEND,
+                + INVALID_PATIENT_EMAIL_DESC + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_LOW
+                + TAG_DESC_HIGH,
                 Email.MESSAGE_CONSTRAINTS);
 
         // invalid family email
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                + PATIENT_EMAIL_DESC_BOB + INVALID_FAMILY_EMAIL_DESC + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND
-                + TAG_DESC_FRIEND,
+                + PATIENT_EMAIL_DESC_BOB + INVALID_FAMILY_EMAIL_DESC + ADDRESS_DESC_BOB + TAG_DESC_LOW
+                + TAG_DESC_HIGH,
                 Email.MESSAGE_CONSTRAINTS);
 
         // invalid address
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + INVALID_ADDRESS_DESC + TAG_DESC_HUSBAND
-                + TAG_DESC_FRIEND,
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + INVALID_ADDRESS_DESC + TAG_DESC_LOW
+                + TAG_DESC_HIGH,
                 Address.MESSAGE_CONSTRAINTS);
 
         // invalid tag
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
                 + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + INVALID_TAG_DESC
-                + VALID_TAG_FRIEND, Tag.MESSAGE_CONSTRAINTS);
+                + VALID_TAG_HIGH, Tag.MESSAGE_CONSTRAINTS);
 
         // two invalid values, only first invalid value reported
         assertParseFailure(parser, INVALID_NAME_DESC + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
@@ -247,8 +253,23 @@ public class AddCommandParserTest {
 
         // non-empty preamble
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
-                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND
-                + TAG_DESC_FRIEND,
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_LOW
+                + TAG_DESC_HIGH,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_mixedCaseTag_success() {
+        Person expectedPerson = new PersonBuilder(AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY)
+                .withoutEmail().withTags(VALID_TAG_HIGH).build();
+        String fields = NAME_DESC_AMY + PHONE_DESC_AMY + FAMILY_PHONE_DESC_AMY + ADDRESS_DESC_AMY;
+        for (String prefix : new String[] {"/tag", "/Tag", "/TAG", "/tAg"}) {
+            for (String value : new String[] {"high", "High", "HIGH", "hIgH"}) {
+                assertParseSuccess(parser, fields + " " + prefix + " " + value, new AddCommand(expectedPerson));
+            }
+        }
+        assertParseSuccess(parser, fields + " /TAG High /tag high", new AddCommand(expectedPerson));
+        assertParseFailure(parser, fields + " /TAG High /tAg low", Person.MESSAGE_TAG_COUNT_CONSTRAINTS);
+        assertParseFailure(parser, fields + " /TAG urgent", Tag.MESSAGE_CONSTRAINTS);
     }
 }

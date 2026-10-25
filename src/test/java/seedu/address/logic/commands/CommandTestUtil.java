@@ -3,8 +3,10 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -14,7 +16,6 @@ import java.util.List;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
-import seedu.address.logic.parser.Prefix;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
@@ -25,9 +26,6 @@ import seedu.address.testutil.EditPersonDescriptorBuilder;
  * Contains helper methods for testing commands.
  */
 public class CommandTestUtil {
-
-    public static final Prefix PREFIX_PATIENT_EMAIL = new Prefix("/pEmail");
-    public static final Prefix PREFIX_FAMILY_EMAIL = new Prefix("/fEmail");
 
     public static final String VALID_NAME_AMY = "Amy Bee";
     public static final String VALID_NAME_BOB = "Bob Choo";
@@ -41,8 +39,8 @@ public class CommandTestUtil {
     public static final String VALID_FAMILY_EMAIL_BOB = "bobfamily@example.com";
     public static final String VALID_ADDRESS_AMY = "Block 312, Amy Street 1";
     public static final String VALID_ADDRESS_BOB = "Block 123, Bobby Street 3";
-    public static final String VALID_TAG_HUSBAND = "husband";
-    public static final String VALID_TAG_FRIEND = "friend";
+    public static final String VALID_TAG_LOW = "LOW";
+    public static final String VALID_TAG_HIGH = "HIGH";
 
     public static final String NAME_DESC_AMY = " " + PREFIX_NAME + " " + VALID_NAME_AMY;
     public static final String NAME_DESC_BOB = " " + PREFIX_NAME + " " + VALID_NAME_BOB;
@@ -51,19 +49,17 @@ public class CommandTestUtil {
     public static final String FAMILY_PHONE_DESC_AMY = " " + PREFIX_FAMILY_PHONE + " " + VALID_FAMILY_PHONE_AMY;
     public static final String FAMILY_PHONE_DESC_BOB = " " + PREFIX_FAMILY_PHONE + " " + VALID_FAMILY_PHONE_BOB;
     public static final String EMAIL_DESC_AMY = " /email " + VALID_EMAIL_AMY;
-    public static final String EMAIL_DESC_BOB = " /email " + VALID_EMAIL_BOB;
     public static final String PATIENT_EMAIL_DESC_AMY = " " + PREFIX_PATIENT_EMAIL + " " + VALID_EMAIL_AMY;
     public static final String PATIENT_EMAIL_DESC_BOB = " " + PREFIX_PATIENT_EMAIL + " " + VALID_EMAIL_BOB;
     public static final String FAMILY_EMAIL_DESC_AMY = " " + PREFIX_FAMILY_EMAIL + " " + VALID_FAMILY_EMAIL_AMY;
     public static final String FAMILY_EMAIL_DESC_BOB = " " + PREFIX_FAMILY_EMAIL + " " + VALID_FAMILY_EMAIL_BOB;
     public static final String ADDRESS_DESC_AMY = " " + PREFIX_ADDRESS + " " + VALID_ADDRESS_AMY;
     public static final String ADDRESS_DESC_BOB = " " + PREFIX_ADDRESS + " " + VALID_ADDRESS_BOB;
-    public static final String TAG_DESC_FRIEND = " " + PREFIX_TAG + " " + VALID_TAG_FRIEND;
-    public static final String TAG_DESC_HUSBAND = " " + PREFIX_TAG + " " + VALID_TAG_HUSBAND;
+    public static final String TAG_DESC_HIGH = " " + PREFIX_TAG + " " + VALID_TAG_HIGH;
+    public static final String TAG_DESC_LOW = " " + PREFIX_TAG + " " + VALID_TAG_LOW;
 
     public static final String INVALID_NAME_DESC = " " + PREFIX_NAME + " James&"; // '&' not allowed in names
     public static final String INVALID_PHONE_DESC = " " + PREFIX_PHONE + " 911a"; // 'a' not allowed in phones
-    public static final String INVALID_EMAIL_DESC = " /email bob!yahoo"; // missing '@' symbol
     public static final String INVALID_PATIENT_EMAIL_DESC = " " + PREFIX_PATIENT_EMAIL + " bob!yahoo";
     public static final String INVALID_FAMILY_EMAIL_DESC = " " + PREFIX_FAMILY_EMAIL + " bob!yahoo";
     public static final String INVALID_ADDRESS_DESC = " " + PREFIX_ADDRESS; // empty string not allowed for addresses
@@ -72,21 +68,20 @@ public class CommandTestUtil {
     public static final String PREAMBLE_WHITESPACE = "\t  \r  \n";
     public static final String PREAMBLE_NON_EMPTY = "NonEmptyPreamble";
 
-    public static final String VALID_REMARK_AMY = "Like skiing.";
-    public static final String VALID_REMARK_BOB = "Favorite pastime: Eating";
-
     public static final EditCommand.EditPersonDescriptor DESC_AMY;
     public static final EditCommand.EditPersonDescriptor DESC_BOB;
 
     static {
         DESC_AMY = new EditPersonDescriptorBuilder().withName(VALID_NAME_AMY)
-                .withPhone(VALID_PHONE_AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY).withEmail(VALID_EMAIL_AMY)
+                .withPhone(VALID_PHONE_AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY)
+                .withPatientEmail(VALID_EMAIL_AMY).withFamilyEmail(VALID_FAMILY_EMAIL_AMY)
                 .withAddress(VALID_ADDRESS_AMY)
-                .withTags(VALID_TAG_FRIEND).build();
+                .withTags(VALID_TAG_HIGH).build();
         DESC_BOB = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB)
-                .withPhone(VALID_PHONE_BOB).withFamilyNo(VALID_FAMILY_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
+                .withPhone(VALID_PHONE_BOB).withFamilyNo(VALID_FAMILY_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).withFamilyEmail(VALID_FAMILY_EMAIL_BOB)
                 .withAddress(VALID_ADDRESS_BOB)
-                .withTags(VALID_TAG_HUSBAND, VALID_TAG_FRIEND).build();
+                .withTags(VALID_TAG_LOW).build();
     }
 
     /**

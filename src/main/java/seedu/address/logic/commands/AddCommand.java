@@ -2,15 +2,16 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
-import seedu.address.logic.parser.Prefix;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 
@@ -20,10 +21,8 @@ import seedu.address.model.person.Person;
 public class AddCommand extends Command {
 
     public static final String COMMAND_WORD = "add";
-    public static final Prefix PREFIX_PATIENT_EMAIL = new Prefix("/pEmail");
-    public static final Prefix PREFIX_FAMILY_EMAIL = new Prefix("/fEmail");
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a person to the address book. "
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Adds a person to CareBook. "
             + "Parameters: "
             + PREFIX_NAME + " NAME "
             + PREFIX_PATIENT_PHONE + " PATIENT_PHONE "
@@ -31,7 +30,7 @@ public class AddCommand extends Command {
             + "[" + PREFIX_PATIENT_EMAIL + " PATIENT_EMAIL] "
             + "[" + PREFIX_FAMILY_EMAIL + " FAMILY_EMAIL] "
             + PREFIX_ADDRESS + " ADDRESS "
-            + "[" + PREFIX_TAG + " TAG]...\n"
+            + "[" + PREFIX_TAG + " PRIORITY]\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + " Aunty Rosalind "
             + PREFIX_PATIENT_PHONE + " 81268767 "
@@ -39,7 +38,7 @@ public class AddCommand extends Command {
             + PREFIX_ADDRESS + " Goonvale Street Block 2 #01-09";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
+    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in CareBook.";
 
     private final Person toAdd;
 

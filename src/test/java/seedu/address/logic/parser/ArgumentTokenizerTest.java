@@ -147,4 +147,22 @@ public class ArgumentTokenizerTest {
         assertNotEquals(aaa, new Prefix("aab"));
     }
 
+
+    @Test
+    public void tokenize_tagPrefix_ignoresCaseAndPreservesValues() {
+        Prefix tag = CliSyntax.PREFIX_TAG;
+        Prefix name = CliSyntax.PREFIX_NAME;
+        ArgumentMultimap result = ArgumentTokenizer.tokenize(" /name Alice /TAG High /TaG low /tag", name, tag);
+        assertArgumentPresent(result, name, "Alice");
+        assertArgumentPresent(result, tag, "High", "low", "");
+    }
+
+    @Test
+    public void tokenize_otherPrefixesAndEmbeddedTags_preserveMatchingRules() {
+        ArgumentMultimap result = ArgumentTokenizer.tokenize(" /NAME Alice/TAG High", CliSyntax.PREFIX_NAME,
+                CliSyntax.PREFIX_TAG);
+        assertArgumentAbsent(result, CliSyntax.PREFIX_NAME);
+        assertArgumentAbsent(result, CliSyntax.PREFIX_TAG);
+        assertPreamblePresent(result, "/NAME Alice/TAG High");
+    }
 }

@@ -1,9 +1,13 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.Messages.MESSAGE_LEGACY_EMAIL_PREFIX;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_FAMILY_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -24,10 +28,6 @@ import seedu.address.model.tag.Tag;
  */
 public class AddCommandParser implements Parser<AddCommand> {
 
-    private static final Prefix PREFIX_PATIENT_EMAIL = new Prefix("/pEmail");
-    private static final Prefix PREFIX_FAMILY_EMAIL = new Prefix("/fEmail");
-    private static final Prefix PREFIX_LEGACY_EMAIL = new Prefix("/email");
-
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
@@ -38,8 +38,11 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE,
                         PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_ADDRESS, PREFIX_TAG);
 
+        if (argMultimap.getValue(PREFIX_LEGACY_EMAIL).isPresent()) {
+            throw new ParseException(MESSAGE_LEGACY_EMAIL_PREFIX);
+        }
+
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE, PREFIX_ADDRESS)
-                || argMultimap.getValue(PREFIX_LEGACY_EMAIL).isPresent()
                 || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
         }

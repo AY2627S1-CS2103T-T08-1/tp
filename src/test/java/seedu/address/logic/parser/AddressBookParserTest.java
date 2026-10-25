@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
@@ -19,14 +18,15 @@ import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
 import seedu.address.logic.commands.ExitCommand;
+import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
-import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.PersonHasTagPredicate;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 import seedu.address.testutil.PersonUtil;
@@ -44,8 +44,17 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_clear() throws Exception {
-        assertTrue(parser.parseCommand(ClearCommand.COMMAND_WORD) instanceof ClearCommand);
-        assertTrue(parser.parseCommand(ClearCommand.COMMAND_WORD + " 3") instanceof ClearCommand);
+        for (String input : List.of("clear", "  clear  ", "\tclear\t", "\nclear\r\n")) {
+            assertTrue(parser.parseCommand(input) instanceof ClearCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_clearWithArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ClearCommand.MESSAGE_USAGE);
+        for (String input : List.of("clear 1", "clear Alice", "clear /name Alice", "clear\tAlice", "clear !")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
+        }
     }
 
     @Test
@@ -74,6 +83,13 @@ public class AddressBookParserTest {
     public void parseCommand_exit() throws Exception {
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
         assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
+    }
+
+    @Test
+    public void parseCommand_filter() throws Exception {
+        FilterCommand command = (FilterCommand) parser.parseCommand(
+                FilterCommand.COMMAND_WORD + " medium");
+        assertEquals(new FilterCommand(new PersonHasTagPredicate("MEDIUM")), command);
     }
 
     @Test
@@ -148,13 +164,5 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
         assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
-    }
-
-    @Test
-    public void parseCommand_remark() throws Exception {
-        final String remark = "Some remark.";
-        RemarkCommand command = (RemarkCommand) parser.parseCommand(RemarkCommand.COMMAND_WORD + " "
-                + INDEX_FIRST_PERSON.getOneBased() + " " + PREFIX_REMARK + remark);
-        assertEquals(new RemarkCommand(INDEX_FIRST_PERSON, remark), command);
     }
 }
