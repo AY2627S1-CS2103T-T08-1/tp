@@ -57,19 +57,19 @@ public class Person {
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark) {
-        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment, 
-              remark, false);
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, false);
     }
 
     /**
      * Creates a person with the given details and archived status.
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
-            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark, 
+            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark,
             boolean archived) {
         requireAllNonNull(name, patientNo, familyNo, address, tags, remark);
         checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
-      
+
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
@@ -93,7 +93,8 @@ public class Person {
      * Returns a copy of this person with the given archived status.
      */
     public Person copyWithArchivedStatus(boolean archived) {
-        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, archived);
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, archived);
     }
 
     public Name getName() {
@@ -142,7 +143,7 @@ public class Person {
      */
     public Person withRemark(Remark remark) {
         return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
-                remark);
+                remark, archived);
     }
 
     /**
@@ -180,7 +181,7 @@ public class Person {
                 && Objects.equals(familyEmail, otherPerson.familyEmail)
                 && address.equals(otherPerson.address)
                 && tags.equals(otherPerson.tags)
-                && archived == otherPerson.archived;
+                && archived == otherPerson.archived
                 && Objects.equals(checkupAppointment, otherPerson.checkupAppointment)
                 && remark.equals(otherPerson.remark);
     }

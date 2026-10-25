@@ -6,21 +6,59 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Remark;
+import seedu.address.testutil.PersonBuilder;
 
 public class ArchiveCommandTest {
     private final AddressBookParser parser = new AddressBookParser();
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_contactWithAppointmentAndRemarks_preservesDetails() throws Exception {
+        Person original = model.getFilteredPersonList().get(0);
+        Person detailed = new PersonBuilder(original).withCheckupAppointment("01/01/2000 09:05")
+                .withRemarks("Needs assistance").build();
+        model.setPerson(original, detailed);
+        parser.parseCommand("archive 1").execute(model);
+        parser.parseCommand("list archive").execute(model);
+        Person archived = model.getFilteredPersonList().get(0);
+        assertTrue(archived.isArchived());
+        assertEquals(detailed.getCheckupAppointment(), archived.getCheckupAppointment());
+        assertEquals(detailed.getRemark(), archived.getRemark());
+        assertEquals(detailed, archived.copyWithArchivedStatus(false));
+    }
+
+    @Test
+    public void execute_updateArchivedDetails_preservesArchivedStatus() throws Exception {
+        parser.parseCommand("archive 1").execute(model);
+        parser.parseCommand("list archive").execute(model);
+        Remark remark = new Remark(List.of("Needs assistance"));
+        RemarkCommand.add(Index.fromOneBased(1), "Needs assistance").execute(model);
+        CheckupAppointment appointment = new CheckupAppointment(
+                LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 09:00");
+        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+        parser.parseCommand("list archive").execute(model);
+        assertEquals(1, model.getFilteredPersonList().size());
+        Person archived = model.getFilteredPersonList().get(0);
+        assertTrue(archived.isArchived());
+        assertEquals(remark, archived.getRemark());
+        assertEquals(appointment, archived.getCheckupAppointment().orElseThrow());
+    }
 
     @Test
     public void execute_archiveAndSwitchLists_preservesContactDetails() throws Exception {

@@ -45,9 +45,8 @@ class JsonAdaptedPerson {
             @JsonProperty("familyNo") String familyNo, @JsonProperty("pEmail") String patientEmail,
             @JsonProperty("fEmail") String familyEmail, @JsonProperty("email") String legacyEmail,
             @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags,
-            @JsonProperty("archived") boolean archived) {
             @JsonProperty("checkupAppointment") String checkupAppointment,
-            @JsonProperty("remarks") List<String> remarks) {
+            @JsonProperty("remarks") List<String> remarks, @JsonProperty("archived") boolean archived) {
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
@@ -74,11 +73,13 @@ class JsonAdaptedPerson {
     }
 
     /**
-     * Constructs an active contact with the given details.
+     * Constructs an active contact with optional appointment and remarks.
      */
     public JsonAdaptedPerson(String name, String patientNo, String familyNo, String patientEmail,
-            String familyEmail, String legacyEmail, String address, List<JsonAdaptedTag> tags) {
-        this(name, patientNo, familyNo, patientEmail, familyEmail, legacyEmail, address, tags, false);
+            String familyEmail, String legacyEmail, String address, List<JsonAdaptedTag> tags,
+            String checkupAppointment, List<String> remarks) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, legacyEmail, address, tags,
+                checkupAppointment, remarks, false);
     }
 
     /**
