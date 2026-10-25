@@ -45,6 +45,15 @@ public class CheckupCommandTest {
     }
 
     @Test
+    public void execute_personWithRemark_keepsRemark() throws Exception {
+        Person bobWithNotes = new PersonBuilder(bob).withRemarks("Allergic to penicillin").build();
+        model.addPerson(bobWithNotes);
+        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+        assertEquals(new PersonBuilder(bobWithNotes).withCheckupAppointment(appointment.toString()).build(),
+                model.getAddressBook().getPersonList().get(0));
+    }
+
+    @Test
     public void execute_filteredList_usesDisplayedIndexAndPreservesFilter() throws Exception {
         model.addPerson(alice);
         model.addPerson(bob);

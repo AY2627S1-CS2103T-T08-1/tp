@@ -67,6 +67,18 @@ public class PersonCardTest {
     }
 
     @Test
+    public void getRemarkText_notes_returnsNumberedNotesOnSeparateLines() {
+        Person person = new PersonBuilder().withRemarks("Allergic to penicillin", "Visits after 3pm").build();
+
+        assertEquals("Remark:\n1. Allergic to penicillin\n2. Visits after 3pm", PersonCard.getRemarkText(person));
+    }
+
+    @Test
+    public void getRemarkText_noNotes_returnsEmptyText() {
+        assertEquals("", PersonCard.getRemarkText(new PersonBuilder().build()));
+    }
+
+    @Test
     public void getTagTexts_noTags_returnsEmptyList() {
         Person person = new PersonBuilder().withTags().build();
 
