@@ -49,10 +49,13 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        // the delete command word is case-insensitive
-        final String commandWord = matcher.group("commandWord").equalsIgnoreCase(DeleteCommand.COMMAND_WORD)
-                ? DeleteCommand.COMMAND_WORD
-                : matcher.group("commandWord");
+        // The delete and archive command words are case-insensitive.
+        String commandWord = matcher.group("commandWord");
+        if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
+            commandWord = DeleteCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(ArchiveCommand.COMMAND_WORD)) {
+            commandWord = ArchiveCommand.COMMAND_WORD;
+        }
         final String arguments = matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
@@ -75,7 +78,7 @@ public class AddressBookParser {
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
             case ListCommand.COMMAND_WORD -> {
                 String trimmedArguments = arguments.trim();
-                if (trimmedArguments.equals("archive")) {
+                if (trimmedArguments.equalsIgnoreCase(ArchiveCommand.COMMAND_WORD)) {
                     yield new ListCommand(true);
                 } else if (trimmedArguments.isEmpty()) {
                     yield new ListCommand();

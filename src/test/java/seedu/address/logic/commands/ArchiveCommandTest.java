@@ -35,6 +35,40 @@ public class ArchiveCommandTest {
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void execute_archiveWithMixedCase_archivesContact() throws Exception {
+        for (String commandWord : List.of("archive", "Archive", "ARCHIVE", "aRcHiVe")) {
+            Model testModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+            Person target = testModel.getFilteredPersonList().get(0);
+
+            parser.parseCommand(commandWord + " 1").execute(testModel);
+
+            assertFalse(testModel.getFilteredPersonList().contains(target));
+            assertTrue(testModel.getAddressBook().getPersonList().contains(target.copyWithArchivedStatus(true)));
+        }
+    }
+
+    @Test
+    public void execute_listArchiveWithMixedCase_showsArchivedContacts() throws Exception {
+        Person target = model.getFilteredPersonList().get(0);
+        parser.parseCommand("archive 1").execute(model);
+        for (String argument : List.of("archive", "Archive", "ARCHIVE", "ARchive")) {
+            parser.parseCommand("list").execute(model);
+
+            CommandResult result = parser.parseCommand("list " + argument).execute(model);
+
+            assertEquals(ListCommand.MESSAGE_ARCHIVE_SUCCESS, result.getFeedbackToUser());
+            assertEquals(List.of(target.copyWithArchivedStatus(true)), model.getFilteredPersonList());
+        }
+    }
+
+    @Test
+    public void parse_mixedCaseArchiveWithInvalidArguments_throwsParseException() {
+        for (String input : List.of("Archive", "ARCHIVE 0", "aRcHiVe -1", "Archive abc", "ARCHIVE 1 2")) {
+            assertThrows(ParseException.class, () -> parser.parseCommand(input));
+        }
+    }
+
+    @Test
     public void equals_comparedObjects_returnsExpectedResult() {
         ArchiveCommand command = new ArchiveCommand(Index.fromOneBased(1));
         ArchiveCommand sameIndexCommand = new ArchiveCommand(Index.fromOneBased(1));
@@ -230,7 +264,7 @@ public class ArchiveCommandTest {
     @Test
     public void parse_invalidArguments_throwsParseException() {
         for (String input : List.of("archive", "archive 0", "archive -1", "archive abc", "archive 1 2",
-                "archive 1.5", "list archive extra", "list Archive")) {
+                "archive 1.5", "list archive extra", "list ARchive extra")) {
             assertThrows(ParseException.class, () -> parser.parseCommand(input));
         }
     }

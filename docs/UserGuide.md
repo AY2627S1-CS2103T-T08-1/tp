@@ -113,6 +113,8 @@ The contact disappears from the current active list and can be viewed using `lis
 
 Format: `archive INDEX`
 
+The command word is case-insensitive: `archive 3`, `Archive 3`, and `ARCHIVE 3` all archive the third displayed contact.
+
 * `INDEX` must be a positive integer shown in the current list, including a filtered list after `find`.
 * `list archive` shows archived contacts. Use `list` to return to active contacts.
 * `find` searches active contacts. Archived contacts remain archived when edited.
@@ -156,7 +158,7 @@ Format: `list` or `list archive`
 | `list Alice` or `list n/Alice` | `Invalid command format. List command format: list [archive]` | Use `find Alice` to search by name, or `list` to show all persons. |
 | `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
 
-The `list` command accepts only the optional `archive` argument. Leading and trailing spaces are allowed.
+The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word `list` remains lowercase. Leading and trailing spaces are allowed.
 If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
 If no contacts have been archived, `list archive` displays an empty list. `list` also clears any `sort`, so persons are 
