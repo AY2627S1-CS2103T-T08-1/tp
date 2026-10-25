@@ -20,6 +20,19 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void checkupAppointment_isOptionalAndAffectsDataEquality() {
+        Person original = new PersonBuilder().build();
+        Person scheduled = new PersonBuilder(original).withCheckupAppointment("01/01/2030 12:00").build();
+        Person copy = new PersonBuilder(scheduled).build();
+        assertTrue(original.getCheckupAppointment().isEmpty());
+        assertEquals(new CheckupAppointment("01/01/2030 12:00"), scheduled.getCheckupAppointment().orElseThrow());
+        assertFalse(original.equals(scheduled));
+        assertTrue(original.isSamePerson(scheduled));
+        assertEquals(scheduled, copy);
+        assertEquals(scheduled.hashCode(), copy.hashCode());
+    }
+
+    @Test
     public void constructor_multiplePriorities_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, Person.MESSAGE_TAG_COUNT_CONSTRAINTS, () ->
                 new PersonBuilder().withTags("HIGH", "LOW").build());
@@ -114,7 +127,8 @@ public class PersonTest {
                 + ", familyNo=" + ALICE.getFamilyNo()
                 + ", patientEmail=" + ALICE.getPatientEmail().orElse(null)
                 + ", familyEmail=" + ALICE.getFamilyEmail().orElse(null)
-                + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
+                + ", checkupAppointment=null}";
         assertEquals(expected, ALICE.toString());
     }
 }

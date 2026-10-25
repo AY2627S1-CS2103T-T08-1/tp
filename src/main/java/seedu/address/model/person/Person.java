@@ -29,6 +29,7 @@ public class Person {
     private final Email patientEmail;
     private final Email familyEmail;
     private final Address address;
+    private final CheckupAppointment checkupAppointment;
     private final Set<Tag> tags = new HashSet<>();
 
     /**
@@ -45,6 +46,14 @@ public class Person {
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, null);
+    }
+
+    /**
+     * Creates a contact with optional emails and an optional checkup appointment.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
+            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment) {
         requireAllNonNull(name, patientNo, familyNo, address, tags);
         checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
         this.name = name;
@@ -53,6 +62,7 @@ public class Person {
         this.patientEmail = patientEmail;
         this.familyEmail = familyEmail;
         this.address = address;
+        this.checkupAppointment = checkupAppointment;
         this.tags.addAll(tags);
     }
 
@@ -78,6 +88,10 @@ public class Person {
 
     public Address getAddress() {
         return address;
+    }
+
+    public Optional<CheckupAppointment> getCheckupAppointment() {
+        return Optional.ofNullable(checkupAppointment);
     }
 
     /**
@@ -123,13 +137,14 @@ public class Person {
                 && Objects.equals(patientEmail, otherPerson.patientEmail)
                 && Objects.equals(familyEmail, otherPerson.familyEmail)
                 && address.equals(otherPerson.address)
+                && Objects.equals(checkupAppointment, otherPerson.checkupAppointment)
                 && tags.equals(otherPerson.tags);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags);
+        return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment);
     }
 
     @Override
@@ -142,6 +157,7 @@ public class Person {
                 .add("familyEmail", familyEmail)
                 .add("address", address)
                 .add("tags", tags)
+                .add("checkupAppointment", checkupAppointment)
                 .toString();
     }
 

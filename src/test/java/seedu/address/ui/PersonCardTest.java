@@ -12,6 +12,13 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonCardTest {
 
     @Test
+    public void getCheckupAppointmentText_formatsAppointmentAndOmitsAbsentAppointment() {
+        assertEquals("", PersonCard.getCheckupAppointmentText(new PersonBuilder().build()));
+        assertEquals("Check up Appointment: 01/01/2030 09:05", PersonCard.getCheckupAppointmentText(
+                new PersonBuilder().withCheckupAppointment("01/01/2030 09:05").build()));
+    }
+
+    @Test
     public void getPhoneText_validPerson_returnsFormattedPhoneTexts() {
         Person person = new PersonBuilder()
                 .withPatientNo("91234567")
