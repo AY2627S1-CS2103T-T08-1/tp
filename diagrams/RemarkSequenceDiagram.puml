@@ -1,0 +1,71 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":RemarkCommandParser" as RemarkCommandParser LOGIC_COLOR
+participant "command:RemarkCommand" as RemarkCommand LOGIC_COLOR
+participant "remark:Remark" as Remark MODEL_COLOR
+participant "model:Model" as Model MODEL_COLOR
+
+[-> LogicManager : execute("remark 1 Diabetic")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("remark 1 Diabetic")
+activate AddressBookParser
+
+create RemarkCommandParser
+AddressBookParser -> RemarkCommandParser : RemarkCommandParser()
+AddressBookParser -> RemarkCommandParser : parse(" 1 Diabetic")
+activate RemarkCommandParser
+
+note over RemarkCommandParser
+  The first word is the index. "Diabetic" is not
+  /edit, /delete or /clear, so the rest is a new note.
+end note
+
+create RemarkCommand
+RemarkCommandParser -> RemarkCommand : add(index, "Diabetic")
+activate RemarkCommand
+RemarkCommand --> RemarkCommandParser
+deactivate RemarkCommand
+
+RemarkCommandParser --> AddressBookParser : command
+deactivate RemarkCommandParser
+AddressBookParser --> LogicManager : command
+deactivate AddressBookParser
+
+LogicManager -> RemarkCommand : execute(model)
+activate RemarkCommand
+RemarkCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> RemarkCommand : lastShownList
+deactivate Model
+
+RemarkCommand -> Remark : withNoteAdded("Diabetic")
+activate Remark
+Remark --> RemarkCommand : updatedNotes
+deactivate Remark
+
+note over RemarkCommand
+  Check that updatedNotes fit within 500 characters,
+  then create a copy of the person with the new Remark.
+end note
+
+RemarkCommand -> Model : setPerson(personToChange, changedPerson)
+activate Model
+Model --> RemarkCommand
+deactivate Model
+
+RemarkCommand --> LogicManager : result
+deactivate RemarkCommand
+
+note over LogicManager
+  remark modifies data, so LogicManager
+  saves the contacts to storage.
+end note
+
+[<-- LogicManager : result
+deactivate LogicManager
+@enduml

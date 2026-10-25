@@ -54,6 +54,7 @@
         "saving-data": "Saving data",
         "viewing-a-contact-s-full-details": "Viewing a contact's full details",
         "priority-tags": "Priority tags",
+        "remarks": "Remarks",
         "find-command": "Find command",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "proposed-data-archiving": "[Proposed] Data archiving",
@@ -68,6 +69,7 @@
         "launch-and-shutdown": "Launch and shutdown",
         "deleting-a-person": "Deleting a person",
         "editing-a-person": "Editing a person",
+        "keeping-care-notes": "Keeping care notes",
         "priority-tags-2": "Priority tags",
         "saving-data-2": "Saving data"
       },
@@ -122,6 +124,7 @@
         "listing-all-persons-list": "Listing all persons: list",
         "viewing-a-person-s-full-details-view": "Viewing a person's full details: view",
         "editing-a-person-edit": "Editing a person: edit",
+        "keeping-care-notes-on-a-person-remark": "Keeping care notes on a person: remark",
         "locating-persons-find": "Locating persons: find",
         "filtering-persons-by-tag-filter": "Filtering persons by tag: filter",
         "deleting-a-person-delete": "Deleting a person: delete",
