@@ -35,6 +35,29 @@ public class ArchiveCommandTest {
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void equals_comparedObjects_returnsExpectedResult() {
+        ArchiveCommand command = new ArchiveCommand(Index.fromOneBased(1));
+        ArchiveCommand sameIndexCommand = new ArchiveCommand(Index.fromOneBased(1));
+        ArchiveCommand differentIndexCommand = new ArchiveCommand(Index.fromOneBased(2));
+
+        assertTrue(command.equals(command));
+        assertTrue(command.equals(sameIndexCommand));
+        assertTrue(sameIndexCommand.equals(command));
+        assertFalse(command.equals(differentIndexCommand));
+        assertFalse(command.equals(new DeleteCommand(Index.fromOneBased(1))));
+        assertFalse(command.equals(null));
+    }
+
+    @Test
+    public void toString_containsTargetIndex() {
+        Index targetIndex = Index.fromOneBased(3);
+        ArchiveCommand command = new ArchiveCommand(targetIndex);
+        String expected = ArchiveCommand.class.getCanonicalName() + "{targetIndex=" + targetIndex + "}";
+
+        assertEquals(expected, command.toString());
+    }
+
+    @Test
     public void execute_lastDisplayedContact_archivesOnlyTarget() {
         int lastIndex = model.getFilteredPersonList().size();
         Person target = model.getFilteredPersonList().get(lastIndex - 1);
