@@ -95,21 +95,43 @@ Examples:
 
 ### Archiving a contact: `archive`
 
-Archives the contact at the displayed index, keeping its details saved while removing it from the active list.
+Archives a contact that you no longer need in the active list while keeping its details in CareBook.
+The contact disappears from the current active list and can be viewed using `list archive`.
 
 Format: `archive INDEX`
 
 * `INDEX` must be a positive integer shown in the current list, including a filtered list after `find`.
-* Example: `archive 3` archives the third displayed contact.
 * `list archive` shows archived contacts. Use `list` to return to active contacts.
 * `find` searches active contacts. Archived contacts remain archived when edited.
 * Archiving an already archived contact reports an error without changing it.
 * Archived status is saved automatically and survives restarting CareBook.
 * Archived contacts retain their identity, so adding a duplicate is still rejected.
 
+**Example workflow:**
+
+1. Enter `list` to display active contacts.
+2. Enter `archive 3` to archive the third contact shown. CareBook displays `Archived person: ...` with the contact's details, and removes that contact from the active list.
+3. Enter `list archive` to switch to the archive list. CareBook displays `Listed archived persons.`
+4. Enter `list` to return to the active list. The archived contact remains in the archive list.
+
+After archiving, the displayed indices may change. Check the current list before archiving another contact.
+For example, after `find Alice`, `archive 1` archives the first contact in those search results.
+
+**Common errors:**
+
+| Incorrect input or situation | Result | How to correct it |
+| --- | --- | --- |
+| `archive`, `archive Alice`, or `archive 1 2` | Invalid command format; usage instructions are shown. | Enter exactly one index, such as `archive 3`. |
+| `archive 0` or `archive -1` | Invalid index. | Use a positive integer shown in the current list. |
+| `archive 4` when only three contacts are displayed | The index is out of range. | Check the displayed indices and select an existing contact. |
+| `archive 1` when the displayed list is empty | `There are no persons in the displayed list to archive.` | Use `list` to check for active contacts. |
+| Archiving a contact in `list archive` | `This person is already archived.` | Use `list` to select an active contact instead. |
+
+There is currently no command to restore an archived contact to the active list.
+
 ### Listing persons: `list`
 
-Shows all active (non-archived) persons in CareBook.
+Use `list` to show all active (non-archived) persons in CareBook, or `list archive` to show only archived persons.
 
 Format: `list` or `list archive`
 
@@ -122,8 +144,9 @@ Format: `list` or `list archive`
 | `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
 
 The `list` command accepts only the optional `archive` argument. Leading and trailing spaces are allowed.
-If all persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
-this is normal behavior. After a `find` command, use `list` to display all persons again.
+If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
+this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
+If no contacts have been archived, `list archive` displays an empty list.
 
 ### Viewing a person's full details: `view`
 
