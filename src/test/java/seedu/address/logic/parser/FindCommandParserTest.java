@@ -81,12 +81,20 @@ public class FindCommandParserTest {
 
     @Test
     public void parse_invalidCriteriaOrInput_throwsParseException() {
-        for (String input : List.of("/unknown abc", "/patientNo", "/name   ", "/address", "/email",
+        for (String input : List.of("/patientNo", "/name   ", "/address", "/email",
                 "/patientNo 8", "/familyNo 8", "/patientNo 8a", "/familyNo 8 7", "/patientNo +87",
-                "/patientNo 87.0", "/patientNo ８７", "/name Alice /address Main", "/UNKNOWN abc",
+                "/patientNo 87.0", "/patientNo ８７", "/name Alice /address Main",
                 "/TAG", "/PATIENTNO 8", "/FaMiLyNo 8 7", "/PATIENTNO ab")) {
             assertParseFailure(parser, input,
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
+    }
+
+    @Test
+    public void parse_unknownCriterion_reportsEnteredCriterion() {
+        for (String criterion : List.of("/unknown", "/UNKNOWN", "/patientNumber", "/")) {
+            assertParseFailure(parser, criterion + " abc", "Unknown criterion: " + criterion);
+            assertParseFailure(parser, criterion, "Unknown criterion: " + criterion);
         }
     }
 

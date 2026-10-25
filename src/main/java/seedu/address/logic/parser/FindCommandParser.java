@@ -54,7 +54,10 @@ public class FindCommandParser implements Parser<FindCommand> {
                 .filter(entry -> entry.getKey().getPrefix().equalsIgnoreCase(tokens[0]))
                 .map(Map.Entry::getValue)
                 .findFirst().orElse(null);
-        if (criterion == null || tokens.length < 2) {
+        if (criterion == null) {
+            throw new ParseException("Unknown criterion: " + tokens[0]);
+        }
+        if (tokens.length < 2) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
 

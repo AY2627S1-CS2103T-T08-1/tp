@@ -246,7 +246,7 @@ keyword as a case-insensitive substring. Phone searches require one sequence of 
 match those digits consecutively: `87` matches `900087000`, but not `89700000`.
 It searches all stored contacts and changes the display filter without modifying stored contacts.
 
-The previous `find KEYWORD [MORE_KEYWORDS]...` name searches remain supported, of which any name matching 
+The  `find KEYWORD [MORE_KEYWORDS]...` command only does name searches, of which any name matching 
 the case-insensitive substring is given.
 
 The sequence diagram below shows a successful `find /patientNo 87` command. A successful search may

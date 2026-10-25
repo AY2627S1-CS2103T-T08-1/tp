@@ -176,7 +176,9 @@ Examples:
 
 Finds persons by the selected contact field using partial matches.
 
-Format: `find /CRITERION INPUT` and `find INPUT`
+Format: `find /CRITERION INPUT` and `find KEYWORD`
+
+For `find /CRITERION INPUT`:
 
 | Criterion | Searches |
 |-----------|----------|
@@ -189,9 +191,9 @@ Format: `find /CRITERION INPUT` and `find INPUT`
 | `/email` | Either patient or family email |
 | `/tag` | Priority tag |
 
-* `find INPUT` searches by name. Any name containing the input substring, case insensitive, will be returned.
+* `find KEYWORD` searches by name. Any name containing the input substring, case-insensitive, will be returned.
 
-For `find /CRITERA INPUT`:
+For `find /CRITERION INPUT`:
 
 * Use exactly one criterion, spelled as shown above, and provide a non-empty input.
 * Phone searches require one sequence of at least **two digits**, with no spaces or other characters.
