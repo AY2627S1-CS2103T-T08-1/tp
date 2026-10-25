@@ -563,44 +563,43 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS:**
 
-1. User requests to view contact details 
-2. CareBook validates the command format
-3. CareBook searches for contacts whose full name matches the given name exactly 
-4. CareBook displays the matching contact’s name, patient phone number, family phone number, and address
+1. User requests to view a contact using its index in the currently displayed list.
+2. CareBook validates the command format.
+3. CareBook retrieves the contact at the specified index in the currently displayed list.
+4. CareBook shows the contact's full details in the details panel and highlights the contact in the list.
+   The current list and stored contact details remain unchanged.
 
    Use case ends.
 
 **Extensions**
 
-*1a. User enters details without contact name. 
+* 2a. The command word is invalid.
 
-    *1a1. CareBook displays error message. 
-        
-        Use case ends. 
+    * 2a1. CareBook displays an unknown-command error.
 
-*1b. The user enters extra spaces between the name and details.
+      Use case ends.
 
-    *1b1. CareBook ignores the extra spaces and processes request. 
-        
-        User case resumes at step 2. 
+* 2b. The index is missing, non-numeric, non-positive, or followed by extra arguments.
 
-*2a. The command word is invalid.
-    
-    *2a1. CareBook displays error message. 
+    * 2b1. CareBook displays an invalid-format error with the correct usage and an example.
 
-        Use case ends. 
+      Use case ends.
 
-*3a. No contact matches given name.
+* 3a. The currently displayed list is empty, including after `clear` or a search with no matches.
 
-    *3a1. CareBook displays error message.
+    * 3a1. CareBook explains that no contacts are displayed and suggests using `list` or `find KEYWORD`.
 
-        Use case ends.
+      Use case ends.
 
-*3b. Multiple contacts have the same name 
+* 3b. The index exceeds the number of contacts in the currently displayed list.
 
-    *3b1. CareBook displays details of all matching contacts 
+    * 3b1. CareBook reports the entered index, displayed contact count and valid index range.
 
-        Use case ends. 
+      Use case ends.
+
+Leading and trailing whitespace is ignored during command validation. After filtering, the index refers
+to a position in the filtered results, not the full stored list. Unsuccessful requests leave stored
+contacts, selection and the displayed list unchanged; there is no fallback to the full stored list.
 
 **Use case: Save contact list after an update**
 
