@@ -44,9 +44,12 @@ public class CheckupCommand extends Command {
             throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE);
         }
         Person person = displayedPersons.get(targetIndex.getZeroBased());
+        boolean keepMarked = person.isCheckupMarked()
+                && person.getCheckupAppointment().filter(appointment::equals).isPresent();
         Person updatedPerson = new Person(person.getName(), person.getPatientNo(), person.getFamilyNo(),
                 person.getPatientEmail().orElse(null), person.getFamilyEmail().orElse(null),
-                person.getAddress(), person.getTags(), appointment, person.getRemark(), person.isArchived());
+                person.getAddress(), person.getTags(), appointment, person.getRemark(),
+                person.isArchived(), keepMarked);
         model.setPerson(person, updatedPerson);
         // A view filter compares all fields, including the appointment being replaced.
         if (!model.getFilteredPersonList().contains(updatedPerson)) {

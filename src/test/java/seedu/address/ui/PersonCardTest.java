@@ -16,6 +16,15 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonCardTest {
 
     @Test
+    public void getNameText_onlyScheduledCheckupsHaveMarkIndicators() {
+        Person person = new PersonBuilder().withName("Carlyn Goh").build();
+        assertEquals("Carlyn Goh", PersonCard.getNameText(person));
+        Person scheduled = new PersonBuilder(person).withCheckupAppointment("01/01/2030 09:05").build();
+        assertEquals("Carlyn Goh [ ]", PersonCard.getNameText(scheduled));
+        assertEquals("Carlyn Goh [X]", PersonCard.getNameText(scheduled.withMarkedCheckup()));
+    }
+
+    @Test
     public void updateEmailVisibility_noEmail_hidesRowAndRemovesLayoutSpace() {
         Node emailRow = new Group();
         Person person = new PersonBuilder().withoutEmail().build();
