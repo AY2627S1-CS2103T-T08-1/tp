@@ -142,7 +142,22 @@ For example, after `find Alice`, `archive 1` archives the first contact in those
 | `archive 1` when the displayed list is empty | `There are no persons in the displayed list to archive.` | Use `list` to check for active contacts. |
 | Archiving a contact in `list archive` | `This person is already archived.` | Use `list` to select an active contact instead. |
 
-There is currently no command to restore an archived contact to the active list.
+### Restoring an archived contact: `unarchive`
+
+Restores an archived contact to the active list, preserving all its details.
+
+Format: `unarchive INDEX`
+
+* Enter `list archive` first, then use the index shown in that list. Filtered and sorted archive indices are supported.
+* `INDEX` must be a positive integer referring to a displayed contact. Only one index and surrounding whitespace are accepted.
+* The command word is case-insensitive: `unarchive 3`, `Unarchive 3`, and `UNARCHIVE 3` all work.
+* Missing indices, zero, negative numbers, decimals, words, and extra arguments are rejected.
+* An active contact cannot be unarchived; an error is shown without changing it.
+* The restored contact disappears from the archive list. Enter `list` to see it in the active list.
+* The change is saved automatically and survives restarting CareBook.
+
+Example: `list archive`, followed by `unarchive 3`, restores the third displayed archived contact.
+Check the updated indices before restoring another contact.
 
 ### Listing persons: `list`
 
@@ -528,6 +543,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
+**Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
 **Archive** | `archive INDEX`<br> e.g., `archive 3`
 **List**   | `list` or `list archive`
 **Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
