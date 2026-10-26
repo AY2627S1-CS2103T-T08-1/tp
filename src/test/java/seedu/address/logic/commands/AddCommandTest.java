@@ -8,11 +8,13 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.Messages;
@@ -88,6 +90,16 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public ReadOnlyObjectProperty<Person> selectedPersonProperty() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void selectPerson(Person person) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public ReadOnlyUserPrefs getUserPrefs() {
             throw new AssertionError("This method should not be called.");
         }
@@ -139,6 +151,21 @@ public class AddCommandTest {
 
         @Override
         public void updateFilteredPersonList(Predicate<Person> predicate) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void updateSortedPersonList(Comparator<Person> comparator) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void sortPersonsByMostRecent() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void resetSortedPersonList() {
             throw new AssertionError("This method should not be called.");
         }
     }

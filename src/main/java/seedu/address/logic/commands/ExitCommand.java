@@ -8,8 +8,10 @@ import seedu.address.model.Model;
 public class ExitCommand extends Command {
 
     public static final String COMMAND_WORD = "exit";
-    public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Exits the application.\nExample: " + COMMAND_WORD;
+
+    public static final String MESSAGE_USAGE = "Exit takes no arguments.\n"
+            + "To close CareBook, enter: " + COMMAND_WORD + "\n"
+            + "No contacts have been changed.";
 
     public static final String MESSAGE_EXIT_ACKNOWLEDGEMENT = "Exiting CareBook as requested ...";
 

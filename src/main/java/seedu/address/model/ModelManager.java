@@ -3,11 +3,15 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
+import java.util.Comparator;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Person;
@@ -21,6 +25,9 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private final SortedList<Person> sortedPersons;
+    /** Transient display selection; never written to the address book file. */
+    private final ReadOnlyObjectWrapper<Person> selectedPerson = new ReadOnlyObjectWrapper<>();
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -33,6 +40,7 @@ public class ModelManager implements Model {
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
+        sortedPersons = new SortedList<>(filteredPersons);
     }
 
     public ModelManager() {
@@ -62,6 +70,7 @@ public class ModelManager implements Model {
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
         this.addressBook.resetData(addressBook);
+        selectedPerson.set(null);
     }
 
     @Override
@@ -78,6 +87,9 @@ public class ModelManager implements Model {
     @Override
     public void deletePerson(Person target) {
         addressBook.removePerson(target);
+        if (target.equals(selectedPerson.get())) {
+            selectedPerson.set(null);
+        }
     }
 
     @Override
@@ -91,23 +103,62 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         addressBook.setPerson(target, editedPerson);
+        if (target.equals(selectedPerson.get())) {
+            selectedPerson.set(editedPerson);
+        }
     }
 
     //=========== Filtered Person List Accessors =============================================================
 
     /**
      * Returns an unmodifiable view of the list of {@code Person} backed by the internal list of
-     * {@code addressBook}
+     * {@code addressBook}, filtered by the current predicate and ordered by the current comparator.
      */
     @Override
     public ObservableList<Person> getFilteredPersonList() {
-        return filteredPersons;
+        return sortedPersons;
+    }
+
+    @Override
+    public ReadOnlyObjectProperty<Person> selectedPersonProperty() {
+        return selectedPerson.getReadOnlyProperty();
+    }
+
+    @Override
+    public void selectPerson(Person person) {
+        if (person != null && !filteredPersons.contains(person)) {
+            throw new IllegalArgumentException("Only a displayed contact can be selected.");
+        }
+        selectedPerson.set(person);
     }
 
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
         filteredPersons.setPredicate(predicate);
+        if (!filteredPersons.contains(selectedPerson.get())) {
+            selectedPerson.set(null);
+        }
+    }
+
+    //=========== Sorted Person List Accessors ===============================================================
+
+    @Override
+    public void updateSortedPersonList(Comparator<Person> comparator) {
+        requireNonNull(comparator);
+        sortedPersons.setComparator(comparator);
+    }
+
+    @Override
+    public void sortPersonsByMostRecent() {
+        // the address book keeps persons in the order they were added, so a later index means more recent
+        ObservableList<Person> addedOrder = addressBook.getPersonList();
+        sortedPersons.setComparator(Comparator.comparingInt(addedOrder::indexOf).reversed());
+    }
+
+    @Override
+    public void resetSortedPersonList() {
+        sortedPersons.setComparator(null);
     }
 
     @Override
@@ -123,7 +174,7 @@ public class ModelManager implements Model {
 
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
-                && filteredPersons.equals(otherModelManager.filteredPersons);
+                && sortedPersons.equals(otherModelManager.sortedPersons);
     }
 
 }

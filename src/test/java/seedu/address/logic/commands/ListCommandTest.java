@@ -1,6 +1,7 @@
 package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
@@ -83,6 +84,16 @@ public class ListCommandTest {
         assertEquals(List.of(), model.getFilteredPersonList());
 
         assertCommandSuccess(parser.parseCommand("list"), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
+    }
+
+    @Test
+    public void execute_afterSort_restoresAddedOrder() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("sort name desc").execute(model);
+        assertNotEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
+
+        assertCommandSuccess(parser.parseCommand("list"), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
+        assertEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
     }
 
     @Test

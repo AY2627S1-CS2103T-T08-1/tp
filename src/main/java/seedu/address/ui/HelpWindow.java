@@ -11,6 +11,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.CheckupCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
@@ -19,6 +20,8 @@ import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.ViewCommand;
 
 /**
@@ -36,7 +39,10 @@ public class HelpWindow extends UiPart<Stage> {
             FindCommand.MESSAGE_USAGE,
             FilterCommand.MESSAGE_USAGE,
             ListCommand.MESSAGE_USAGE,
+            SortCommand.MESSAGE_USAGE,
             ViewCommand.MESSAGE_USAGE,
+            CheckupCommand.MESSAGE_USAGE,
+            RemarkCommand.MESSAGE_USAGE,
             ClearCommand.MESSAGE_USAGE,
             HelpCommand.MESSAGE_USAGE,
             ExitCommand.MESSAGE_USAGE);
