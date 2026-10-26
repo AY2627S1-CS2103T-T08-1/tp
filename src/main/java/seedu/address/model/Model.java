@@ -84,6 +84,11 @@ public interface Model {
     void updateFilteredPersonList(Predicate<Person> predicate);
 
     /**
+     * Filters contacts within the current active or archived list, replacing any previous search criteria.
+     */
+    void filterPersonsInCurrentList(Predicate<Person> predicate);
+
+    /**
      * Orders the displayed person list by {@code comparator}. The stored data is not reordered.
      * @throws NullPointerException if {@code comparator} is null.
      */

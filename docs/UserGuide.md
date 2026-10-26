@@ -355,7 +355,11 @@ Examples:
 
 ### Filtering persons by name, tag and address: `filter`
 
-Shows only the persons who match all the criteria you give.
+Shows only the persons in the current active or archived list who match all the criteria you give.
+
+After `list`, `filter` excludes archived contacts. After `list archive`, it searches only archived contacts.
+Each `filter` replaces the previous filter criteria while keeping the same list, even when no contacts match.
+`find` switches back to searching active contacts.
 
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
