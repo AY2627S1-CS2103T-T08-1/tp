@@ -29,6 +29,7 @@ public class Person {
     private final Email patientEmail;
     private final Email familyEmail;
     private final Address address;
+    private final boolean archived;
     private final CheckupAppointment checkupAppointment;
     private final Set<Tag> tags = new HashSet<>();
     private final Remark remark;
@@ -56,17 +57,44 @@ public class Person {
      */
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, false);
+    }
+
+    /**
+     * Creates a person with the given details and archived status.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
+            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark,
+            boolean archived) {
         requireAllNonNull(name, patientNo, familyNo, address, tags, remark);
         checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
+
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
         this.patientEmail = patientEmail;
         this.familyEmail = familyEmail;
         this.address = address;
+        this.archived = archived;
         this.checkupAppointment = checkupAppointment;
         this.tags.addAll(tags);
         this.remark = remark;
+    }
+
+    /**
+     * Returns whether this person is archived.
+     */
+    public boolean isArchived() {
+        return archived;
+    }
+
+    /**
+     * Returns a copy of this person with the given archived status.
+     */
+    public Person copyWithArchivedStatus(boolean archived) {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, archived);
     }
 
     public Name getName() {
@@ -115,7 +143,7 @@ public class Person {
      */
     public Person withRemark(Remark remark) {
         return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
-                remark);
+                remark, archived);
     }
 
     /**
@@ -152,8 +180,9 @@ public class Person {
                 && Objects.equals(patientEmail, otherPerson.patientEmail)
                 && Objects.equals(familyEmail, otherPerson.familyEmail)
                 && address.equals(otherPerson.address)
-                && Objects.equals(checkupAppointment, otherPerson.checkupAppointment)
                 && tags.equals(otherPerson.tags)
+                && archived == otherPerson.archived
+                && Objects.equals(checkupAppointment, otherPerson.checkupAppointment)
                 && remark.equals(otherPerson.remark);
     }
 
@@ -161,7 +190,7 @@ public class Person {
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
         return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
-                remark);
+                remark, archived);
     }
 
     @Override

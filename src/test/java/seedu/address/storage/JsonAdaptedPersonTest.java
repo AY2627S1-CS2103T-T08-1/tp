@@ -40,6 +40,14 @@ public class JsonAdaptedPersonTest {
             .collect(Collectors.toList());
 
     @Test
+    public void jsonRoundTrip_archivedContact_preservesAllDetails() throws Exception {
+        Person archived = new PersonBuilder(BENSON).withCheckupAppointment("01/01/2000 09:05")
+                .withRemarks("Needs assistance").build().copyWithArchivedStatus(true);
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(archived));
+        assertEquals(archived, JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
     public void jsonRoundTrip_preservesCheckupIncludingPastAppointments() throws Exception {
         Person scheduled = new PersonBuilder(BENSON).withCheckupAppointment("01/01/2000 09:05").build();
         String json = JsonUtil.toJsonString(new JsonAdaptedPerson(scheduled));

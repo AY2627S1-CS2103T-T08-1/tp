@@ -121,7 +121,7 @@ public class EditCommand extends Command {
 
         return new Person(updatedName, updatedPatientNo, updatedFamilyNo, updatedPatientEmail,
                 updatedFamilyEmail, updatedAddress, updatedTags, personToEdit.getCheckupAppointment().orElse(null),
-                personToEdit.getRemark());
+                personToEdit.getRemark(), personToEdit.isArchived());
     }
 
     @Override

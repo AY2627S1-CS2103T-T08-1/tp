@@ -12,8 +12,11 @@ import seedu.address.model.person.Person;
  * The API of the Model component.
  */
 public interface Model {
-    /** {@code Predicate} that always evaluates to true */
-    Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
+    /** Predicate that selects all active persons. */
+    Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = person -> !person.isArchived();
+
+    /** Predicate that selects archived persons. */
+    Predicate<Person> PREDICATE_SHOW_ARCHIVED_PERSONS = Person::isArchived;
 
     /** {@code Predicate} that always evaluates to false, hiding all persons without deleting them. */
     Predicate<Person> PREDICATE_SHOW_NO_PERSONS = unused -> false;
@@ -79,6 +82,11 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
+    /**
+     * Filters contacts within the current active or archived list, replacing any previous search criteria.
+     */
+    void filterPersonsInCurrentList(Predicate<Person> predicate);
 
     /**
      * Orders the displayed person list by {@code comparator}. The stored data is not reordered.

@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.CheckupCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
@@ -21,6 +22,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
+import seedu.address.logic.commands.UnarchiveCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -48,10 +50,15 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        // The delete and help command words are case-insensitive.
+
+        // The delete, archive, unarchive, and help command words are case-insensitive.
         String commandWord = matcher.group("commandWord");
         if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
             commandWord = DeleteCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(ArchiveCommand.COMMAND_WORD)) {
+            commandWord = ArchiveCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(UnarchiveCommand.COMMAND_WORD)) {
+            commandWord = UnarchiveCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(HelpCommand.COMMAND_WORD)) {
             commandWord = HelpCommand.COMMAND_WORD;
         }
@@ -64,6 +71,8 @@ public class AddressBookParser {
 
         return switch (commandWord) {
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
+            case ArchiveCommand.COMMAND_WORD -> new ArchiveCommandParser().parse(arguments);
+            case UnarchiveCommand.COMMAND_WORD -> new UnarchiveCommandParser().parse(arguments);
             case CheckupCommand.COMMAND_WORD -> new CheckupCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
@@ -74,13 +83,17 @@ public class AddressBookParser {
                 yield new ClearCommand();
             }
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
-            case FilterCommand.COMMAND_WORD -> new FilterCommandParser().parse(arguments);
-            case ListCommand.COMMAND_WORD -> { // Update Parser to only accept the command if only `list` is the inputi
-                if (!arguments.trim().isEmpty()) {
+            case ListCommand.COMMAND_WORD -> {
+                String trimmedArguments = arguments.trim();
+                if (trimmedArguments.equalsIgnoreCase(ArchiveCommand.COMMAND_WORD)) {
+                    yield new ListCommand(true);
+                } else if (trimmedArguments.isEmpty()) {
+                    yield new ListCommand();
+                } else {
                     throw new ParseException(ListCommand.MESSAGE_INVALID_FORMAT);
                 }
-                yield new ListCommand();
             }
+            case FilterCommand.COMMAND_WORD -> new FilterCommandParser().parse(arguments);
             case SortCommand.COMMAND_WORD -> new SortCommandParser().parse(arguments);
             case ExitCommand.COMMAND_WORD -> {
                 if (!arguments.isBlank()) {

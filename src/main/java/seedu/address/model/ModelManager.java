@@ -26,6 +26,7 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
+    private Predicate<Person> personListScope = PREDICATE_SHOW_ALL_PERSONS;
     /** Transient display selection; never written to the address book file. */
     private final ReadOnlyObjectWrapper<Person> selectedPerson = new ReadOnlyObjectWrapper<>();
 
@@ -39,7 +40,7 @@ public class ModelManager implements Model {
 
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
-        filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
+        filteredPersons = new FilteredList<>(this.addressBook.getPersonList(), PREDICATE_SHOW_ALL_PERSONS);
         sortedPersons = new SortedList<>(filteredPersons);
     }
 
@@ -135,10 +136,20 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
+        // Explicit list switches change the scope; search criteria alone keep the current scope.
+        if (predicate == PREDICATE_SHOW_ALL_PERSONS || predicate == PREDICATE_SHOW_ARCHIVED_PERSONS) {
+            personListScope = predicate;
+        }
         filteredPersons.setPredicate(predicate);
         if (!filteredPersons.contains(selectedPerson.get())) {
             selectedPerson.set(null);
         }
+    }
+
+    @Override
+    public void filterPersonsInCurrentList(Predicate<Person> predicate) {
+        requireNonNull(predicate);
+        updateFilteredPersonList(personListScope.and(predicate));
     }
 
     //=========== Sorted Person List Accessors ===============================================================
@@ -174,6 +185,7 @@ public class ModelManager implements Model {
 
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
+                && personListScope == otherModelManager.personListScope
                 && sortedPersons.equals(otherModelManager.sortedPersons);
     }
 

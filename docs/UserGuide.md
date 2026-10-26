@@ -29,7 +29,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists all active contacts. Use `list archive` for archived contacts.
 
    * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to the CareBook.
 
@@ -61,7 +61,8 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
-* The `help`, `list`, `clear`, and `exit` commands reject extra parameters; enter these commands on their own.
+* The `help`, `clear`, and `exit` commands reject extra parameters; enter these commands on their own.<br>
+  For example, `help 123` will be rejected. The `list` command accepts only the optional `archive` argument.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -119,24 +120,78 @@ Use `/tag PRIORITY` with `add` or `edit` to label a person's priority. Choose on
 
 An invalid priority displays `Tag names must be HIGH, MEDIUM or LOW` and leaves the contacts unchanged.
 
-### Listing all persons: `list`
+### Archiving a contact: `archive`
 
-Shows a list of all persons in CareBook.
+Archives a contact that you no longer need in the active list while keeping its details in CareBook.
+The contact disappears from the current active list and can be viewed using `list archive`.
 
-Format: `list`
+Format: `archive INDEX`
+
+The command word is case-insensitive: `archive 3`, `Archive 3`, and `ARCHIVE 3` all archive the third displayed contact.
+
+* `INDEX` must be a positive integer shown in the current list, including a filtered list after `find`.
+* `list archive` shows archived contacts. Use `list` to return to active contacts.
+* `find` searches active contacts. Archived contacts remain archived when edited.
+* Archiving an already archived contact reports an error without changing it.
+* Archived status is saved automatically and survives restarting CareBook.
+* Archived contacts retain their identity, so adding a duplicate is still rejected.
+
+**Example workflow:**
+
+1. Enter `list` to display active contacts.
+2. Enter `archive 3` to archive the third contact shown. CareBook displays `Archived person: ...` with the contact's details, and removes that contact from the active list.
+3. Enter `list archive` to switch to the archive list. CareBook displays `Listed archived persons.`
+4. Enter `list` to return to the active list. The archived contact remains in the archive list.
+
+After archiving, the displayed indices may change. Check the current list before archiving another contact.
+For example, after `find Alice`, `archive 1` archives the first contact in those search results.
+
+**Common errors:**
+
+| Incorrect input or situation | Result | How to correct it |
+| --- | --- | --- |
+| `archive`, `archive Alice`, or `archive 1 2` | Invalid command format; usage instructions are shown. | Enter exactly one index, such as `archive 3`. |
+| `archive 0` or `archive -1` | Invalid index. | Use a positive integer shown in the current list. |
+| `archive 4` when only three contacts are displayed | The index is out of range. | Check the displayed indices and select an existing contact. |
+| `archive 1` when the displayed list is empty | `There are no persons in the displayed list to archive.` | Use `list` to check for active contacts. |
+| Archiving a contact in `list archive` | `This person is already archived.` | Use `list` to select an active contact instead. |
+
+### Restoring an archived contact: `unarchive`
+
+Restores an archived contact to the active list, preserving all its details.
+
+Format: `unarchive INDEX`
+
+* Enter `list archive` first, then use the index shown in that list. Filtered and sorted archive indices are supported.
+* `INDEX` must be a positive integer referring to a displayed contact. Only one index and surrounding whitespace are accepted.
+* The command word is case-insensitive: `unarchive 3`, `Unarchive 3`, and `UNARCHIVE 3` all work.
+* Missing indices, zero, negative numbers, decimals, words, and extra arguments are rejected.
+* An active contact cannot be unarchived; an error is shown without changing it.
+* The restored contact disappears from the archive list. Enter `list` to see it in the active list.
+* The change is saved automatically and survives restarting CareBook.
+
+Example: `list archive`, followed by `unarchive 3`, restores the third displayed archived contact.
+Check the updated indices before restoring another contact.
+
+### Listing persons: `list`
+
+Use `list` to show all active (non-archived) persons in CareBook, or `list archive` to show only archived persons.
+
+Format: `list` or `list archive`
 
 **Common errors:**
 
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
-| `list 3` | `Invalid command format. List command format: list` | Remove the index. Use `list` to show all persons. |
-| `list Alice` or `list n/Alice` | `Invalid command format. List command format: list` | Use `find Alice` to search by name, or `list` to show all persons. |
+| `list 3` | `Invalid command format. List command format: list [archive]` | Remove the index. Use `list` to show all persons. |
+| `list Alice` or `list n/Alice` | `Invalid command format. List command format: list [archive]` | Use `find Alice` to search by name, or `list` to show all persons. |
 | `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
 
-The `list` command accepts no arguments. Leading and trailing spaces are allowed.
-If all persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
-this is normal behavior. After a `find` command, use `list` to display all persons again.
-`list` also clears any `sort`, so persons are shown in the order they were added.
+The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word `list` remains lowercase. Leading and trailing spaces are allowed.
+If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
+this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
+If no contacts have been archived, `list archive` displays an empty list. `list` also clears any `sort`, so persons are 
+shown in the order they were added.
 
 ### Sorting persons: `sort`
 
@@ -329,7 +384,11 @@ Examples:
 
 ### Filtering persons by name, tag and address: `filter`
 
-Shows only the persons who match all the criteria you give.
+Shows only the persons in the current active or archived list who match all the criteria you give.
+
+After `list`, `filter` excludes archived contacts. After `list archive`, it searches only archived contacts.
+Each `filter` replaces the previous filter criteria while keeping the same list, even when no contacts match.
+`find` switches back to searching active contacts.
 
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
@@ -426,7 +485,7 @@ No contacts have been changed.
 
 ### Saving the data
 
-CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
+CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit`, `archive` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
 
 ### Editing the data file
 
@@ -442,6 +501,7 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `patientEmail` | No    | The patient's email address. Leave it out if the patient has no email. |
 | `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
+| `archived` | No | `true` for archived contacts; defaults to `false` when omitted. |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
 | `remarks`   | No       | A list of the contact's notes in order, e.g. `[ "Allergic to penicillin" ]`. Each note must not be blank or start with a space, and the notes can have at most 500 characters in total. Leave it out or use `[]` for no notes. |
 
@@ -497,11 +557,11 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
+**Archive** | `archive INDEX`<br> e.g., `archive 3`
+**List**   | `list` or `list archive`
 **Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
-**Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
-**List**   | `list`
 **Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
 **Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`
