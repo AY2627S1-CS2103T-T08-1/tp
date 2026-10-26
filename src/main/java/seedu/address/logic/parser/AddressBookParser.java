@@ -50,7 +50,7 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        
+
         // The delete, archive, unarchive, and help command words are case-insensitive.
         String commandWord = matcher.group("commandWord");
         if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
