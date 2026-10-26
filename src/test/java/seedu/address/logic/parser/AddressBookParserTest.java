@@ -134,9 +134,28 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_help() throws Exception {
-        assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD) instanceof HelpCommand);
-        assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD + " 3") instanceof HelpCommand);
+    public void parseCommand_help_success() throws Exception {
+        for (String input : List.of("help", "   help", "help   ", "   help   ", "\thelp\t",
+                " \t help \t ", "\nhelp\r\n", "HELP", "Help", "hElP", " \t HeLp \r\n")) {
+            assertTrue(parser.parseCommand(input) instanceof HelpCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_helpWithArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE);
+        for (String input : List.of("help 3", "help abc", "   help abc   ", "help\tabc",
+                "help --help", "help abc def", "help !", "help\nabc", "HELP 3", "HeLp\tabc")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
+        }
+    }
+
+    @Test
+    public void parseCommand_helpWithExtraText_throwsUnknownCommand() {
+        for (String input : List.of("abc help", "   abc help   ", "abchelp", "helpabc", "help3",
+                "abc HELP", "HELPabc", "abcHeLp")) {
+            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(input));
+        }
     }
 
     @Test

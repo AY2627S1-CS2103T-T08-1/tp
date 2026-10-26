@@ -50,7 +50,8 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        // The delete, archive, and unarchive command words are case-insensitive.
+        
+        // The delete, archive, unarchive, and help command words are case-insensitive.
         String commandWord = matcher.group("commandWord");
         if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
             commandWord = DeleteCommand.COMMAND_WORD;
@@ -58,6 +59,8 @@ public class AddressBookParser {
             commandWord = ArchiveCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(UnarchiveCommand.COMMAND_WORD)) {
             commandWord = UnarchiveCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(HelpCommand.COMMAND_WORD)) {
+            commandWord = HelpCommand.COMMAND_WORD;
         }
         final String arguments = matcher.group("arguments");
 
@@ -98,7 +101,12 @@ public class AddressBookParser {
                 }
                 yield new ExitCommand();
             }
-            case HelpCommand.COMMAND_WORD -> new HelpCommand();
+            case HelpCommand.COMMAND_WORD -> {
+                if (!arguments.trim().isEmpty()) {
+                    throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
+                }
+                yield new HelpCommand();
+            }
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
             default -> {
