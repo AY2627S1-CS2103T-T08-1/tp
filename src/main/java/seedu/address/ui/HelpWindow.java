@@ -20,6 +20,7 @@ import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.MarkCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.ViewCommand;
@@ -58,6 +59,7 @@ public class HelpWindow extends UiPart<Stage> {
             SortCommand.MESSAGE_USAGE,
             ViewCommand.MESSAGE_USAGE,
             CheckupCommand.MESSAGE_USAGE,
+            MarkCommand.MESSAGE_USAGE,
             RemarkCommand.MESSAGE_USAGE,
             ClearCommand.MESSAGE_USAGE,
             HelpCommand.MESSAGE_USAGE,

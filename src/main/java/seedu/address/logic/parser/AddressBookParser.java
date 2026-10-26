@@ -20,9 +20,11 @@ import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.MarkCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.UnarchiveCommand;
+import seedu.address.logic.commands.UnmarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -51,7 +53,7 @@ public class AddressBookParser {
         }
 
 
-        // The delete, archive, unarchive, and help command words are case-insensitive.
+        // These command words are case-insensitive.
         String commandWord = matcher.group("commandWord");
         if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
             commandWord = DeleteCommand.COMMAND_WORD;
@@ -61,6 +63,10 @@ public class AddressBookParser {
             commandWord = UnarchiveCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(HelpCommand.COMMAND_WORD)) {
             commandWord = HelpCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(MarkCommand.COMMAND_WORD)) {
+            commandWord = MarkCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(UnmarkCommand.COMMAND_WORD)) {
+            commandWord = UnmarkCommand.COMMAND_WORD;
         }
         final String arguments = matcher.group("arguments");
 
@@ -109,6 +115,8 @@ public class AddressBookParser {
             }
             case ViewCommand.COMMAND_WORD -> new ViewCommandParser().parse(arguments);
             case RemarkCommand.COMMAND_WORD -> new RemarkCommandParser().parse(arguments);
+            case MarkCommand.COMMAND_WORD -> new MarkCommandParser().parse(arguments);
+            case UnmarkCommand.COMMAND_WORD -> new UnmarkCommandParser().parse(arguments);
             default -> {
                 logger.finer("This user input caused a ParseException: " + userInput);
                 throw new ParseException(MESSAGE_UNKNOWN_COMMAND);

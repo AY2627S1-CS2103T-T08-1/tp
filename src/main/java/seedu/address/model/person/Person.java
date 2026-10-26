@@ -19,6 +19,8 @@ import seedu.address.model.tag.Tag;
 public class Person {
 
     public static final String MESSAGE_TAG_COUNT_CONSTRAINTS = "A contact can have at most one priority tag.";
+    public static final String MESSAGE_MARK_WITHOUT_CHECKUP =
+            "Contacts with no checkup appointments cannot be marked.";
 
     // Identity fields
     private final Name name;
@@ -31,6 +33,7 @@ public class Person {
     private final Address address;
     private final boolean archived;
     private final CheckupAppointment checkupAppointment;
+    private final boolean checkupMarked;
     private final Set<Tag> tags = new HashSet<>();
     private final Remark remark;
 
@@ -67,8 +70,20 @@ public class Person {
     public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
             Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark,
             boolean archived) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, archived, false);
+    }
+
+    /**
+     * Creates a contact with its archived and checkup marking states.
+     * Only a contact with a checkup appointment may be marked.
+     */
+    public Person(Name name, Phone patientNo, Phone familyNo, Email patientEmail, Email familyEmail,
+            Address address, Set<Tag> tags, CheckupAppointment checkupAppointment, Remark remark,
+            boolean archived, boolean checkupMarked) {
         requireAllNonNull(name, patientNo, familyNo, address, tags, remark);
         checkArgument(tags.size() <= 1, MESSAGE_TAG_COUNT_CONSTRAINTS);
+        checkArgument(!checkupMarked || checkupAppointment != null, MESSAGE_MARK_WITHOUT_CHECKUP);
 
         this.name = name;
         this.patientNo = patientNo;
@@ -78,6 +93,7 @@ public class Person {
         this.address = address;
         this.archived = archived;
         this.checkupAppointment = checkupAppointment;
+        this.checkupMarked = checkupMarked;
         this.tags.addAll(tags);
         this.remark = remark;
     }
@@ -94,7 +110,7 @@ public class Person {
      */
     public Person copyWithArchivedStatus(boolean archived) {
         return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
-                remark, archived);
+                remark, archived, checkupMarked);
     }
 
     public Name getName() {
@@ -125,6 +141,26 @@ public class Person {
         return Optional.ofNullable(checkupAppointment);
     }
 
+    public boolean isCheckupMarked() {
+        return checkupMarked;
+    }
+
+    /**
+     * Returns a marked copy, preserving all other contact details.
+     */
+    public Person withMarkedCheckup() {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, archived, true);
+    }
+
+    /**
+     * Returns an unmarked copy, preserving all other contact details.
+     */
+    public Person withUnmarkedCheckup() {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, archived, false);
+    }
+
     /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
@@ -143,7 +179,7 @@ public class Person {
      */
     public Person withRemark(Remark remark) {
         return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
-                remark, archived);
+                remark, archived, checkupMarked);
     }
 
     /**
@@ -182,6 +218,7 @@ public class Person {
                 && address.equals(otherPerson.address)
                 && tags.equals(otherPerson.tags)
                 && archived == otherPerson.archived
+                && checkupMarked == otherPerson.checkupMarked
                 && Objects.equals(checkupAppointment, otherPerson.checkupAppointment)
                 && remark.equals(otherPerson.remark);
     }
@@ -190,7 +227,7 @@ public class Person {
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
         return Objects.hash(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
-                remark, archived);
+                remark, archived, checkupMarked);
     }
 
     @Override
@@ -205,6 +242,7 @@ public class Person {
                 .add("tags", tags)
                 .add("checkupAppointment", checkupAppointment)
                 .add("remark", remark)
+                .add("checkupMarked", checkupMarked)
                 .toString();
     }
 
