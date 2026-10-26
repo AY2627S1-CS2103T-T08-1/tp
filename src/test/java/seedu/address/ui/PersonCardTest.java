@@ -22,6 +22,7 @@ public class PersonCardTest {
         Person scheduled = new PersonBuilder(person).withCheckupAppointment("01/01/2030 09:05").build();
         assertEquals("Carlyn Goh [ ]", PersonCard.getNameText(scheduled));
         assertEquals("Carlyn Goh [X]", PersonCard.getNameText(scheduled.withMarkedCheckup()));
+        assertEquals("Carlyn Goh [ ]", PersonCard.getNameText(scheduled.withMarkedCheckup().withUnmarkedCheckup()));
     }
 
     @Test

@@ -27,6 +27,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.MarkCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.UnmarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.CheckupAppointment;
@@ -45,7 +46,25 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_mark() throws Exception {
-        assertEquals(new MarkCommand(INDEX_FIRST_PERSON), parser.parseCommand("mark 1"));
+        for (String word : List.of("mark", "MARK", "Mark", "mArK")) {
+            assertEquals(new MarkCommand(INDEX_FIRST_PERSON), parser.parseCommand(word + " 1"));
+        }
+    }
+
+    @Test
+    public void parseCommand_unmark() throws Exception {
+        for (String word : List.of("unmark", "UNMARK", "Unmark", "uNmArK")) {
+            assertEquals(new UnmarkCommand(INDEX_FIRST_PERSON), parser.parseCommand(word + " 1"));
+        }
+    }
+
+    @Test
+    public void parseCommand_markAndUnmarkInvalidIndex_showsExactError() {
+        for (String word : List.of("MARK", "mArK", "UNMARK", "uNmArK")) {
+            for (String args : List.of("", "0", "-1", "abc", "1.5", "2147483648", "1 2", "1 extra")) {
+                assertThrows(ParseException.class, "Invalid index.", () -> parser.parseCommand(word + " " + args));
+            }
+        }
     }
 
     @Test

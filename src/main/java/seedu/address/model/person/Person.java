@@ -154,6 +154,14 @@ public class Person {
     }
 
     /**
+     * Returns an unmarked copy, preserving all other contact details.
+     */
+    public Person withUnmarkedCheckup() {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
+                remark, archived, false);
+    }
+
+    /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.
      * Returns an empty set when the person has no assigned tags.
