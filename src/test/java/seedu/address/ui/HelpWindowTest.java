@@ -38,8 +38,12 @@ public class HelpWindowTest {
                 List<String> commandWords = Arrays.stream(commandList.getText().split("\n\n"))
                         .map(usage -> usage.split("[ :]")[0].toLowerCase(Locale.ROOT))
                         .toList();
-                assertEquals(List.of("add", "edit", "delete", "find", "filter", "list", "sort", "view",
-                        "checkup", "remark", "clear", "help", "exit"), commandWords);
+                assertEquals(List.of("add", "edit", "delete", "archive", "unarchive", "find", "filter", "list",
+                        "sort", "view", "checkup", "remark", "clear", "help", "exit"), commandWords);
+                assertTrue(commandList.getText().contains("Example: archive 1"));
+                assertTrue(commandList.getText().contains("Example: unarchive 1"));
+                assertTrue(commandList.getText().contains("Example: list archive"));
+                assertTrue(commandList.getText().contains("Run list archive first"));
                 assertTrue(commandList.getText().contains(FilterCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(CheckupCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(RemarkCommand.MESSAGE_USAGE));

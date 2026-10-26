@@ -32,13 +32,29 @@ public class HelpWindow extends UiPart<Stage> {
     public static final String USERGUIDE_URL = "https://ay2627s1-cs2103t-t08-1.github.io/tp/UserGuide.html";
     public static final String HELP_MESSAGE = "Refer to the user guide: " + USERGUIDE_URL;
 
+    // Usage copied from branch-archive until its command classes are integrated.
+    private static final String ARCHIVE_USAGE = "archive: Archives the person identified by the index number "
+            + "used in the displayed person list.\n"
+            + "Parameters: INDEX (must be a positive integer)\n"
+            + "The contact is retained in the archive. Use list archive to view archived contacts.\n"
+            + "Example: archive 1";
+    private static final String UNARCHIVE_USAGE = "unarchive: Unarchives the person identified by the index number "
+            + "used in the displayed person list.\n"
+            + "Parameters: INDEX (must be a positive integer)\n"
+            + "Run list archive first, then use the displayed index to restore a contact.\n"
+            + "Example: unarchive 1";
+    private static final String LIST_ARCHIVE_USAGE = "list archive: Lists archived contacts and resets filters "
+            + "and sorting. Use list to return to active contacts.\nExample: list archive";
+
     private static final String COMMAND_HELP = String.join("\n\n",
             AddCommand.MESSAGE_USAGE,
             EditCommand.MESSAGE_USAGE,
             DeleteCommand.MESSAGE_USAGE,
+            ARCHIVE_USAGE,
+            UNARCHIVE_USAGE,
             FindCommand.MESSAGE_USAGE,
             FilterCommand.MESSAGE_USAGE,
-            ListCommand.MESSAGE_USAGE,
+            ListCommand.MESSAGE_USAGE + "\n" + LIST_ARCHIVE_USAGE,
             SortCommand.MESSAGE_USAGE,
             ViewCommand.MESSAGE_USAGE,
             CheckupCommand.MESSAGE_USAGE,
