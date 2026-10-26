@@ -1,4 +1,4 @@
-#copyButton, #helpMessage {
+#copyButton, #helpMessage, .help-heading, .help-hint, #commandList {
     -fx-text-fill: white;
 }
 
@@ -16,4 +16,17 @@
 
 #helpMessageContainer {
     -fx-background-color: derive(#1d1d1d, 20%);
+}
+
+.help-heading {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+#commandList {
+    -fx-font-size: 14px;
+}
+
+#commandList .content {
+    -fx-background-color: derive(#1d1d1d, 10%);
 }
