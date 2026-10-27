@@ -72,7 +72,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 Opens a resizable, scrollable Help window listing the available commands, their usage, and examples.
 The command list includes `add`, `edit`, `delete`, `find`, `filter`, `list`, `sort`, `view`,
 `checkup`, `remark`, `clear`, `help`, and `exit`. It covers search criteria, sorting by name,
-priority or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
+priority, checkup date or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
 
 The window also provides the user guide URL and a **Copy URL** button.
 

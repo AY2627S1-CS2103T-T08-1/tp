@@ -369,8 +369,8 @@ Use `list` to display all contacts again after a successful search.
 
 ### Sort command
 
-The `sort` command changes the order in which contacts are displayed. It supports three criteria:
-`sort priority [asc|desc]`, `sort name [asc|desc]` and `sort recent`.
+The `sort` command changes the order in which contacts are displayed. It supports four criteria:
+`sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|desc]` and `sort recent`.
 
 **Design.** `ModelManager` keeps a `SortedList` that wraps the `FilteredList`, and
 `Model#getFilteredPersonList()` returns the sorted list. This means:
@@ -385,6 +385,9 @@ The `sort` command changes the order in which contacts are displayed. It support
 `PersonComparators` provides the orderings:
 
 * `byName(ascending)` compares names ignoring case.
+* `byCheckup(ascending)` orders by checkup appointment date and time, earliest first when ascending. Contacts without a
+  checkup appointment are always last in both directions, and ties are ordered by name. `CheckupAppointment` implements
+  `Comparable` for this.
 * `byPriority(mostUrgentFirst)` orders `HIGH`, `MEDIUM`, `LOW` (or the reverse). Contacts without a priority tag
   are always last in both directions, and ties are ordered by name. In the user-facing command, `desc` means most
   urgent first, so `SortCommand` passes `!ascending` as `mostUrgentFirst`.
@@ -394,7 +397,7 @@ How the `sort` command works:
 1. `AddressBookParser` recognises `sort` and creates a `SortCommandParser`.
 2. `SortCommandParser#parse()` lowercases and splits the arguments. It throws a `ParseException` if there is no
    criterion, the criterion or direction is unknown, `recent` is given a direction, or there are extra arguments.
-   Priority defaults to descending and name defaults to ascending. It creates a `SortCommand`.
+   Priority defaults to descending; name and checkup default to ascending. It creates a `SortCommand`.
 3. `SortCommand#execute()` calls `Model#updateSortedPersonList(comparator)` (or `Model#sortPersonsByMostRecent()`
    for `recent`) and returns a `CommandResult` describing the order.
 4. `SortCommand#modifiesData()` returns `false`, so `LogicManager` does not save. The UI observes the sorted list
