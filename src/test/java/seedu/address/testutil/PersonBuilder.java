@@ -32,6 +32,8 @@ public class PersonBuilder {
     private Email familyEmail;
     private Address address;
     private CheckupAppointment checkupAppointment;
+    private boolean checkupMarked;
+    private boolean archived;
     private Set<Tag> tags;
     private Remark remark;
 
@@ -60,6 +62,8 @@ public class PersonBuilder {
         familyEmail = personToCopy.getFamilyEmail().orElse(null);
         address = personToCopy.getAddress();
         checkupAppointment = personToCopy.getCheckupAppointment().orElse(null);
+        checkupMarked = personToCopy.isCheckupMarked();
+        archived = personToCopy.isArchived();
         tags = new HashSet<>(personToCopy.getTags());
         remark = personToCopy.getRemark();
     }
@@ -175,7 +179,7 @@ public class PersonBuilder {
      */
     public Person build() {
         return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, checkupAppointment,
-                remark);
+                remark, archived, checkupMarked);
     }
 
 }

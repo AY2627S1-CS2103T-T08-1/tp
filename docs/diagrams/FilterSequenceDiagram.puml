@@ -11,14 +11,14 @@ participant "r:CommandResult" as CommandResult LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
-participant "p:PersonHasTagPredicate" as PersonHasTagPredicate MODEL_COLOR
+participant "p:PersonMatchesFilterPredicate" as PersonMatchesFilterPredicate MODEL_COLOR
 participant "m:Model" as Model MODEL_COLOR
 end box
 
-[-> LogicManager : execute("filter HIGH")
+[-> LogicManager : execute("filter /tag HIGH")
 activate LogicManager
 
-LogicManager -> AddressBookParser : parseCommand("filter HIGH")
+LogicManager -> AddressBookParser : parseCommand("filter /tag HIGH")
 activate AddressBookParser
 
 create FilterCommandParser
@@ -28,20 +28,21 @@ activate FilterCommandParser
 FilterCommandParser --> AddressBookParser
 deactivate FilterCommandParser
 
-AddressBookParser -> FilterCommandParser : parse("HIGH")
+AddressBookParser -> FilterCommandParser : parse(" /tag HIGH")
 activate FilterCommandParser
 
 note right of FilterCommandParser
-  Throws ParseException if the argument is not
-  one of HIGH, MEDIUM or LOW (case-insensitive).
+  Throws ParseException if no criterion is given,
+  a value is empty, or a tag is not one of
+  HIGH, MEDIUM or LOW (case-insensitive).
 end note
 
-create PersonHasTagPredicate
-FilterCommandParser -> PersonHasTagPredicate : PersonHasTagPredicate("HIGH")
-activate PersonHasTagPredicate
+create PersonMatchesFilterPredicate
+FilterCommandParser -> PersonMatchesFilterPredicate : PersonMatchesFilterPredicate([], ["HIGH"], [])
+activate PersonMatchesFilterPredicate
 
-PersonHasTagPredicate --> FilterCommandParser : p
-deactivate PersonHasTagPredicate
+PersonMatchesFilterPredicate --> FilterCommandParser : p
+deactivate PersonMatchesFilterPredicate
 
 create FilterCommand
 FilterCommandParser -> FilterCommand : FilterCommand(p)

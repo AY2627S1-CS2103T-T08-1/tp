@@ -56,7 +56,7 @@ public class PersonCard extends UiPart<Region> {
         super(FXML);
         this.person = person;
         id.setText(displayedIndex + ". ");
-        name.setText(person.getName().fullName);
+        name.setText(getNameText(person));
         checkupAppointment.setText(getCheckupAppointmentText(person));
         checkupAppointment.setVisible(person.getCheckupAppointment().isPresent());
         checkupAppointment.setManaged(person.getCheckupAppointment().isPresent());
@@ -70,6 +70,13 @@ public class PersonCard extends UiPart<Region> {
         // an empty remark takes up no space on the card
         remark.setManaged(!person.getRemark().isEmpty());
         remark.setVisible(!person.getRemark().isEmpty());
+    }
+
+    static String getNameText(Person person) {
+        if (person.getCheckupAppointment().isEmpty()) {
+            return person.getName().fullName;
+        }
+        return person.getName().fullName + (person.isCheckupMarked() ? " [X]" : " [ ]");
     }
 
     static String getCheckupAppointmentText(Person person) {
