@@ -21,6 +21,8 @@ public class Person {
     public static final String MESSAGE_TAG_COUNT_CONSTRAINTS = "A contact can have at most one priority tag.";
     public static final String MESSAGE_MARK_WITHOUT_CHECKUP =
             "Contacts with no checkup appointments cannot be marked.";
+    public static final String MESSAGE_NAME_ADDRESS_CONFLICT =
+            "WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.";
 
     // Identity fields
     private final Name name;
@@ -183,8 +185,8 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have the same name.
-     * This defines a weaker notion of equality between two persons.
+     * Returns true if the persons share patient contact details, or share a name and address.
+     * This duplicate check is weaker than full data equality.
      */
     public boolean isSamePerson(Person otherPerson) {
         if (otherPerson == this) {
@@ -192,7 +194,26 @@ public class Person {
         }
 
         return otherPerson != null
-                && otherPerson.getName().equals(getName());
+                && (hasSamePatientContactDetails(otherPerson) || hasSameNameAndAddress(otherPerson));
+    }
+
+    /**
+     * Returns whether either patient phone or a present patient email matches.
+     */
+    public boolean hasSamePatientContactDetails(Person otherPerson) {
+        return patientNo.equals(otherPerson.patientNo)
+                || patientEmail != null && otherPerson.patientEmail != null
+                && patientEmail.value.equalsIgnoreCase(otherPerson.patientEmail.value);
+    }
+
+    /**
+     * Returns whether names match ignoring case and surrounding spaces, and addresses match
+     * ignoring case and all whitespace.
+     */
+    public boolean hasSameNameAndAddress(Person otherPerson) {
+        return name.fullName.strip().equalsIgnoreCase(otherPerson.name.fullName.strip())
+                && address.value.replaceAll("\\s+", "")
+                .equalsIgnoreCase(otherPerson.address.value.replaceAll("\\s+", ""));
     }
 
     /**

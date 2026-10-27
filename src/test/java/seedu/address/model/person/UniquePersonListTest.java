@@ -22,6 +22,22 @@ public class UniquePersonListTest {
     private final UniquePersonList uniquePersonList = new UniquePersonList();
 
     @Test
+    public void setPerson_sameIdentityAsTargetButConflictsWithAnotherContact_throwsDuplicatePersonException() {
+        uniquePersonList.add(ALICE);
+        uniquePersonList.add(BOB);
+        Person editedAlice = new PersonBuilder(ALICE).withPhone(BOB.getPatientNo().value).build();
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPerson(ALICE, editedAlice));
+        assertEquals(List.of(ALICE, BOB), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void setPersons_sameNameWithDifferentDetails_acceptsBoth() {
+        Person anotherAlice = new PersonBuilder(BOB).withName(ALICE.getName().fullName).build();
+        uniquePersonList.setPersons(List.of(ALICE, anotherAlice));
+        assertEquals(List.of(ALICE, anotherAlice), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
     public void contains_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniquePersonList.contains(null));
     }

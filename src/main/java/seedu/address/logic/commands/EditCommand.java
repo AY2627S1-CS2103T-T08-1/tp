@@ -89,9 +89,14 @@ public class EditCommand extends Command {
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
-        if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
-            logger.fine("Edit rejected: another contact is already named " + editedPerson.getName());
+        List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
+                .filter(person -> !person.equals(personToEdit)).toList();
+        if (otherPersons.stream().anyMatch(editedPerson::hasSamePatientContactDetails)) {
+            logger.fine("Edit rejected: patient contact details already exist");
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+        }
+        if (otherPersons.stream().anyMatch(editedPerson::hasSameNameAndAddress)) {
+            throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
         }
 
         model.setPerson(personToEdit, editedPerson);

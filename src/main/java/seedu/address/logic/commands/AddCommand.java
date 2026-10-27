@@ -55,6 +55,9 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasPerson(toAdd)) {
+            if (model.getAddressBook().getPersonList().stream().noneMatch(toAdd::hasSamePatientContactDetails)) {
+                throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+            }
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 

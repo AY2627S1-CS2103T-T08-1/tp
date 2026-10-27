@@ -25,7 +25,8 @@ import seedu.address.testutil.PersonBuilder;
 public class CheckupCommandTest {
     private final Model model = new ModelManager();
     private final Person alice = new PersonBuilder().withName("Alice").withTags("LOW").build();
-    private final Person bob = new PersonBuilder().withName("Bob").withTags("HIGH").build();
+    private final Person bob = new PersonBuilder().withName("Bob").withTags("HIGH")
+            .withPhone("91234567").withEmail("bob@example.com").build();
     private final CheckupAppointment appointment = appointmentOn(LocalDate.now().plusDays(1));
 
     @Test
