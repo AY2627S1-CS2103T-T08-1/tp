@@ -18,7 +18,8 @@ import seedu.address.model.person.Person;
 public class CheckupCommand extends Command {
     public static final String COMMAND_WORD = "checkup";
     public static final String MESSAGE_USAGE = "checkup INDEX dd/mm/yyyy HH:mm: Sets a checkup appointment.\n"
-            + "INDEX must be a positive displayed index. Use a valid 24-hour time and a date today or later.\n"
+            + "INDEX must be a positive displayed index. Use a valid 24-hour time. "
+            + "The appointment must not be in the past.\n"
             + "Example: checkup 1 25/12/2030 14:30";
     public static final String MESSAGE_SUCCESS = "Checkup appointment for %1$s: %2$s";
     public static final String MESSAGE_BOOKING_CONFLICT =
@@ -43,8 +44,8 @@ public class CheckupCommand extends Command {
         if (targetIndex.getZeroBased() >= displayedPersons.size()) {
             throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
-        if (appointment.isBeforeToday()) {
-            throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE);
+        if (appointment.isBeforeNow()) {
+            throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE_TIME);
         }
         Person person = displayedPersons.get(targetIndex.getZeroBased());
         boolean hasConflict = model.getAddressBook().getPersonList().stream()

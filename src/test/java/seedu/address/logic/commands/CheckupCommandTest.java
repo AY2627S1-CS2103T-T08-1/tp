@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -106,7 +107,7 @@ public class CheckupCommandTest {
         assertEquals(new PersonBuilder(bob).withCheckupAppointment(appointment.toString()).build(),
                 model.getAddressBook().getPersonList().get(1));
 
-        CheckupAppointment replacement = appointmentOn(LocalDate.now());
+        CheckupAppointment replacement = appointmentOn(LocalDate.now().plusDays(2));
         new CheckupCommand(Index.fromOneBased(2), replacement).execute(model);
         assertEquals(replacement, model.getFilteredPersonList().get(1).getCheckupAppointment().orElseThrow());
     }
@@ -202,7 +203,15 @@ public class CheckupCommandTest {
     public void execute_pastDate_leavesModelUnchanged() {
         model.addPerson(alice);
         assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), appointmentOn(LocalDate.now().minusDays(1))),
-                model, CheckupAppointment.MESSAGE_PAST_DATE);
+                model, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+    }
+
+    @Test
+    public void execute_pastTime_leavesModelUnchanged() {
+        model.addPerson(alice);
+        String pastTime = LocalDateTime.now().minusMinutes(5).format(DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm"));
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), new CheckupAppointment(pastTime)),
+                model, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
     }
 
     @Test

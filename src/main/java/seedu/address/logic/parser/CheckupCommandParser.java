@@ -29,8 +29,8 @@ public class CheckupCommandParser implements Parser<CheckupCommand> {
         } catch (IllegalArgumentException e) {
             throw new ParseException(CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE, e);
         }
-        if (appointment.isBeforeToday()) {
-            throw new ParseException(CheckupAppointment.MESSAGE_PAST_DATE);
+        if (appointment.isBeforeNow()) {
+            throw new ParseException(CheckupAppointment.MESSAGE_PAST_DATE_TIME);
         }
         return new CheckupCommand(index, appointment);
     }
