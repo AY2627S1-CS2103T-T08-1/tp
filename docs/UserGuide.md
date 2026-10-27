@@ -393,7 +393,7 @@ Each `filter` replaces the previous filter criteria while keeping the same list,
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
 * At least one of `/name`, `/tag` or `/address` must be given.
-* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`.
+* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`. `/name` can be given only once; put all the keywords after it.
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
@@ -413,6 +413,7 @@ Examples:
 | `filter` (no criteria) | `Invalid command format!` followed by the correct usage | Give at least one criterion, e.g. `filter /tag MEDIUM`. |
 | `filter MEDIUM` (no prefix) | `Invalid command format!` followed by the correct usage | Start each criterion with its prefix, e.g. `filter /tag MEDIUM`. |
 | `filter /name` (empty value) | `Invalid command format!` followed by the correct usage | Put a value after each prefix, e.g. `filter /name ali`. |
+| `filter /name ali /name bob` (`/name` repeated) | `Multiple values specified for the following single-valued field(s): /name` | Give `/name` once with all keywords: `filter /name ali bob`. |
 | `filter /tag URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
 | `filter /tag HIGH LOW` (several tags in one prefix) | `Invalid command format!` followed by the correct usage | Repeat the prefix: `filter /tag HIGH /tag LOW`. |
 
