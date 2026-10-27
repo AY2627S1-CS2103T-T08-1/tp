@@ -70,8 +70,10 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_checkup() throws Exception {
         String value = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 00:00";
-        assertEquals(new CheckupCommand(INDEX_FIRST_PERSON, new CheckupAppointment(value)),
-                new AddressBookParser().parseCommand("checkup 1 " + value));
+        for (String word : List.of("checkup", "Checkup", "CHECKUP", "cHeCkUp", "ChEcKuP")) {
+            assertEquals(new CheckupCommand(INDEX_FIRST_PERSON, new CheckupAppointment(value)),
+                    parser.parseCommand(word + " 1 " + value));
+        }
     }
 
 
