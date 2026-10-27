@@ -97,12 +97,20 @@ Adds a person to CareBook.
 
 Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] `
 
-Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
-
+* `add` is case-insensitive. `Add`, `ADD`, `ADd` and other variants are all accepted.
+* The email fields are optional and can be added later with `edit`.
+* `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
+* Duplicate names are allowed as long as the patients' handphone numbers and emails are not identical.
+* For duplicate names and addresses, add a differentiator (such as an index or identifier)
+  * An example of this would be `Rosalind 1` and `Rosalind 2`
+* No special characters are allowed in the fields!
 <box type="tip" seamless>
 
 **Tip:** A person can have no priority tag or one priority tag: `HIGH`, `MEDIUM`, or `LOW`. Repeating the same tag stores it only once.
 </box>
+
+| Incorrect input or situation | Result | How to correct it |
+| `add `,  `add /name CG` | Invalid command format | Ensure parameters are included correctly |
 
 Examples:
 * `add /name Aunty Rosalind /patientNo 81268767 /familyNo 90783658 /address Goonvale Street Block 2 #01-09`
@@ -343,6 +351,8 @@ Finds persons by the selected contact field using partial matches.
 
 Format: `find /CRITERION INPUT` and `find KEYWORD`
 
+* Both formats are case-insensitive.
+
 For `find /CRITERION INPUT`:
 
 | Criterion | Searches |
@@ -365,22 +375,19 @@ For `find /CRITERION INPUT`:
   The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
 * Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
-* For non-phone searches, whitespace separates keywords. A contact matches if the selected field contains
-  at least one keyword (an `OR` search); keyword order does not matter.
 * Contacts without an optional email or tag do not match searches on that absent field.
 * Searches consider all stored contacts, replacing the current display filter without changing stored data.
   Use `list` to display all contacts again. A search with no matches displays an empty list.
-* Missing input, an unknown criterion, multiple criteria, or invalid phone input produces an error and
-  leaves the displayed list unchanged.
+* To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
+
 
 Examples:
 * `find /patientNo 87` finds patient numbers containing `87` consecutively.
 * `find /email gmail` searches both email fields for `gmail`.
 * `find /address street` searches addresses for `street`.
 * `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
 * `find j` returns `John Doe`<br> ![result for 'find j'](images/findJ.png)
+* `find Alex David` returns `alex david` but not `alex` and `david`
 
 ### Filtering persons by name, tag and address: `filter`
 

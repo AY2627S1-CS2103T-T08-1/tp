@@ -15,10 +15,10 @@ participant "p:PersonContainsKeywordsPredicate" as Predicate MODEL_COLOR
 participant "m:Model" as Model MODEL_COLOR
 end box
 
-[-> LogicManager : execute("find /patientNo 87")
+[-> LogicManager : execute("find /name D       Est")
 activate LogicManager
 
-LogicManager -> AddressBookParser : parseCommand("find /patientNo 87")
+LogicManager -> AddressBookParser : parseCommand(commandText)
 activate AddressBookParser
 
 create FindCommandParser
@@ -28,11 +28,19 @@ activate FindCommandParser
 FindCommandParser --> AddressBookParser
 deactivate FindCommandParser
 
-AddressBookParser -> FindCommandParser : parse(" /patientNo 87")
+AddressBookParser -> FindCommandParser : parse(" /name D       Est")
 activate FindCommandParser
 
+note right of FindCommandParser
+  Trim surrounding whitespace.
+  Collapse repeated whitespace.
+  Validate exactly one syntax and criterion.
+  Mixed syntax or missing input throws
+  the same invalid-format error.
+end note
+
 create Predicate
-FindCommandParser -> Predicate : "patientNo", ["87"]
+FindCommandParser -> Predicate : NAME, ["D Est"]
 activate Predicate
 
 Predicate --> FindCommandParser
@@ -57,9 +65,27 @@ deactivate AddressBookParser
 LogicManager -> FindCommand : execute(m)
 activate FindCommand
 
-FindCommand -> Model : updateFilteredPersonList(p)
+FindCommand -> Model : isShowingArchiveList()
 activate Model
+Model --> FindCommand : archiveScope
+deactivate Model
 
+alt archiveScope
+    FindCommand -> Model : updateFilteredPersonList(PREDICATE_SHOW_ARCHIVED_PERSONS)
+else active scope
+    FindCommand -> Model : updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS)
+end
+
+FindCommand -> Model : filterPersonsInCurrentList(p)
+activate Model
+note right of Model
+  Combine scope AND search predicate.
+  Match "D Est" as one substring,
+  ignoring case.
+  Replace prior search criteria;
+  preserve sort order and list scope,
+  even when there are zero matches.
+end note
 Model --> FindCommand
 deactivate Model
 
@@ -70,7 +96,7 @@ Model --> FindCommand : filteredPersonsList
 deactivate Model
 
 create CommandResult
-FindCommand -> CommandResult
+FindCommand -> CommandResult : match count
 activate CommandResult
 
 CommandResult --> FindCommand
