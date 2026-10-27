@@ -434,16 +434,16 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in CareBook.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
-Common errors:
+**Common errors:**
 
-Input | Error message shown | How to fix
-------|---------------------|-----------
-`delete` (no index) | `Invalid command format!` followed by the correct usage | Supply an index, e.g. `delete 1`
-`delete abc` | `Invalid command format!` followed by the correct usage | Use a number, not text
-`delete 1 2` | `Invalid command format!` followed by the correct usage | Use a single index per command
-`delete 0` / `delete -1` | `Index must be a positive integer.` | Use an index of 1 or more
-`delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list
-`delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first 
+| Incorrect input | Error message | How to correct it |
+| --- | --- | --- |
+| `delete` (no index) | `Invalid command format!` followed by the correct usage | Supply an index, e.g. `delete 1` |
+| `delete abc` | `Invalid command format!` followed by the correct usage | Use a number, not text |
+| `delete 1 2` | `Invalid command format!` followed by the correct usage | Use a single index per command |
+| `delete 0` / `delete -1` | `Index must be a positive integer.` | Use an index of 1 or more |
+| `delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list |
+| `delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first |
 
 ### Clearing the displayed contact list: `clear`
 

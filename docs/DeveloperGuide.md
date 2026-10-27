@@ -400,6 +400,26 @@ How the `sort` command works:
 4. `SortCommand#modifiesData()` returns `false`, so `LogicManager` does not save. The UI observes the sorted list
    and reorders the contact cards.
 
+#### Design considerations
+
+**Aspect: How sorting is applied**
+
+* **Alternative 1 (current choice):** Wrap the filtered list in a `SortedList` and change only its comparator.
+  * Pros: The stored order and the saved data never change, and sorting combines with `find` and `filter` in either order.
+  * Cons: Indices refer to the displayed order, so every command that takes an `INDEX` must read the displayed list (they do).
+* **Alternative 2:** Reorder the contacts in the address book itself.
+  * Pros: No second list to maintain.
+  * Cons: Sorting would change and save the stored data, `list` could not restore the order contacts were added, and `recent` would need a timestamp.
+
+**Aspect: How `recent` is determined**
+
+* **Alternative 1 (current choice):** Reverse the order in which contacts are stored, since new contacts are appended.
+  * Pros: No new field in the model or the saved file.
+  * Cons: Relies on the stored order never being changed, which is why sorting must not reorder the address book.
+* **Alternative 2:** Store a creation timestamp for each contact.
+  * Pros: Does not depend on the stored order.
+  * Cons: Needs a new field, and the saved file format and existing data files must be updated.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -532,6 +552,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
+| `* *`    | user                                       | filter contacts by name, tag and address | focus on the patients I need to look after right now |
+| `* *`    | user                                       | sort contacts by name, priority or when they were added | see the most urgent or most recent patients first |
 | `* * *`  | caregiver                                  | keep care notes on a contact | remember allergies, medication times and visiting rules |
 | `* *`    | caregiver                                  | edit or delete one care note | keep notes up to date without retyping the others |
 
@@ -817,6 +839,54 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
     *2a1. Carebook displays an error message and the displayed contacts do not change.
 
       
+**Use case: Filter contacts**
+
+**MSS**
+
+1.  User requests to filter contacts by one or more criteria (name, tag, address)
+2.  CareBook validates the command
+3.  CareBook shows the contacts in the current list (active or archived) that match all of the criteria
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. No criterion is given, a prefix has an empty value, there is text before the first prefix, or a tag is not `HIGH`, `MEDIUM` or `LOW`.
+
+    * 2a1. CareBook shows an invalid command format error with the correct usage. The displayed list does not change.
+
+      Use case resumes at step 1.
+
+* 3a. No contact matches the criteria.
+
+    * 3a1. CareBook shows an empty list and the message "0 person(s) listed!". The next filter searches the same list (active or archived).
+
+      Use case ends.
+
+**Use case: Sort contacts**
+
+**MSS**
+
+1.  User requests to sort the displayed contacts by a criterion (priority, name or recent) and an optional direction
+2.  CareBook validates the command
+3.  CareBook reorders the displayed contacts and shows a message describing the new order
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The criterion is missing or unknown, the direction is unknown, a direction is given for `recent`, or there are extra arguments.
+
+    * 2a1. CareBook shows an invalid command format error with the correct usage. The order does not change.
+
+      Use case resumes at step 1.
+
+* 3a. User wants to see the contacts in the order they were added again.
+
+    * 3a1. User requests to list persons. CareBook clears the sort and shows all active contacts in the order they were added.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed
@@ -880,6 +950,64 @@ testers are expected to do more *exploratory* testing.
 
    1. Other incorrect delete commands to try: `delete`, `delete abc`, `delete 1 2`, `delete 99` (where 99 is larger than the list size)<br>
       Expected: Similar to previous.
+
+### Filtering persons
+
+1. Filtering the contacts that are being shown
+
+   1. Prerequisites: List all persons using the `list` command, with persons that have different names, priority tags and addresses.
+
+   1. Test case: `filter /tag HIGH`<br>
+      Expected: Only persons tagged `HIGH` are shown. The status message shows "N person(s) listed!" with the number shown.
+
+   1. Test case: `filter /tag HIGH /tag LOW`<br>
+      Expected: Persons tagged `HIGH` or `LOW` are shown.
+
+   1. Test case: `filter /name ali /tag HIGH`<br>
+      Expected: Only persons whose name contains `ali` and who are tagged `HIGH` are shown.
+
+   1. Test case: `filter /address clementi ave`<br>
+      Expected: Only persons whose address contains the text `clementi ave` are shown, ignoring case.
+
+   1. Test case: `filter /tag URGENT`<br>
+      Expected: The displayed list does not change. The status message shows `Invalid command format!` followed by the filter usage.
+
+   1. Other incorrect filter commands to try: `filter`, `filter HIGH`, `filter /name`, `filter /tag HIGH LOW`<br>
+      Expected: Similar to previous.
+
+1. Filtering the archived contacts
+
+   1. Prerequisites: Archive at least one contact tagged `HIGH`, then run `list archive`.
+
+   1. Test case: `filter /tag HIGH`<br>
+      Expected: Only archived persons tagged `HIGH` are shown. Running `list` and then `filter /tag HIGH` shows only active persons.
+
+### Sorting persons
+
+1. Sorting the contacts that are being shown
+
+   1. Prerequisites: List all persons using the `list` command, with persons that have different names and priority tags.
+
+   1. Test case: `sort name`<br>
+      Expected: Persons are shown from A to Z, ignoring case. The status message shows "Sorted by name: A to Z."
+
+   1. Test case: `sort name desc`<br>
+      Expected: Persons are shown from Z to A. The status message shows "Sorted by name: Z to A."
+
+   1. Test case: `sort priority`<br>
+      Expected: `HIGH` persons are shown first, then `MEDIUM`, then `LOW`, and persons without a priority tag are last. Persons with the same priority are ordered by name. The status message shows "Sorted by priority: HIGH to LOW."
+
+   1. Test case: `sort recent`<br>
+      Expected: The most recently added person is shown first. The status message shows "Sorted by most recently added."
+
+   1. Test case: `filter /tag HIGH` followed by `sort name`<br>
+      Expected: Only `HIGH` persons are shown, from A to Z.
+
+   1. Test case: `list` after any sort<br>
+      Expected: All active persons are shown again in the order they were added.
+
+   1. Incorrect sort commands to try: `sort`, `sort address`, `sort priority up`, `sort recent desc`<br>
+      Expected: The order does not change. The status message shows `Invalid command format!` followed by the sort usage.
 
 1. _{ more test cases … }_
 
