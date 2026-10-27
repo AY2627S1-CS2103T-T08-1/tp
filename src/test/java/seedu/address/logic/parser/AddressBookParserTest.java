@@ -78,8 +78,10 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_add() throws Exception {
         Person person = new PersonBuilder().build();
-        AddCommand command = (AddCommand) parser.parseCommand(PersonUtil.getAddCommand(person));
-        assertEquals(new AddCommand(person), command);
+        String arguments = PersonUtil.getAddCommand(person).substring(AddCommand.COMMAND_WORD.length());
+        for (String word : List.of("add", "adD", "aDd", "aDD", "Add", "AdD", "ADd", "ADD")) {
+            assertEquals(new AddCommand(person), parser.parseCommand(word + arguments));
+        }
     }
 
     @Test
