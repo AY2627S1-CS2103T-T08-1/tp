@@ -99,6 +99,10 @@ Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail
 
 Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
 
+The `/` character is reserved for valid prefixes and is **not allowed in any field value**, including names and addresses. Separate each prefix from its value with a space. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
+
+Unknown or mistyped prefixes cause an error and the contact is not added. For example, `/address 4 St /phone 123` is rejected because `/phone` is not a valid prefix; use `/patientNo` or `/familyNo`. Addresses such as `4/5 Main St` are also rejected; write them without `/`. The same rule applies when editing contact fields with `edit`.
+
 <box type="tip" seamless>
 
 **Tip:** A person can have no priority tag or one priority tag: `HIGH`, `MEDIUM`, or `LOW`. Repeating the same tag stores it only once.
