@@ -587,7 +587,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1.  User requests to list persons
 2.  CareBook shows a list of persons
 3.  User requests to delete a specific person in the list
-4.  CareBook deletes the person
+4.  CareBook shows a warning with the person's details and the command to confirm the deletion
+5.  User confirms the deletion with `delete INDEX /confirm`
+6.  CareBook deletes the person
 
     Use case ends.
 
@@ -602,6 +604,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3a1. CareBook shows an error message.
 
       Use case resumes at step 2.
+
+* 5a. User does not enter the confirm command.
+
+    * 5a1. CareBook keeps the person. Nothing is deleted or saved.
+
+      Use case ends.
 
 **Use case: Edit a contact**
 

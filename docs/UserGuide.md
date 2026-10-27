@@ -33,7 +33,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
    * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to the CareBook.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `delete 3` : Shows a warning for the 3rd contact shown in the current list. Enter `delete 3 /confirm` to delete them.
 
    * `clear` : Clears the displayed contact list without deleting contacts.
 
