@@ -205,7 +205,7 @@ Format: `sort priority [asc|desc]`, `sort name [asc|desc]` or `sort recent`
   * `asc` is the reverse: `LOW`, then `MEDIUM`, then `HIGH`.
   * Persons without a priority tag are always shown last, in either direction.
   * Persons with the same priority are ordered by name, A to Z.
-* `sort name` orders alphabetically by name, ignoring case.
+* `sort name` orders alphabetically by name, ignoring case. Numbers inside names are compared by value, so `Ethan2` comes before `Ethan10`.
   * `asc` (the default) shows A to Z; `desc` shows Z to A.
 * `sort recent` shows the most recently added person first. It takes no direction.
 * The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
