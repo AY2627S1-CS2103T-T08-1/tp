@@ -11,19 +11,39 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
+import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.UserPrefs;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAndSaveAddressBook_archivedContact_preservesStatusAcrossRestart() throws Exception {
+        Path filePath = testFolder.resolve("archived.json");
+        AddressBook original = getTypicalAddressBook();
+        original.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(filePath);
+        storage.saveAddressBook(original);
+        ReadOnlyAddressBook restored = storage.readAddressBook().orElseThrow();
+        assertEquals(original, new AddressBook(restored));
+        Model model = new ModelManager(
+                restored, new UserPrefs());
+        assertFalse(model.getFilteredPersonList().contains(ALICE.copyWithArchivedStatus(true)));
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ARCHIVED_PERSONS);
+        assertEquals(List.of(ALICE.copyWithArchivedStatus(true)), model.getFilteredPersonList());
+    }
 
     @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {
