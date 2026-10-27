@@ -121,6 +121,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public boolean isShowingArchiveList() {
+        return personListScope == PREDICATE_SHOW_ARCHIVED_PERSONS;
+    }
+
+    @Override
     public ReadOnlyObjectProperty<Person> selectedPersonProperty() {
         return selectedPerson.getReadOnlyProperty();
     }

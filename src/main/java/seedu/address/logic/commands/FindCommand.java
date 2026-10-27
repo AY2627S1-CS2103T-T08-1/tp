@@ -54,12 +54,14 @@ public class FindCommand extends Command {
     }
 
     /**
-     * Filters the displayed persons and returns the number of matches.
+     * Searches all contacts within the current active or archive scope, replacing previous search criteria.
+     * Returns the number of matches.
      */
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+        model.updateFilteredPersonList(model.isShowingArchiveList()
+                ? Model.PREDICATE_SHOW_ARCHIVED_PERSONS : Model.PREDICATE_SHOW_ALL_PERSONS);
         model.filterPersonsInCurrentList(predicate);
         return new CommandResult(
                 String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));

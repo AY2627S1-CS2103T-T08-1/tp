@@ -71,6 +71,9 @@ public interface Model {
     /** Returns an unmodifiable view of the filtered person list, in the current sort order */
     ObservableList<Person> getFilteredPersonList();
 
+    /** Returns whether the displayed list is scoped to archived contacts, including search and sort results. */
+    boolean isShowingArchiveList();
+
     /** Returns the selected contact, or null when no contact is selected, as a read-only property. */
     ReadOnlyObjectProperty<Person> selectedPersonProperty();
 
