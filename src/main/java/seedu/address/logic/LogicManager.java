@@ -55,6 +55,10 @@ public class LogicManager implements Logic {
             logger.info("Command does not modify data, skipping save.");
         }
 
+        if (!command.preservesPersonSelection()) {
+            model.selectPerson(null);
+        }
+
         return commandResult;
     }
 
