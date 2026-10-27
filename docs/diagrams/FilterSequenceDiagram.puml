@@ -63,7 +63,7 @@ deactivate AddressBookParser
 LogicManager -> FilterCommand : execute(m)
 activate FilterCommand
 
-FilterCommand -> Model : updateFilteredPersonList(p)
+FilterCommand -> Model : filterPersonsInCurrentList(p)
 activate Model
 
 Model --> FilterCommand

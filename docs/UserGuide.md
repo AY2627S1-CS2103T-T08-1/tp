@@ -397,6 +397,7 @@ Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
+* The command word `filter` and the prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
 * When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
