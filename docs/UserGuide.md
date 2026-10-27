@@ -208,8 +208,7 @@ Format: `sort priority [asc|desc]`, `sort name [asc|desc]` or `sort recent`
 * `sort name` orders alphabetically by name, ignoring case.
   * `asc` (the default) shows A to Z; `desc` shows Z to A.
 * `sort recent` shows the most recently added person first. It takes no direction.
-* The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
-  lowercase.
+* The command word, criterion and direction are all case-insensitive, so `SORT Name DESC` works.
 * Use `list` to show all persons again in the order they were added.
 
 Examples:

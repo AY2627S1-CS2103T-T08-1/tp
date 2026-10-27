@@ -67,6 +67,8 @@ public class AddressBookParser {
             commandWord = MarkCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(UnmarkCommand.COMMAND_WORD)) {
             commandWord = UnmarkCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(SortCommand.COMMAND_WORD)) {
+            commandWord = SortCommand.COMMAND_WORD;
         }
         final String arguments = matcher.group("arguments");
 
