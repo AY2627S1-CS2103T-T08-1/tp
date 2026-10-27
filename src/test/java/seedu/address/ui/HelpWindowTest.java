@@ -24,6 +24,26 @@ import seedu.address.logic.commands.SortCommand;
 public class HelpWindowTest {
 
     @Test
+    public void focus_minimisedWindow_restoresWindow() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow();
+            try {
+                helpWindow.show();
+                helpWindow.getRoot().setIconified(true);
+                assertTrue(helpWindow.isShowing());
+                assertTrue(helpWindow.getRoot().isIconified());
+
+                helpWindow.focus();
+
+                assertTrue(helpWindow.isShowing());
+                assertFalse(helpWindow.getRoot().isIconified());
+            } finally {
+                helpWindow.hide();
+            }
+        });
+    }
+
+    @Test
     public void show_commandList_displaysAvailableCommands() throws Exception {
         runOnFxThread(() -> {
             HelpWindow helpWindow = new HelpWindow();
