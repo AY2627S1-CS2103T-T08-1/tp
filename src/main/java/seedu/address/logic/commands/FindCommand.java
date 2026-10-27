@@ -20,8 +20,8 @@ import seedu.address.model.Model;
 import seedu.address.model.person.Person;
 
 /**
- * Finds and lists persons whose selected field contains any of the argument keywords.
- * Keyword matching is case insensitive and allows partial matches.
+ * Finds and lists persons whose selected field contains the search phrase.
+ * Matching is case insensitive and allows partial matches.
  */
 public class FindCommand extends Command {
 
@@ -38,7 +38,8 @@ public class FindCommand extends Command {
             + MESSAGE_CRITERIA + "\n"
             + "Phone input must be one sequence of at least 2 digits; digits must occur consecutively.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_PATIENT_PHONE + " 87\n"
-            + "Name searches also support: find KEYWORD [MORE_KEYWORDS]...";
+            + "Name searches also support: find INPUT. "
+            + "Text input is matched as one phrase, with repeated spaces treated as a single space.";
 
     private final Predicate<Person> predicate;
 

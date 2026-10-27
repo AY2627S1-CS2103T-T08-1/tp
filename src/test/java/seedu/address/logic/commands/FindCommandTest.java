@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -29,6 +30,38 @@ import seedu.address.testutil.PersonBuilder;
 public class FindCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
     private Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_extraSpacesWithinSearchText_returnsSameMatches() throws Exception {
+        Model searchModel = new ModelManager();
+        Person match = new PersonBuilder().withName("D Est").withAddress("D Est").build();
+        Person containingPhrase = new PersonBuilder().withName("Dr D Est Tan").withAddress("Dr D Est Tan").build();
+        searchModel.addPerson(match);
+        searchModel.addPerson(containingPhrase);
+        for (String name : List.of("Kim Lee", "D Tan", "Est Lee", "D Middle Est", "Est D", "Brandy")) {
+            searchModel.addPerson(new PersonBuilder().withName(name).withAddress(name).build());
+        }
+        AddressBookParser parser = new AddressBookParser();
+        for (String command : List.of("find D Est", "find D       Est   ",
+                "find /name D       Est   ", "find /address D       Est   ")) {
+            parser.parseCommand(command).execute(searchModel);
+            assertEquals(List.of(match, containingPhrase), searchModel.getFilteredPersonList(), command);
+        }
+    }
+
+    @Test
+    public void execute_singleSubstring_stillMatchesWithinName() throws Exception {
+        Model searchModel = new ModelManager();
+        Person brandy = new PersonBuilder().withName("Brandy").build();
+        searchModel.addPerson(brandy);
+        searchModel.addPerson(new PersonBuilder().withName("Dylan").build());
+        searchModel.addPerson(new PersonBuilder().withName("D Y").build());
+        for (String command : List.of("find dy", "find /name dy")) {
+            new AddressBookParser().parseCommand(command).execute(searchModel);
+            assertEquals(List.of(brandy, new PersonBuilder().withName("Dylan").build()),
+                    searchModel.getFilteredPersonList());
+        }
+    }
 
     @Test
     public void execute_phoneCriterion_filtersConsecutiveDigitsWithoutChangingStoredContacts() {

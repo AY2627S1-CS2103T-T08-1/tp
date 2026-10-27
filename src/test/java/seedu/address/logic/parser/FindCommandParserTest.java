@@ -46,11 +46,41 @@ public class FindCommandParserTest {
     public void parse_validArgs_returnsFindCommand() {
         // no leading and trailing whitespaces
         FindCommand expectedFindCommand =
-                new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice", "Bob")));
+                new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice Bob")));
         assertParseSuccess(parser, "Alice Bob", expectedFindCommand);
 
         // multiple whitespaces between keywords
         assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+    }
+
+    @Test
+    public void parse_trailingWhitespace_ignoredForKeywordsAndAllCriteria() {
+        for (String whitespace : List.of(" ", "    ", "\t", " \t \r\n")) {
+            assertParseSuccess(parser, "Alice" + whitespace,
+                    new FindCommand(new NameContainsKeywordsPredicate(List.of("Alice"))));
+            for (Map.Entry<Prefix, FindCriterion> entry : CRITERIA.entrySet()) {
+                assertParseSuccess(parser, entry.getKey() + " 87" + whitespace,
+                        new FindCommand(new PersonContainsKeywordsPredicate(entry.getValue(), List.of("87"))));
+            }
+            assertParseFailure(parser, "Alice /address A" + whitespace,
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
+    }
+
+    @Test
+    public void parse_extraWhitespaceWithinText_ignoredForKeywordsAndCriteria() {
+        for (String whitespace : List.of(" ", "       ", "\t", " \t \n ")) {
+            String input = "D" + whitespace + "Est" + whitespace;
+            assertParseSuccess(parser, input,
+                    new FindCommand(new NameContainsKeywordsPredicate(List.of("D Est"))));
+            for (Map.Entry<Prefix, FindCriterion> entry : CRITERIA.entrySet()) {
+                if (entry.getValue() == FindCriterion.PATIENT_PHONE || entry.getValue() == FindCriterion.FAMILY_PHONE) {
+                    continue;
+                }
+                assertParseSuccess(parser, entry.getKey() + whitespace + input,
+                        new FindCommand(new PersonContainsKeywordsPredicate(entry.getValue(), List.of("D Est"))));
+            }
+        }
     }
 
     @Test
@@ -69,7 +99,7 @@ public class FindCommandParserTest {
                     new FindCommand(new PersonContainsKeywordsPredicate(entry.getValue(), List.of("87"))));
         }
         assertParseSuccess(parser, "/address \n Main \t Street",
-                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.ADDRESS, List.of("Main", "Street"))));
+                new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.ADDRESS, List.of("Main Street"))));
     }
 
     @Test
