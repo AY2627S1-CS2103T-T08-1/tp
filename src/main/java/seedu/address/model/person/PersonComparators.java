@@ -47,6 +47,26 @@ public class PersonComparators {
         return byPriority.thenComparing(BY_NAME_IGNORING_CASE);
     }
 
+    /**
+     * Returns a comparator ordering persons by checkup appointment date and time. Persons without a checkup
+     * appointment always come last. Persons with the same appointment (or none) are ordered by name, A to Z.
+     *
+     * @param ascending True for the earliest appointment first, false for the latest appointment first.
+     */
+    public static Comparator<Person> byCheckup(boolean ascending) {
+        Comparator<Person> byCheckup = (first, second) -> {
+            Optional<CheckupAppointment> firstCheckup = first.getCheckupAppointment();
+            Optional<CheckupAppointment> secondCheckup = second.getCheckupAppointment();
+            if (firstCheckup.isEmpty() || secondCheckup.isEmpty()) {
+                // persons without a checkup go last regardless of direction
+                return Boolean.compare(firstCheckup.isEmpty(), secondCheckup.isEmpty());
+            }
+            int comparison = firstCheckup.get().compareTo(secondCheckup.get());
+            return ascending ? comparison : -comparison;
+        };
+        return byCheckup.thenComparing(BY_NAME_IGNORING_CASE);
+    }
+
     private static Optional<Priority> getPriority(Person person) {
         return person.getTags().stream()
                 .map(tag -> Priority.valueOf(tag.tagName))

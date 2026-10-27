@@ -13,7 +13,7 @@ import java.util.Locale;
 /**
  * An immutable checkup appointment. Past appointments remain valid when loading saved contacts.
  */
-public class CheckupAppointment {
+public class CheckupAppointment implements Comparable<CheckupAppointment> {
     public static final String MESSAGE_CONSTRAINTS =
             "Checkup must be a valid date and time in dd/mm/yyyy HH:mm format (24-hour clock).";
     public static final String MESSAGE_PAST_DATE = "Checkup date must be today or later.";
@@ -42,6 +42,11 @@ public class CheckupAppointment {
      */
     public boolean isBeforeToday() {
         return dateTime.toLocalDate().isBefore(LocalDate.now());
+    }
+
+    @Override
+    public int compareTo(CheckupAppointment other) {
+        return dateTime.compareTo(other.dateTime);
     }
 
     @Override
