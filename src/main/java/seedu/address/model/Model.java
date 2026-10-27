@@ -3,6 +3,7 @@ package seedu.address.model;
 import java.util.Comparator;
 import java.util.function.Predicate;
 
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
@@ -11,8 +12,11 @@ import seedu.address.model.person.Person;
  * The API of the Model component.
  */
 public interface Model {
-    /** {@code Predicate} that always evaluates to true */
-    Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = unused -> true;
+    /** Predicate that selects all active persons. */
+    Predicate<Person> PREDICATE_SHOW_ALL_PERSONS = person -> !person.isArchived();
+
+    /** Predicate that selects archived persons. */
+    Predicate<Person> PREDICATE_SHOW_ARCHIVED_PERSONS = Person::isArchived;
 
     /** {@code Predicate} that always evaluates to false, hiding all persons without deleting them. */
     Predicate<Person> PREDICATE_SHOW_NO_PERSONS = unused -> false;
@@ -67,11 +71,22 @@ public interface Model {
     /** Returns an unmodifiable view of the filtered person list, in the current sort order */
     ObservableList<Person> getFilteredPersonList();
 
+    /** Returns the selected contact, or null when no contact is selected, as a read-only property. */
+    ReadOnlyObjectProperty<Person> selectedPersonProperty();
+
+    /** Selects a contact in the displayed list, or clears selection when {@code person} is null. */
+    void selectPerson(Person person);
+
     /**
      * Updates the filter of the filtered person list to filter by the given {@code predicate}.
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
+    /**
+     * Filters contacts within the current active or archived list, replacing any previous search criteria.
+     */
+    void filterPersonsInCurrentList(Predicate<Person> predicate);
 
     /**
      * Orders the displayed person list by {@code comparator}. The stored data is not reordered.

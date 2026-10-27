@@ -25,7 +25,9 @@ import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.MarkCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.UnmarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.CheckupAppointment;
@@ -41,6 +43,29 @@ import seedu.address.testutil.PersonUtil;
 public class AddressBookParserTest {
 
     private final AddressBookParser parser = new AddressBookParser();
+
+    @Test
+    public void parseCommand_mark() throws Exception {
+        for (String word : List.of("mark", "MARK", "Mark", "mArK")) {
+            assertEquals(new MarkCommand(INDEX_FIRST_PERSON), parser.parseCommand(word + " 1"));
+        }
+    }
+
+    @Test
+    public void parseCommand_unmark() throws Exception {
+        for (String word : List.of("unmark", "UNMARK", "Unmark", "uNmArK")) {
+            assertEquals(new UnmarkCommand(INDEX_FIRST_PERSON), parser.parseCommand(word + " 1"));
+        }
+    }
+
+    @Test
+    public void parseCommand_markAndUnmarkInvalidIndex_showsExactError() {
+        for (String word : List.of("MARK", "mArK", "UNMARK", "uNmArK")) {
+            for (String args : List.of("", "0", "-1", "abc", "1.5", "2147483648", "1 2", "1 extra")) {
+                assertThrows(ParseException.class, "Invalid index.", () -> parser.parseCommand(word + " " + args));
+            }
+        }
+    }
 
     @Test
     public void parseCommand_checkup() throws Exception {
@@ -96,8 +121,18 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_exit() throws Exception {
-        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD) instanceof ExitCommand);
-        assertTrue(parser.parseCommand(ExitCommand.COMMAND_WORD + " 3") instanceof ExitCommand);
+        for (String input : List.of("exit", "exit   ", "  exit  ", "\texit\t", "\nexit\r\n")) {
+            assertTrue(parser.parseCommand(input) instanceof ExitCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_exitWithArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ExitCommand.MESSAGE_USAGE);
+        for (String input : List.of("exit 1", "exit Alice", "exit /name Alice", "exit --help",
+                "exit\tAlice", "  exit Alice  ", "exit Alice Bob", "exit !")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
+        }
     }
 
     @Test
@@ -124,9 +159,28 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_help() throws Exception {
-        assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD) instanceof HelpCommand);
-        assertTrue(parser.parseCommand(HelpCommand.COMMAND_WORD + " 3") instanceof HelpCommand);
+    public void parseCommand_help_success() throws Exception {
+        for (String input : List.of("help", "   help", "help   ", "   help   ", "\thelp\t",
+                " \t help \t ", "\nhelp\r\n", "HELP", "Help", "hElP", " \t HeLp \r\n")) {
+            assertTrue(parser.parseCommand(input) instanceof HelpCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_helpWithArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE);
+        for (String input : List.of("help 3", "help abc", "   help abc   ", "help\tabc",
+                "help --help", "help abc def", "help !", "help\nabc", "HELP 3", "HeLp\tabc")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
+        }
+    }
+
+    @Test
+    public void parseCommand_helpWithExtraText_throwsUnknownCommand() {
+        for (String input : List.of("abc help", "   abc help   ", "abchelp", "helpabc", "help3",
+                "abc HELP", "HELPabc", "abcHeLp")) {
+            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(input));
+        }
     }
 
     @Test

@@ -15,7 +15,7 @@ import seedu.address.model.person.PersonMatchesFilterPredicate;
 import seedu.address.model.tag.Priority;
 
 /**
- * Filters and lists all persons in the address book who match every given criterion (name, tag, address).
+ * Filters persons in the current active or archived list by name, tag, and address.
  * Within one criterion, matching any one of the values is enough. Matching is case insensitive.
  */
 public class FilterCommand extends Command {
@@ -56,7 +56,7 @@ public class FilterCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.updateFilteredPersonList(predicate);
+        model.filterPersonsInCurrentList(predicate);
         return new CommandResult(
                 String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
     }
