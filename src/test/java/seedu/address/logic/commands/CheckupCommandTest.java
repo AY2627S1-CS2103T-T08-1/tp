@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.CheckupAppointment;
@@ -27,6 +28,67 @@ public class CheckupCommandTest {
     private final Person alice = new PersonBuilder().withName("Alice").withTags("LOW").build();
     private final Person bob = new PersonBuilder().withName("Bob").withTags("HIGH").build();
     private final CheckupAppointment appointment = appointmentOn(LocalDate.now().plusDays(1));
+
+    @Test
+    public void execute_archivedContactWithInvalidDate_prioritizesArchiveError() throws Exception {
+        model.addPerson(alice.copyWithArchivedStatus(true));
+        new ListCommand(true).execute(model);
+        AddressBookParser parser = new AddressBookParser();
+        for (String value : List.of("31/02/2030 12:00", "01/01/2030 24:00", "not a date",
+                "01/01/2030", appointmentOn(LocalDate.now().minusDays(1)).toString())) {
+            assertCommandFailure(parser.parseCommand("checkup 1 " + value), model,
+                    CheckupCommand.MESSAGE_ARCHIVED_CONTACT);
+        }
+    }
+
+    @Test
+    public void execute_activeContactWithInvalidDate_preservesDateErrors() throws Exception {
+        model.addPerson(alice);
+        AddressBookParser parser = new AddressBookParser();
+        for (String value : List.of("31/02/2030 12:00", "01/01/2030 24:00", "not a date",
+                "01/01/2030", "01/01/2030 12:00 extra")) {
+            assertCommandFailure(parser.parseCommand("checkup 1 " + value), model,
+                    CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE);
+        }
+        assertCommandFailure(parser.parseCommand("checkup 1 " + appointmentOn(LocalDate.now().minusDays(1))),
+                model, CheckupAppointment.MESSAGE_PAST_DATE);
+    }
+
+    @Test
+    public void execute_archivedContact_rejectsAppointmentWithoutChangingModel() throws Exception {
+        model.addPerson(alice.copyWithArchivedStatus(true));
+        new ListCommand(true).execute(model);
+
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), appointment), model,
+                "Appointments cannot be made with archived contacts. Unarchive the contact to do so.");
+    }
+
+    @Test
+    public void execute_archivedContactWithAppointment_preservesAppointmentMarkAndSelection() throws Exception {
+        Person archived = new PersonBuilder(alice).withCheckupAppointment(appointment.toString())
+                .build().withMarkedCheckup().copyWithArchivedStatus(true);
+        model.addPerson(archived);
+        new ListCommand(true).execute(model);
+        new FilterCommand(new PersonMatchesFilterPredicate(List.of("Alice"), List.of(), List.of())).execute(model);
+        new ViewCommand(Index.fromOneBased(1)).execute(model);
+
+        CheckupAppointment replacement = appointmentOn(LocalDate.now().plusDays(2));
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), replacement), model,
+                CheckupCommand.MESSAGE_ARCHIVED_CONTACT);
+        assertEquals(archived, model.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void execute_afterUnarchivingContact_allowsAppointment() throws Exception {
+        model.addPerson(alice.copyWithArchivedStatus(true));
+        new ListCommand(true).execute(model);
+        new UnarchiveCommand(Index.fromOneBased(1)).execute(model);
+        new ListCommand().execute(model);
+
+        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+
+        assertEquals(appointment, model.getFilteredPersonList().get(0).getCheckupAppointment().orElseThrow());
+    }
 
     @Test
     public void execute_unfilteredList_updatesSelectedContactAndAllowsReplacement() throws Exception {
