@@ -29,7 +29,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
    Some example commands you can try:
 
-   * `list` : Lists all contacts.
+   * `list` : Lists all active contacts. Use `list archive` for archived contacts.
 
    * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to the CareBook.
 
@@ -61,20 +61,34 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
-* Extraneous parameters for `help` and `exit` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list` and `clear` commands reject extra parameters;
-  enter either command on its own.
+* The `help`, `clear`, and `exit` commands reject extra parameters; enter these commands on their own.<br>
+  For example, `help 123` will be rejected. The `list` command accepts only the optional `archive` argument.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
 ### Viewing help: `help`
 
-Shows a message explaining how to access the help page.
+Opens a resizable, scrollable Help window listing the available commands, their usage, and examples.
+The command list includes `add`, `edit`, `delete`, `find`, `filter`, `list`, `sort`, `view`,
+`checkup`, `remark`, `clear`, `help`, and `exit`. It covers search criteria, sorting by name,
+priority or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
 
-![help message](images/helpMessage.png)
+The window also provides the user guide URL and a **Copy URL** button.
 
 Format: `help`
+
+* The command is case-insensitive: `help`, `HELP`, and `HeLp` all open the same window.
+* Whitespace before and after the command is allowed.
+* Additional text is rejected: `help 123`, `help me`, `abc help`, and `helpabc` are invalid.
+* You can also open the window using **Help > Help** in the menu or pressing **F1**.
+* If the Help window is already open, running `help` focuses that window.
+
+Examples:
+
+* `help` — displays the command list.
+* `HELP` — displays the same command list.
+* `help 123` — displays an invalid command format error; use `help` on its own.
 
 
 ### Adding a person: `add`
@@ -106,24 +120,78 @@ Use `/tag PRIORITY` with `add` or `edit` to label a person's priority. Choose on
 
 An invalid priority displays `Tag names must be HIGH, MEDIUM or LOW` and leaves the contacts unchanged.
 
-### Listing all persons: `list`
+### Archiving a contact: `archive`
 
-Shows a list of all persons in CareBook.
+Archives a contact that you no longer need in the active list while keeping its details in CareBook.
+The contact disappears from the current active list and can be viewed using `list archive`.
 
-Format: `list`
+Format: `archive INDEX`
+
+The command word is case-insensitive: `archive 3`, `Archive 3`, and `ARCHIVE 3` all archive the third displayed contact.
+
+* `INDEX` must be a positive integer shown in the current list, including a filtered list after `find`.
+* `list archive` shows archived contacts. Use `list` to return to active contacts.
+* `find` searches active contacts. Archived contacts remain archived when edited.
+* Archiving an already archived contact reports an error without changing it.
+* Archived status is saved automatically and survives restarting CareBook.
+* Archived contacts retain their identity, so adding a duplicate is still rejected.
+
+**Example workflow:**
+
+1. Enter `list` to display active contacts.
+2. Enter `archive 3` to archive the third contact shown. CareBook displays `Archived person: ...` with the contact's details, and removes that contact from the active list.
+3. Enter `list archive` to switch to the archive list. CareBook displays `Listed archived persons.`
+4. Enter `list` to return to the active list. The archived contact remains in the archive list.
+
+After archiving, the displayed indices may change. Check the current list before archiving another contact.
+For example, after `find Alice`, `archive 1` archives the first contact in those search results.
+
+**Common errors:**
+
+| Incorrect input or situation | Result | How to correct it |
+| --- | --- | --- |
+| `archive`, `archive Alice`, or `archive 1 2` | Invalid command format; usage instructions are shown. | Enter exactly one index, such as `archive 3`. |
+| `archive 0` or `archive -1` | Invalid index. | Use a positive integer shown in the current list. |
+| `archive 4` when only three contacts are displayed | The index is out of range. | Check the displayed indices and select an existing contact. |
+| `archive 1` when the displayed list is empty | `There are no persons in the displayed list to archive.` | Use `list` to check for active contacts. |
+| Archiving a contact in `list archive` | `This person is already archived.` | Use `list` to select an active contact instead. |
+
+### Restoring an archived contact: `unarchive`
+
+Restores an archived contact to the active list, preserving all its details.
+
+Format: `unarchive INDEX`
+
+* Enter `list archive` first, then use the index shown in that list. Filtered and sorted archive indices are supported.
+* `INDEX` must be a positive integer referring to a displayed contact. Only one index and surrounding whitespace are accepted.
+* The command word is case-insensitive: `unarchive 3`, `Unarchive 3`, and `UNARCHIVE 3` all work.
+* Missing indices, zero, negative numbers, decimals, words, and extra arguments are rejected.
+* An active contact cannot be unarchived; an error is shown without changing it.
+* The restored contact disappears from the archive list. Enter `list` to see it in the active list.
+* The change is saved automatically and survives restarting CareBook.
+
+Example: `list archive`, followed by `unarchive 3`, restores the third displayed archived contact.
+Check the updated indices before restoring another contact.
+
+### Listing persons: `list`
+
+Use `list` to show all active (non-archived) persons in CareBook, or `list archive` to show only archived persons.
+
+Format: `list` or `list archive`
 
 **Common errors:**
 
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
-| `list 3` | `Invalid command format. List command format: list` | Remove the index. Use `list` to show all persons. |
-| `list Alice` or `list n/Alice` | `Invalid command format. List command format: list` | Use `find Alice` to search by name, or `list` to show all persons. |
+| `list 3` | `Invalid command format. List command format: list [archive]` | Remove the index. Use `list` to show all persons. |
+| `list Alice` or `list n/Alice` | `Invalid command format. List command format: list [archive]` | Use `find Alice` to search by name, or `list` to show all persons. |
 | `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
 
-The `list` command accepts no arguments. Leading and trailing spaces are allowed.
-If all persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
-this is normal behavior. After a `find` command, use `list` to display all persons again.
-`list` also clears any `sort`, so persons are shown in the order they were added.
+The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word `list` remains lowercase. Leading and trailing spaces are allowed.
+If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
+this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
+If no contacts have been archived, `list archive` displays an empty list. `list` also clears any `sort`, so persons are 
+shown in the order they were added.
 
 ### Sorting persons: `sort`
 
@@ -162,17 +230,40 @@ Examples:
 
 ### Viewing a person's full details: `view`
 
-Displays only the specified person and shows their full details in the result box.
+Shows the specified person's full details in a dedicated panel above the contact list.
+The current list stays visible, so you can read details without losing your search or filter context.
 
 Format: `view INDEX`
 
 * Displays the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
-* Use `list` to display all persons again.
+* The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
+* The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
+  Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
+  resize it within its limit; double-click the handle to fit its contents again. New content or a change
+  in window width restores automatic sizing. With no selection, the details panel is hidden entirely.
+* Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
+* The details panel also shows the checkup appointment (`Not scheduled` if absent) and all numbered
+  remarks (`None` if absent). Updating the selected contact's appointment or remarks refreshes the panel.
+* After filtering or sorting, use the index in the list currently on screen. For example,
+  `filter /tag HIGH`, `sort name desc`, then `view 1` selects the first contact in those sorted results.
+* Editing the selected contact refreshes the details. Deleting it clears the panel.
+* A new search or filter clears selection if it hides the selected contact. `clear` clears both panels
+  without deleting any contacts. `list` restores the contact list, but does not reselect a contact.
 
 Example:
 * `view 2` displays the full details of the 2nd person in the displayed list.
+
+Common errors:
+
+| Input | Error message shown | How to fix |
+| --- | --- | --- |
+| `view 3` when 2 contacts are displayed | `Index 3 is out of range. The displayed list has 2 contacts. Enter an index from 1 to 2.` | Use an index shown in the current list. |
+| `view 1` when no contacts are displayed, including after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. If no contacts are saved, add one. |
+
+These errors leave contacts, the current list and selection unchanged. `view` never falls back to
+selecting a contact from the full stored list when that contact is not currently displayed.
 
 ### Editing a person: `edit`
 
@@ -291,28 +382,39 @@ Examples:
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 * `find j` returns `John Doe`<br> ![result for 'find j'](images/findJ.png)
 
-### Filtering persons by tag: `filter`
+### Filtering persons by name, tag and address: `filter`
 
-Shows only the persons who are tagged with the given tag.
+Shows only the persons in the current active or archived list who match all the criteria you give.
 
-Format: `filter TAG`
+After `list`, `filter` excludes archived contacts. After `list archive`, it searches only archived contacts.
+Each `filter` replaces the previous filter criteria while keeping the same list, even when no contacts match.
+`find` switches back to searching active contacts.
 
-* `TAG` must be one of `HIGH`, `MEDIUM` or `LOW`.
-* The tag is case-insensitive; for example, `medium` matches persons tagged `MEDIUM`.
-* Only persons who have the exact tag are returned.
-* Exactly one tag must be given.
+Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
+
+* At least one of `/name`, `/tag` or `/address` must be given.
+* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`.
+* **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
+* **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases.
+  * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
+* When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
-* `filter MEDIUM` lists all persons tagged as `MEDIUM`.
-* `filter high` lists all persons tagged as `HIGH`.
+* `filter /tag MEDIUM` lists all persons tagged as `MEDIUM`.
+* `filter /tag HIGH /tag MEDIUM` lists all persons tagged as `HIGH` or `MEDIUM`.
+* `filter /name ali bob` lists all persons whose name contains `ali` or `bob`.
+* `filter /address clementi ave /address jurong` lists all persons whose address contains `clementi ave` or `jurong`.
+* `filter /name meier /tag HIGH /address street` lists all persons whose name contains `meier`, who are tagged `HIGH`, and whose address contains `street`.
 
 **Common errors:**
 
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
-| `filter` (no tag) | `Invalid command format!` followed by the correct usage | Supply a tag, e.g. `filter MEDIUM`. |
-| `filter URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
-| `filter HIGH LOW` (more than one tag) | `Invalid command format!` followed by the correct usage | Give only one tag per command. |
+| `filter` (no criteria) | `Invalid command format!` followed by the correct usage | Give at least one criterion, e.g. `filter /tag MEDIUM`. |
+| `filter MEDIUM` (no prefix) | `Invalid command format!` followed by the correct usage | Start each criterion with its prefix, e.g. `filter /tag MEDIUM`. |
+| `filter /name` (empty value) | `Invalid command format!` followed by the correct usage | Put a value after each prefix, e.g. `filter /name ali`. |
+| `filter /tag URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
+| `filter /tag HIGH LOW` (several tags in one prefix) | `Invalid command format!` followed by the correct usage | Repeat the prefix: `filter /tag HIGH /tag LOW`. |
 
 After a `filter` command, use `list` to display all persons again.
 
@@ -371,9 +473,19 @@ Exits the program.
 
 Format: `exit`
 
+Trailing whitespace is allowed. Extra arguments are rejected to prevent accidental exits:
+`exit Alice` or `exit 1` leaves CareBook open without changing any contacts and shows:
+
+```text
+Invalid command format!
+Exit takes no arguments.
+To close CareBook, enter: exit
+No contacts have been changed.
+```
+
 ### Saving the data
 
-CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
+CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit`, `archive` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
 
 ### Editing the data file
 
@@ -389,6 +501,7 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `patientEmail` | No    | The patient's email address. Leave it out if the patient has no email. |
 | `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
+| `archived` | No | `true` for archived contacts; defaults to `false` when omitted. |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
 | `remarks`   | No       | A list of the contact's notes in order, e.g. `[ "Allergic to penicillin" ]`. Each note must not be blank or start with a space, and the notes can have at most 500 characters in total. Leave it out or use `[]` for no notes. |
 
@@ -444,9 +557,11 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
+**Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
+**Archive** | `archive INDEX`<br> e.g., `archive 3`
+**List**   | `list` or `list archive`
+**Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
-**Filter** | `filter TAG`<br> e.g., `filter MEDIUM`
-**List**   | `list`
 **Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
 **Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`

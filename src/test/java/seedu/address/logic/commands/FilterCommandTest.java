@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -29,6 +31,58 @@ public class FilterCommandTest {
 
     private static PersonMatchesFilterPredicate tags(String... tags) {
         return new PersonMatchesFilterPredicate(List.of(), List.of(tags), List.of());
+    }
+
+    @Test
+    public void execute_activeList_excludesArchivedMatches() throws Exception {
+        model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
+        AddressBook original = new AddressBook(model.getAddressBook());
+
+        CommandResult result = new AddressBookParser().parseCommand("filter /tag HIGH").execute(model);
+
+        assertEquals(List.of(DANIEL), model.getFilteredPersonList());
+        assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
+        assertEquals(original, model.getAddressBook());
+    }
+
+    @Test
+    public void execute_archiveList_excludesActiveMatches() throws Exception {
+        model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("list archive").execute(model);
+
+        parser.parseCommand("filter /tag HIGH").execute(model);
+
+        assertEquals(List.of(ALICE.copyWithArchivedStatus(true)), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_noMatches_preservesListScopeForNextFilter() throws Exception {
+        model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("list archive").execute(model);
+        parser.parseCommand("filter /tag LOW").execute(model);
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        parser.parseCommand("filter /tag HIGH").execute(model);
+        assertEquals(List.of(ALICE.copyWithArchivedStatus(true)), model.getFilteredPersonList());
+
+        parser.parseCommand("list").execute(model);
+        parser.parseCommand("filter /tag MEDIUM").execute(model);
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        parser.parseCommand("filter /tag HIGH").execute(model);
+        assertEquals(List.of(DANIEL), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_afterFindFromArchiveList_filtersActiveContacts() throws Exception {
+        model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("list archive").execute(model);
+        parser.parseCommand("find NobodyMatches").execute(model);
+
+        parser.parseCommand("filter /tag HIGH").execute(model);
+
+        assertEquals(List.of(DANIEL), model.getFilteredPersonList());
     }
 
     @Test

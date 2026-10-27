@@ -49,7 +49,7 @@ note over ViewCommand, Model
   For view 1, use list index 0.
 end note
 
-ViewCommand -> Model : updateFilteredPersonList(\nperson -> person.equals(personToView))
+ViewCommand -> Model : selectPerson(personToView)
 activate Model
 Model --> ViewCommand
 deactivate Model

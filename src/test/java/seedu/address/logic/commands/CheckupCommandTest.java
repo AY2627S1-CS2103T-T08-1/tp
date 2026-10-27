@@ -46,6 +46,33 @@ public class CheckupCommandTest {
     }
 
     @Test
+    public void execute_sameAppointment_preservesMark() throws Exception {
+        Person marked = new PersonBuilder(alice).withCheckupAppointment(appointment.toString())
+                .build().withMarkedCheckup();
+        model.addPerson(marked);
+
+        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+
+        assertEquals(List.of(marked), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_replacementAppointment_resetsMarkAndAllowsMarkingAgain() throws Exception {
+        Person marked = new PersonBuilder(alice).withCheckupAppointment(appointment.toString())
+                .withRemarks("Needs assistance").build().withMarkedCheckup();
+        model.addPerson(marked);
+        CheckupAppointment replacement = appointmentOn(LocalDate.now().plusDays(2));
+
+        new CheckupCommand(Index.fromOneBased(1), replacement).execute(model);
+
+        Person expected = new PersonBuilder(alice).withCheckupAppointment(replacement.toString())
+                .withRemarks("Needs assistance").build();
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        new MarkCommand(Index.fromOneBased(1)).execute(model);
+        assertEquals(List.of(expected.withMarkedCheckup()), model.getFilteredPersonList());
+    }
+
+    @Test
     public void execute_personWithRemark_keepsRemark() throws Exception {
         Person bobWithNotes = new PersonBuilder(bob).withRemarks("Allergic to penicillin").build();
         model.addPerson(bobWithNotes);
@@ -86,10 +113,11 @@ public class CheckupCommandTest {
         model.addPerson(alice);
         model.addPerson(bob);
         new ViewCommand(Index.fromOneBased(2)).execute(model);
-        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+        new CheckupCommand(Index.fromOneBased(2), appointment).execute(model);
         Person updatedBob = new PersonBuilder(bob).withCheckupAppointment(appointment.toString()).build();
-        assertEquals(List.of(updatedBob), model.getFilteredPersonList());
+        assertEquals(List.of(alice, updatedBob), model.getFilteredPersonList());
         assertEquals(List.of(alice, updatedBob), model.getAddressBook().getPersonList());
+        assertEquals(updatedBob, model.selectedPersonProperty().get());
     }
 
     @Test
