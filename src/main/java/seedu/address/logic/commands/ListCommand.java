@@ -2,22 +2,37 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
+import static seedu.address.model.Model.PREDICATE_SHOW_ARCHIVED_PERSONS;
 
 import seedu.address.model.Model;
 
 /**
- * Lists all persons in the address book to the user, in the order they were added.
+ * Lists active or archived persons in the address book to the user, in the order they were added.
  * Clears any filter and any sort order.
  */
 public class ListCommand extends Command {
 
     public static final String COMMAND_WORD = "list";
+    public static final String MESSAGE_USAGE = COMMAND_WORD
+            + ": Lists all persons and resets filters and sorting.\nExample: " + COMMAND_WORD;
 
     public static final String MESSAGE_SUCCESS = "Listed all persons.";
 
-    /* Error string for list command */
-    public static final String MESSAGE_INVALID_FORMAT = "Invalid command format. List command format: list";
+    public static final String MESSAGE_ARCHIVE_SUCCESS = "Listed archived persons.";
 
+    /* Error string for list command */
+    public static final String MESSAGE_INVALID_FORMAT = "Invalid command format. List command format: list [archive]";
+
+
+    private final boolean showArchive;
+
+    public ListCommand() {
+        this(false);
+    }
+
+    public ListCommand(boolean showArchive) {
+        this.showArchive = showArchive;
+    }
 
     @Override
     public boolean modifiesData() {
@@ -27,8 +42,8 @@ public class ListCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        model.updateFilteredPersonList(showArchive ? PREDICATE_SHOW_ARCHIVED_PERSONS : PREDICATE_SHOW_ALL_PERSONS);
         model.resetSortedPersonList();
-        return new CommandResult(MESSAGE_SUCCESS);
+        return new CommandResult(showArchive ? MESSAGE_ARCHIVE_SUCCESS : MESSAGE_SUCCESS);
     }
 }

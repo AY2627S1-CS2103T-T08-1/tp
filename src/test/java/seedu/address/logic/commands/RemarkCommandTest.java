@@ -10,6 +10,9 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -177,16 +180,18 @@ public class RemarkCommandTest {
     }
 
     @Test
-    public void execute_afterView_keepsShowingPerson() throws Exception {
+    public void execute_afterView_preservesListAndRefreshesSelectedPerson() throws Exception {
+        List<Person> expectedList = new ArrayList<>(model.getFilteredPersonList());
         new ViewCommand(INDEX_SECOND_PERSON).execute(model);
-        Person secondPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
 
-        RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_ALLERGY).execute(model);
-        RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_VISITS).execute(model);
+        RemarkCommand.add(INDEX_SECOND_PERSON, NOTE_ALLERGY).execute(model);
+        RemarkCommand.add(INDEX_SECOND_PERSON, NOTE_VISITS).execute(model);
 
-        assertEquals(1, model.getFilteredPersonList().size());
-        assertEquals(new PersonBuilder(secondPerson).withRemarks(NOTE_ALLERGY, NOTE_VISITS).build(),
-                model.getFilteredPersonList().get(0));
+        Person updatedPerson = new PersonBuilder(secondPerson).withRemarks(NOTE_ALLERGY, NOTE_VISITS).build();
+        expectedList.set(INDEX_SECOND_PERSON.getZeroBased(), updatedPerson);
+        assertEquals(expectedList, model.getFilteredPersonList());
+        assertEquals(updatedPerson, model.selectedPersonProperty().get());
     }
 
     @Test

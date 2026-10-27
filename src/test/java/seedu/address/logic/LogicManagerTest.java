@@ -30,6 +30,7 @@ import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -79,6 +80,38 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_exitWithArguments_preservesContactsDisplayAndSavedData() throws Exception {
+        logic.execute(PersonUtil.getAddCommand(AMY));
+        logic.execute(PersonUtil.getAddCommand(BOB));
+        logic.execute("find Amy");
+        Path dataFile = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(dataFile);
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ExitCommand.MESSAGE_USAGE);
+
+        for (String input : List.of("exit Alice", "exit 1")) {
+            assertThrows(ParseException.class, expectedMessage, () -> logic.execute(input));
+            assertEquals(List.of(AMY, BOB), model.getAddressBook().getPersonList());
+            assertEquals(List.of(AMY), model.getFilteredPersonList());
+            assertEquals(savedData, Files.readString(dataFile));
+        }
+
+        // A rejected exit must not prevent the user from continuing to use CareBook.
+        logic.execute(ListCommand.COMMAND_WORD);
+        assertEquals(List.of(AMY, BOB), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_exitWithWhitespace_returnsExitResultWithoutSaving() throws Exception {
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        CommandResult result = logic.execute("  exit \t ");
+
+        assertTrue(result.isExit());
+        assertFalse(result.isShowHelp());
+        assertEquals(ExitCommand.MESSAGE_EXIT_ACKNOWLEDGEMENT, result.getFeedbackToUser());
     }
 
     @Test
