@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+  <ScrollPane fx:id="detailsScroll" fitToWidth="true" hbarPolicy="NEVER"
+              styleClass="contact-details-scroll" minHeight="0" VBox.vgrow="ALWAYS">
+    <content>
+      <VBox fx:id="detailsContent" spacing="10" styleClass="contact-details" fillWidth="true">
+        <Label fx:id="title" wrapText="true" maxWidth="Infinity" styleClass="details-title" />
+        <Label fx:id="details" wrapText="true" maxWidth="Infinity" styleClass="details-text" />
+      </VBox>
+    </content>
+  </ScrollPane>
+  <Region fx:id="resizeHandle" styleClass="panel-resize-handle" minHeight="6" prefHeight="6" maxHeight="6" />
+</VBox>

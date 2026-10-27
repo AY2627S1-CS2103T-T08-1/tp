@@ -40,6 +40,37 @@ public class JsonAdaptedPersonTest {
             .collect(Collectors.toList());
 
     @Test
+    public void jsonRoundTrip_markedCheckup_preservesStateAndAllDetails() throws Exception {
+        Person marked = new PersonBuilder(BENSON).withCheckupAppointment("01/01/2030 09:05")
+                .withRemarks("Needs assistance").build().copyWithArchivedStatus(true).withMarkedCheckup();
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(marked));
+        assertEquals(marked, JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
+    public void jsonWithoutMarkedField_defaultsToUnmarked() throws Exception {
+        Person scheduled = new PersonBuilder(BENSON).withCheckupAppointment("01/01/2030 09:05").build();
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(scheduled))
+                .replaceAll(",\\s*\"checkupMarked\"\\s*:\\s*false", "");
+        assertEquals(scheduled, JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
+    public void toModelType_markedWithoutCheckup_rejectsInvalidState() {
+        JsonAdaptedPerson adapted = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, null, null, false, true);
+        assertThrows(IllegalValueException.class, Person.MESSAGE_MARK_WITHOUT_CHECKUP, adapted::toModelType);
+    }
+
+    @Test
+    public void jsonRoundTrip_archivedContact_preservesAllDetails() throws Exception {
+        Person archived = new PersonBuilder(BENSON).withCheckupAppointment("01/01/2000 09:05")
+                .withRemarks("Needs assistance").build().copyWithArchivedStatus(true);
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(archived));
+        assertEquals(archived, JsonUtil.fromJsonString(json, JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
     public void jsonRoundTrip_preservesCheckupIncludingPastAppointments() throws Exception {
         Person scheduled = new PersonBuilder(BENSON).withCheckupAppointment("01/01/2000 09:05").build();
         String json = JsonUtil.toJsonString(new JsonAdaptedPerson(scheduled));

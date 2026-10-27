@@ -18,3 +18,37 @@
 .tooltip-text {
     -fx-text-fill: white;
 }
+
+.list-cell:viewed {
+    -fx-border-color: #76c7c0;
+    -fx-border-width: 2;
+}
+
+.contact-details {
+    -fx-background-color: #303a3c;
+    -fx-padding: 12;
+}
+
+.contact-details-scroll > .viewport {
+    -fx-background-color: #303a3c;
+}
+
+.details-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #a9e8df;
+}
+
+.details-text {
+    -fx-font-size: 15px;
+    -fx-text-fill: white;
+}
+
+.panel-resize-handle {
+    -fx-cursor: v-resize;
+    -fx-background-color: #58696b;
+}
+
+.panel-resize-handle:hover {
+    -fx-background-color: #76c7c0;
+}

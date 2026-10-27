@@ -20,6 +20,24 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void markCheckup_requiresAppointmentAndPreservesOtherDetails() {
+        Person noCheckup = new PersonBuilder().build();
+        assertThrows(IllegalArgumentException.class, Person.MESSAGE_MARK_WITHOUT_CHECKUP, noCheckup::withMarkedCheckup);
+        Person scheduled = new PersonBuilder().withCheckupAppointment("01/01/2030 09:05")
+                .withRemarks("Needs assistance").build();
+        Person marked = scheduled.withMarkedCheckup();
+        assertFalse(scheduled.isCheckupMarked());
+        assertTrue(marked.isCheckupMarked());
+        assertFalse(scheduled.equals(marked));
+        assertTrue(scheduled.isSamePerson(marked));
+        assertEquals(marked, new PersonBuilder(marked).build());
+        assertEquals(marked.hashCode(), new PersonBuilder(marked).build().hashCode());
+        assertTrue(marked.withRemark(Remark.EMPTY).isCheckupMarked());
+        assertTrue(marked.copyWithArchivedStatus(true).isCheckupMarked());
+        assertEquals(scheduled.getCheckupAppointment(), marked.getCheckupAppointment());
+    }
+
+    @Test
     public void checkupAppointment_isOptionalAndAffectsDataEquality() {
         Person original = new PersonBuilder().build();
         Person scheduled = new PersonBuilder(original).withCheckupAppointment("01/01/2030 12:00").build();
@@ -140,7 +158,7 @@ public class PersonTest {
                 + ", patientEmail=" + ALICE.getPatientEmail().orElse(null)
                 + ", familyEmail=" + ALICE.getFamilyEmail().orElse(null)
                 + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
-                + ", checkupAppointment=null, remark=" + ALICE.getRemark() + "}";
+                + ", checkupAppointment=null, remark=" + ALICE.getRemark() + ", checkupMarked=false}";
         assertEquals(expected, ALICE.toString());
     }
 }

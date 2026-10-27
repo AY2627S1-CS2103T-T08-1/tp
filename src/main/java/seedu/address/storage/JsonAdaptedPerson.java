@@ -32,7 +32,9 @@ class JsonAdaptedPerson {
     private final String patientEmail;
     private final String familyEmail;
     private final String address;
+    private final boolean archived;
     private final String checkupAppointment;
+    private final boolean checkupMarked;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final List<String> remarks = new ArrayList<>();
 
@@ -45,14 +47,17 @@ class JsonAdaptedPerson {
             @JsonProperty("fEmail") String familyEmail, @JsonProperty("email") String legacyEmail,
             @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("checkupAppointment") String checkupAppointment,
-            @JsonProperty("remarks") List<String> remarks) {
+            @JsonProperty("remarks") List<String> remarks, @JsonProperty("archived") boolean archived,
+            @JsonProperty("checkupMarked") boolean checkupMarked) {
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
         this.patientEmail = patientEmail != null ? patientEmail : legacyEmail;
         this.familyEmail = familyEmail;
         this.address = address;
+        this.archived = archived;
         this.checkupAppointment = checkupAppointment;
+        this.checkupMarked = checkupMarked;
         if (tags != null) {
             this.tags.addAll(tags);
         }
@@ -60,6 +65,16 @@ class JsonAdaptedPerson {
         if (remarks != null) {
             this.remarks.addAll(remarks);
         }
+    }
+
+    /**
+     * Constructs an adapted contact whose checkup has not been marked.
+     */
+    public JsonAdaptedPerson(String name, String patientNo, String familyNo, String patientEmail,
+            String familyEmail, String legacyEmail, String address, List<JsonAdaptedTag> tags,
+            String checkupAppointment, List<String> remarks, boolean archived) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, legacyEmail, address, tags,
+                checkupAppointment, remarks, archived, false);
     }
 
     /**
@@ -71,7 +86,18 @@ class JsonAdaptedPerson {
     }
 
     /**
-     * Constructs a {@code JsonAdaptedPerson} with one legacy email, and no checkup appointment or remarks.
+     * Constructs an active contact with optional appointment and remarks.
+     */
+    public JsonAdaptedPerson(String name, String patientNo, String familyNo, String patientEmail,
+            String familyEmail, String legacyEmail, String address, List<JsonAdaptedTag> tags,
+            String checkupAppointment, List<String> remarks) {
+        this(name, patientNo, familyNo, patientEmail, familyEmail, legacyEmail, address, tags,
+                checkupAppointment, remarks, false);
+    }
+
+    /**
+     * Constructs a {@code JsonAdaptedPerson} with one legacy email.
+     * and no checkup appointment or remarks.
      */
     public JsonAdaptedPerson(String name, String patientNo, String familyNo, String email, String address,
             List<JsonAdaptedTag> tags) {
@@ -88,7 +114,9 @@ class JsonAdaptedPerson {
         patientEmail = source.getPatientEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         familyEmail = source.getFamilyEmail().map(sourceEmail -> sourceEmail.value).orElse(null);
         address = source.getAddress().value;
+        archived = source.isArchived();
         checkupAppointment = source.getCheckupAppointment().map(CheckupAppointment::toString).orElse(null);
+        checkupMarked = source.isCheckupMarked();
         tags.addAll(source.getTags().stream()
                 .map(JsonAdaptedTag::new)
                 .collect(Collectors.toList()));
@@ -173,8 +201,11 @@ class JsonAdaptedPerson {
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException(CheckupAppointment.MESSAGE_CONSTRAINTS);
         }
+        if (checkupMarked && modelAppointment == null) {
+            throw new IllegalValueException(Person.MESSAGE_MARK_WITHOUT_CHECKUP);
+        }
         return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
-                modelAddress, modelTags, modelAppointment, toModelRemark());
+                modelAddress, modelTags, modelAppointment, toModelRemark(), archived, checkupMarked);
     }
 
     /**
