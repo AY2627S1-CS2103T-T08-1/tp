@@ -181,10 +181,12 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 <puml src="diagrams/SaveSequenceDiagram.puml" alt="How LogicManager decides whether to save after a command" />
 
-1. `LogicManager` parses the command text into a `Command` and executes it.
+1. `LogicManager` parses the command text into a `Command`, keeps a copy of the address book, and executes the command.
 1. It then calls `modifiesData()` on the command.
-1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. If the save fails, the error becomes a `CommandException`, so the user sees `Could not save data to file: ...` and CareBook keeps running.
+1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. If the save fails, `LogicManager` restores the copy with `Model#setAddressBook` and throws a `CommandException`. The user sees `Could not save data to file ...` (or a message about insufficient permissions), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
 1. Otherwise, `LogicManager` only logs that the save was skipped, and the data file is left as it is.
+
+**Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. Restoring the address book also clears the details panel, which is acceptable after an error.
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
 
@@ -797,6 +799,12 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
     
         Use case resumes at step 4.
 
+*4a. CareBook cannot write the data file.
+
+    *4a1. CareBook undoes the change and displays an error message saying the data could not be saved.
+
+        Use case ends.
+
 **Use case: Find contacts**
 
 **MSS:**
@@ -1004,3 +1012,13 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Launch CareBook with a valid `data/contacts.json`, then run `list`, `find` or `view 1`.<br>
       Expected: The commands run normally and the data file is not rewritten (its last modified time does not change).
+
+1. Saving when the data file cannot be written
+
+   1. Prerequisites: Launch CareBook with at least one contact, then make `data/contacts.json` read-only (on Windows, tick *Read-only* in the file's properties).
+
+   1. Test case: `remark 1 Uses a wheelchair`<br>
+      Expected: The result box shows `Could not save data to file ...` and `The command was undone, so your contacts are unchanged.` The first contact's card does not show the note.
+
+   1. Test case: make the file writable again, then enter `remark 1 Uses a wheelchair` again.<br>
+      Expected: The note is added and saved. It is still shown after restarting CareBook.

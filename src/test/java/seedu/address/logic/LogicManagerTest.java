@@ -115,13 +115,13 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_storageThrowsIoException_throwsCommandException() {
+    public void execute_storageThrowsIoException_throwsCommandException() throws Exception {
         assertCommandFailureForExceptionFromStorage(DUMMY_IO_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()));
     }
 
     @Test
-    public void execute_storageThrowsAdException_throwsCommandException() {
+    public void execute_storageThrowsAdException_throwsCommandException() throws Exception {
         assertCommandFailureForExceptionFromStorage(DUMMY_AD_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, DUMMY_AD_EXCEPTION.getMessage()));
     }
@@ -288,7 +288,8 @@ public class LogicManagerTest {
      * @param e the exception to be thrown by the Storage component
      * @param expectedMessage the message expected inside exception thrown by the Logic component
      */
-    private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage) {
+    private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage)
+            throws Exception {
         Path prefPath = temporaryFolder.resolve("ExceptionUserPrefs.json");
 
         // Inject LogicManager with a JsonAddressBookStorage that throws the IOException e when saving
@@ -308,10 +309,18 @@ public class LogicManagerTest {
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + FAMILY_PHONE_DESC_AMY + PATIENT_EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+
+        // the add is undone, so the shown contacts still match the data file
+        ModelManager expectedModel = new ModelManager();
+        assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+
+        // a retry is not blocked as a duplicate, and is saved once storage works again
+        logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(
+                temporaryFolder.resolve("RetryAddressBook.json")), userPrefsStorage));
         Person expectedPerson = new PersonBuilder(AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY)
                 .withPatientEmail(VALID_EMAIL_AMY).withTags().build();
-        ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
-        assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+        assertCommandSuccess(addCommand, String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expectedPerson)),
+                expectedModel);
     }
 }
