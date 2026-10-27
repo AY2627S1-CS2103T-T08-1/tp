@@ -18,6 +18,23 @@ public class CheckupCommandParserTest {
     private final CheckupCommandParser parser = new CheckupCommandParser();
 
     @Test
+    public void parse_delete_returnsDeleteCommand() {
+        for (String keyword : List.of("delete", "DELETE", "DeLeTe")) {
+            assertParseSuccess(parser, " 2 " + keyword + " ", CheckupCommand.delete(Index.fromOneBased(2)));
+        }
+    }
+
+    @Test
+    public void parse_deleteWithInvalidIndexOrExtraArguments_failure() {
+        for (String args : List.of("0 delete", "-1 delete", "abc delete", "2147483648 delete")) {
+            assertParseFailure(parser, args,
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, CheckupCommand.MESSAGE_USAGE));
+        }
+        assertParseFailure(parser, "1 delete extra",
+                CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE);
+    }
+
+    @Test
     public void parse_todayOrFuture_returnsCommand() {
         for (LocalDate date : List.of(LocalDate.now(), LocalDate.now().plusDays(1))) {
             String value = date.format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 00:00";

@@ -8,7 +8,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.CheckupAppointment;
 
 /**
- * Parses a displayed index followed by a checkup date and time.
+ * Parses a displayed index followed by a checkup date and time or the delete keyword.
  */
 public class CheckupCommandParser implements Parser<CheckupCommand> {
     @Override
@@ -22,6 +22,9 @@ public class CheckupCommandParser implements Parser<CheckupCommand> {
             index = ParserUtil.parseIndex(parts[0]);
         } catch (ParseException e) {
             throw invalidFormat();
+        }
+        if (parts[1].equalsIgnoreCase("delete")) {
+            return CheckupCommand.delete(index);
         }
         final CheckupAppointment appointment;
         try {

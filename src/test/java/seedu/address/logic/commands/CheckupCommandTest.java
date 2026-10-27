@@ -5,14 +5,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.LogicManager;
 import seedu.address.logic.Messages;
+import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.CheckupAppointment;
@@ -20,13 +24,76 @@ import seedu.address.model.person.NameContainsKeywordsPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonHasTagPredicate;
 import seedu.address.model.person.PersonMatchesFilterPredicate;
+import seedu.address.storage.JsonAddressBookStorage;
+import seedu.address.storage.JsonUserPrefsStorage;
+import seedu.address.storage.StorageManager;
 import seedu.address.testutil.PersonBuilder;
 
 public class CheckupCommandTest {
+    @TempDir
+    public Path testFolder;
+
     private final Model model = new ModelManager();
     private final Person alice = new PersonBuilder().withName("Alice").withTags("LOW").build();
     private final Person bob = new PersonBuilder().withName("Bob").withTags("HIGH").build();
     private final CheckupAppointment appointment = appointmentOn(LocalDate.now().plusDays(1));
+
+    @Test
+    public void execute_delete_removesAppointmentAndMarkPreservingOtherDetailsAndSelection() throws Exception {
+        Person original = new PersonBuilder(alice).withRemarks("Needs assistance").build();
+        Person scheduled = new PersonBuilder(original).withCheckupAppointment(appointment.toString())
+                .build().withMarkedCheckup();
+        model.addPerson(scheduled);
+        new ViewCommand(Index.fromOneBased(1)).execute(model);
+
+        Command command = new AddressBookParser().parseCommand("checkup 1 delete");
+        assertTrue(command.modifiesData());
+        assertEquals("Deleted checkup appointment for Alice.", command.execute(model).getFeedbackToUser());
+        assertEquals(List.of(original), model.getFilteredPersonList());
+        assertEquals(List.of(original), model.getAddressBook().getPersonList());
+        assertEquals(original, model.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void execute_deleteInFilteredAndSortedLists_usesDisplayedIndex() throws Exception {
+        Person scheduledAlice = new PersonBuilder(alice).withCheckupAppointment(appointment.toString()).build();
+        Person scheduledBob = new PersonBuilder(bob).withCheckupAppointment(appointment.toString()).build();
+        model.addPerson(scheduledAlice);
+        model.addPerson(scheduledBob);
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("filter /tag HIGH").execute(model);
+        parser.parseCommand("checkup 1 delete").execute(model);
+        assertEquals(List.of(bob), model.getFilteredPersonList());
+        assertEquals(List.of(scheduledAlice, bob), model.getAddressBook().getPersonList());
+
+        parser.parseCommand("list").execute(model);
+        parser.parseCommand("sort name desc").execute(model);
+        parser.parseCommand("checkup 2 delete").execute(model);
+        assertEquals(List.of(bob, alice), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_deleteWithoutAppointmentOrInvalidIndex_leavesModelUnchanged() {
+        assertCommandFailure(CheckupCommand.delete(Index.fromOneBased(1)), model,
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        model.addPerson(alice);
+        assertCommandFailure(CheckupCommand.delete(Index.fromOneBased(1)), model,
+                CheckupCommand.MESSAGE_NO_APPOINTMENT);
+    }
+
+    @Test
+    public void execute_delete_savesClearedAppointmentAndMark() throws Exception {
+        Person scheduled = new PersonBuilder(alice).withCheckupAppointment(appointment.toString())
+                .build().withMarkedCheckup();
+        model.addPerson(scheduled);
+        StorageManager storage = new StorageManager(new JsonAddressBookStorage(testFolder.resolve("contacts.json")),
+                new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
+        new LogicManager(model, storage).execute("checkup 1 delete");
+        assertEquals(List.of(alice), storage.readAddressBook().orElseThrow().getPersonList());
+        assertEquals(CheckupCommand.delete(Index.fromOneBased(1)), CheckupCommand.delete(Index.fromOneBased(1)));
+        assertFalse(CheckupCommand.delete(Index.fromOneBased(1)).equals(
+                new CheckupCommand(Index.fromOneBased(1), appointment)));
+    }
 
     @Test
     public void execute_unfilteredList_updatesSelectedContactAndAllowsReplacement() throws Exception {
