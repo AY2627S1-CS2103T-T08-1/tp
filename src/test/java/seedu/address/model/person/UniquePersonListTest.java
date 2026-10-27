@@ -22,6 +22,15 @@ public class UniquePersonListTest {
     private final UniquePersonList uniquePersonList = new UniquePersonList();
 
     @Test
+    public void add_sameNameWithExtraSpaces_throwsDuplicatePersonException() {
+        Person kim = new PersonBuilder(ALICE).withName("Kim Lee").build();
+        Person spacedKim = new PersonBuilder(BOB).withName("Kim    Lee   ").build();
+        uniquePersonList.add(kim);
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(spacedKim));
+        assertEquals(List.of(kim), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
     public void contains_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> uniquePersonList.contains(null));
     }
