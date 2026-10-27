@@ -21,6 +21,9 @@ public class CheckupCommand extends Command {
             + "INDEX must be a positive displayed index. Use a valid 24-hour time and a date today or later.\n"
             + "Example: checkup 1 25/12/2030 14:30";
     public static final String MESSAGE_SUCCESS = "Checkup appointment for %1$s: %2$s";
+    public static final String MESSAGE_BOOKING_CONFLICT =
+            "A contact with this booking date and time already exists. "
+            + "Only contacts with the same family HP can be booked at the same time.";
 
     private final Index targetIndex;
     private final CheckupAppointment appointment;
@@ -44,6 +47,13 @@ public class CheckupCommand extends Command {
             throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE);
         }
         Person person = displayedPersons.get(targetIndex.getZeroBased());
+        boolean hasConflict = model.getAddressBook().getPersonList().stream()
+                .anyMatch(existing -> !existing.isArchived() && !existing.equals(person)
+                        && existing.getCheckupAppointment().filter(appointment::equals).isPresent()
+                        && !existing.getFamilyNo().equals(person.getFamilyNo()));
+        if (hasConflict) {
+            throw new CommandException(MESSAGE_BOOKING_CONFLICT);
+        }
         boolean keepMarked = person.isCheckupMarked()
                 && person.getCheckupAppointment().filter(appointment::equals).isPresent();
         Person updatedPerson = new Person(person.getName(), person.getPatientNo(), person.getFamilyNo(),

@@ -258,6 +258,64 @@ Priority tags use the existing `/tag` prefix and `Tag` model, with names restric
 
 For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` is rejected, and `edit 1 /tag` clears them.
 
+### Checkup appointments
+
+The `checkup INDEX dd/mm/yyyy HH:mm` command sets or replaces an appointment for a displayed contact.
+`checkup INDEX delete` removes it. The command word and `delete` keyword are case-insensitive.
+
+#### Parsing and validation
+
+`AddressBookParser` delegates to `CheckupCommandParser`, which trims surrounding whitespace, collapses
+repeated whitespace and parses the displayed `Index`. A delete request creates a deletion command;
+otherwise the command retains the date/time input until the target contact can be checked during execution.
+Missing arguments and invalid index syntax cause a `ParseException` with the command usage.
+
+`CheckupCommand#execute()` validates the displayed index before retrieving the contact. For scheduling,
+the archived-contact check runs before date/time validation, so an archived contact produces
+`Appointments cannot be made with archived contacts. Unarchive the contact to do so.` even if the supplied
+date or time is invalid. This ordering requires date/time validation to be deferred until execution.
+
+`CheckupAppointment` uses the fixed `dd/MM/uuuu HH:mm` formatter with `Locale.ROOT` and
+`ResolverStyle.STRICT`. Impossible dates and times are rejected without rounding. The appointment is a
+`LocalDateTime`; comparison with the current local date and time rejects earlier times today as well as
+past dates. The error is `Checkup date and time must not be in the past.` Regional date-display and
+12/24-hour settings do not affect parsing or comparison, but the system clock and timezone determine now.
+
+Before changing the model, the command checks all active contacts for an equal `CheckupAppointment`,
+excluding the target contact. A shared slot is allowed only when every contact already booked at that slot
+has the same `familyNo` as the target. Hidden active contacts participate; archived contacts are excluded. A conflict
+throws a `CommandException` with `A contact with this booking date and time already exists. Only contacts
+with the same family HP can be booked at the same time.` No appointment, mark, selection or stored contact
+is changed by a rejected booking.
+
+The sequence diagram below shows scheduling or deleting a checkup using the displayed contact index.
+Validation failures stop before the model is changed or saved. Field-construction helpers and individual
+UI observer calls are omitted for clarity.
+
+<puml src="diagrams/CheckupSequenceDiagram.puml" alt="Sequence of parsing, validating, updating and saving a checkup appointment" />
+
+#### Model, UI and storage
+
+The command creates an immutable replacement `Person` and calls `Model#setPerson()`, preserving the
+other contact fields. Replacing an appointment clears `checkupMarked`; assigning the same appointment
+preserves its mark. A deletion clears both the optional appointment and its mark, and fails with
+`This contact has no checkup appointment to delete.` if no appointment exists.
+
+`PersonCard` shows the appointment row and a `[ ]` or `[X]` indicator only while an appointment is present.
+After deletion, the row is invisible and unmanaged, so it reserves no layout space, and the indicator is
+omitted. Updating a selected immutable contact refreshes the details panel. The command uses the displayed
+list index and preserves sorting and filtering; if a view predicate excludes the replacement because its
+fields changed, the display is refreshed to keep the updated contact visible.
+
+`CheckupCommand` modifies data, so `LogicManager` saves successful changes through `Storage`.
+`JsonAdaptedPerson` stores `checkupAppointment` and `checkupMarked`; absent appointments are represented
+by `null` and cannot be marked. Stored past appointments remain loadable because the constructor validates
+the date/time format, while the command enforces the not-in-the-past rule for new bookings.
+
+**Design consideration:** Checking archive status and booking conflicts during execution uses the current
+model state and ensures the displayed index refers to the selected contact. Keeping parsing and storage
+formatting independent of regional settings makes saved appointments portable between computers.
+
 ### Remarks
 
 The `remark` command keeps numbered care notes on a contact, such as allergies or visiting rules. One command
@@ -911,6 +969,45 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `edit 1 /address 1 Test Street`<br>
       Expected: The first person in the filtered list is edited, and the full list is shown again.
+
+### Checkup appointments
+
+1. Scheduling, replacing and deleting an appointment
+
+   1. Prerequisites: Use `list` to show at least three active contacts. Contacts 1 and 3 share a family HP;
+      contact 2 has a different family HP. Choose an unused future date and replace `DATE` below with it
+      in `dd/mm/yyyy` format.
+
+   1. Test case: `CHECKUP 1   DATE  14:30   `<br>
+      Expected: The first displayed contact has an appointment at `14:30`, with `[ ]` beside the name.
+      Extra spaces and command capitalization do not affect parsing.
+
+   1. Test case: `checkup 2 DATE 14:30`, then `checkup 3 DATE 14:30`.<br>
+      Expected: Contact 2 is rejected with the booking-conflict error; contact 3 is booked because the
+      family HP matches contact 1. The check includes active contacts hidden by a filter, but excludes archived contacts.
+
+   1. Test case: Mark contact 1, then assign the same appointment again; next run `checkup 1 DATE 15:30`.<br>
+      Expected: The identical appointment preserves `[X]`. The changed appointment resets it to `[ ]`.
+
+   1. Test case: `checkup 1 delete`, then repeat the command.<br>
+      Expected: The first command removes the appointment row and mark indicator entirely. The second
+      reports `This contact has no checkup appointment to delete.` without changing the contact.
+
+   1. Test case: Schedule an appointment, close CareBook and relaunch it; then delete the appointment and relaunch again.<br>
+      Expected: Each successful change survives reloading. Other contact details are unchanged.
+
+1. Rejecting invalid bookings
+
+   1. Test case: Schedule an appointment for an earlier time today.<br>
+      Expected: `Checkup date and time must not be in the past.` The existing appointment and mark are unchanged.
+
+   1. Test case: Archive a contact, run `list archive`, then try `checkup 1 31/02/2030 14:30`.<br>
+      Expected: The archive error takes priority over the invalid-date error. Unarchiving the contact
+      allows scheduling again, subject to date/time and booking-conflict validation.
+
+   1. Other incorrect inputs to try: `checkup`, `checkup 0 DATE 14:30`, `checkup x DATE 14:30`,
+      an out-of-range displayed index, `31/02/2030 14:30` and `DATE 24:00`.<br>
+      Expected: Appropriate format, index or date/time errors. No contact data is changed.
 
 ### Keeping care notes
 
