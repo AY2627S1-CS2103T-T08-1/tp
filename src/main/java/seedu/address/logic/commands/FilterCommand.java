@@ -26,8 +26,8 @@ public class FilterCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Lists all persons matching ALL of the given "
             + "criteria (case-insensitive).\n"
-            + "Parameters: [" + PREFIX_NAME + "NAME_KEYWORDS] [" + PREFIX_TAG + "TAG]... ["
-            + PREFIX_ADDRESS + "ADDRESS]...\n"
+            + "Parameters: [" + PREFIX_NAME + " NAME_KEYWORDS] [" + PREFIX_TAG + " TAG]... ["
+            + PREFIX_ADDRESS + " ADDRESS]...\n"
             + "At least one criterion is required.\n"
             + PREFIX_NAME + " takes space-separated keywords; a name containing any of them matches (partial match "
             + "allowed).\n"
@@ -35,8 +35,8 @@ public class FilterCommand extends Command {
             + "several tags.\n"
             + PREFIX_ADDRESS + " takes a phrase; repeat it to match any of several phrases (partial match "
             + "allowed).\n"
-            + "Example: " + COMMAND_WORD + " " + PREFIX_NAME + "ali bob " + PREFIX_TAG + "HIGH " + PREFIX_TAG
-            + "MEDIUM " + PREFIX_ADDRESS + "clementi";
+            + "Example: " + COMMAND_WORD + " " + PREFIX_NAME + " ali bob " + PREFIX_TAG + " HIGH "
+            + PREFIX_TAG + " MEDIUM " + PREFIX_ADDRESS + " clementi";
 
     private final PersonMatchesFilterPredicate predicate;
 

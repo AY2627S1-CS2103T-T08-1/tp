@@ -32,6 +32,14 @@ public class FilterCommandTest {
     }
 
     @Test
+    public void messageUsage_prefixesSeparatedFromValues() {
+        assertTrue(FilterCommand.MESSAGE_USAGE.contains(
+                "[/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]..."));
+        assertTrue(FilterCommand.MESSAGE_USAGE.contains(
+                "filter /name ali bob /tag HIGH /tag MEDIUM /address clementi"));
+    }
+
+    @Test
     public void equals() {
         PersonMatchesFilterPredicate firstPredicate = tags("HIGH");
         PersonMatchesFilterPredicate secondPredicate = tags("LOW");
