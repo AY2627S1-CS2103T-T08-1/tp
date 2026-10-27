@@ -384,7 +384,8 @@ The `sort` command changes the order in which contacts are displayed. It support
 
 `PersonComparators` provides the orderings:
 
-* `byName(ascending)` compares names ignoring case.
+* `byName(ascending)` compares names ignoring case and compares each run of digits by its numeric value, so `Ethan2`
+  comes before `Ethan10`. It is also the tie-breaker of `byPriority`.
 * `byPriority(mostUrgentFirst)` orders `HIGH`, `MEDIUM`, `LOW` (or the reverse). Contacts without a priority tag
   are always last in both directions, and ties are ordered by name. In the user-facing command, `desc` means most
   urgent first, so `SortCommand` passes `!ascending` as `mostUrgentFirst`.
