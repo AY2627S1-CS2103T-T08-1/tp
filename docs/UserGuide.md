@@ -61,6 +61,8 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
+* After `add`, `edit`, `archive`, `unarchive` and `delete`, the success message shows the contact's details, including the checkup appointment (if any) and the remark (if any).
+
 * The `help`, `clear`, and `exit` commands reject extra parameters; enter these commands on their own.<br>
   For example, `help 123` will be rejected. The `list` command accepts only the optional `archive` argument.
 
