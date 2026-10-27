@@ -226,6 +226,9 @@ contact leaves selection unchanged. Updating a filter clears selection only if i
 therefore `clear` also hides the details panel. With no selection, the panel and its placeholder are
 invisible and unmanaged, so they reserve no layout space. Selection is never serialized.
 
+`setPerson` clears selection instead of retaining the replacement if it leaves the displayed list.
+This also handles archiving an active selected contact and restoring one from the archive list.
+
 **Cross-feature integration:** `getFilteredPersonList()` exposes the `SortedList` over the filtered
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
 contact rather than selecting whichever contact moves into its former row. `PersonDetailsFormatter`
