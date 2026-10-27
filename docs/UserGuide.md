@@ -239,6 +239,7 @@ Format: `view INDEX`
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
+* Each successful `view INDEX` scrolls to its contact, even if that contact is already selected.
 * The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
   Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
   resize it within its limit; double-click the handle to fit its contents again. New content or a change

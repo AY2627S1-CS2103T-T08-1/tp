@@ -17,9 +17,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -44,6 +46,33 @@ public class ContactDetailsUiTest {
             assertFalse(window.node("#personDetailsPlaceholder").isManaged());
             assertEquals("", window.detailsText().getText());
             assertTrue(window.feedback().isWrapText());
+        });
+    }
+
+    @Test
+    public void repeatedView_afterScrollingAway_scrollsBackWithoutChangingSelection() throws Exception {
+        withWindow(window -> {
+            for (int i = 0; i < 8; i++) {
+                window.model.addPerson(new PersonBuilder().withName("Extra Person " + i).build());
+            }
+            ListView<?> list = (ListView<?>) window.node("#personListView");
+            list.setMinHeight(140);
+            list.setPrefHeight(140);
+            list.setMaxHeight(140);
+            window.enter("view 1");
+            window.layout();
+            Person selected = window.model.selectedPersonProperty().get();
+            VirtualFlow<?> flow = (VirtualFlow<?>) list.lookup(".virtual-flow");
+            list.scrollTo(8);
+            window.layout();
+            assertTrue(flow.getFirstVisibleCell().getIndex() > 0);
+
+            window.enter("view 1");
+            window.layout();
+
+            assertEquals(0, flow.getFirstVisibleCell().getIndex());
+            assertEquals(selected, window.model.selectedPersonProperty().get());
+            assertEquals(10, window.model.getAddressBook().getPersonList().size());
         });
     }
 

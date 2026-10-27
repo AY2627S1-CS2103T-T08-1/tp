@@ -205,6 +205,10 @@ public class MainWindow extends UiPart<Stage> {
                 handleHelp();
             }
 
+            if (commandResult.isViewRequested()) {
+                personListPanel.scrollToSelectedPerson();
+            }
+
             if (commandResult.isExit()) {
                 handleExit();
             }

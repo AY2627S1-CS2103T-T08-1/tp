@@ -212,6 +212,11 @@ It focuses on command parsing and execution; helper calls and UI updates are omi
    `LogicManager` checks `ViewCommand#modifiesData()`, which returns `false`, and skips saving.
    `MainWindow` displays the returned feedback in `ResultDisplay`.
 
+Every successful view result also sets `CommandResult#isViewRequested()` to `true`. `MainWindow`
+uses this request to refresh highlighting and scroll the selected contact into view. Unlike a selection
+change listener, this also runs when the user repeats `view` for the same contact after scrolling away.
+No temporary deselection or stored-data change is needed to trigger the UI action.
+
 **Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
 with the command usage. During execution, `ViewCommand#validateTargetIndex()` distinguishes an empty
 displayed list from an index outside a non-empty list. An empty display produces recovery instructions
