@@ -102,9 +102,10 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 How the `Logic` component works, using `delete 1` as the example:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex`.
+1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex` and whether the optional `/confirm` flag was given.
 1. The `DeleteCommand` is returned to the `LogicManager` and executed. It first calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
-1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex` and calls `Model#deletePerson(personToDelete)`.
+1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex`. If the command was not confirmed, it returns a `CommandResult` containing a warning (and the `delete INDEX /confirm` command to enter) without changing the model, and `modifiesData()` is false so nothing is saved.
+1. If the command was confirmed, it calls `Model#deletePerson(personToDelete)`.
 1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
 
 The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter /tag HIGH")`.
