@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.model.Model.PREDICATE_SHOW_ARCHIVED_PERSONS;
 import static seedu.address.model.Model.PREDICATE_SHOW_NO_PERSONS;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -54,7 +55,25 @@ public class ListCommandTest {
     public void execute_emptyAddressBook_showsEmptyList() {
         model = new ModelManager();
         expectedModel = new ModelManager();
-        assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_SUCCESS, expectedModel);
+        assertCommandSuccess(new ListCommand(), model, "No contacts found", expectedModel);
+    }
+
+    @Test
+    public void execute_onlyArchivedContacts_reportsNoContacts() {
+        AddressBook addressBook = new AddressBook();
+        addressBook.addPerson(model.getAddressBook().getPersonList().get(0).copyWithArchivedStatus(true));
+        model = new ModelManager(addressBook, new UserPrefs());
+        expectedModel = new ModelManager(addressBook, new UserPrefs());
+        model.updateFilteredPersonList(PREDICATE_SHOW_ARCHIVED_PERSONS);
+
+        assertCommandSuccess(new ListCommand(), model, ListCommand.MESSAGE_NO_CONTACTS, expectedModel);
+    }
+
+    @Test
+    public void execute_noArchivedContacts_reportsNoContacts() {
+        expectedModel.updateFilteredPersonList(PREDICATE_SHOW_ARCHIVED_PERSONS);
+
+        assertCommandSuccess(new ListCommand(true), model, ListCommand.MESSAGE_NO_CONTACTS, expectedModel);
     }
 
     @Test
