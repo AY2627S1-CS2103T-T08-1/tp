@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.function.Predicate;
@@ -30,9 +31,10 @@ public class FindCommand extends Command {
     public static final String MESSAGE_USAGE = "find /CRITERION INPUT: Finds contacts by a field "
             + "using case-insensitive partial matches.\n"
             + "Criteria: " + Stream.of(PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE, PREFIX_ADDRESS,
-                    PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_TAG)
+                    PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_TAG, PREFIX_REMARK)
                     .map(Object::toString).collect(Collectors.joining(", ")) + ".\n"
             + "Phone input must be one sequence of at least 2 digits; digits must occur consecutively.\n"
+            + "Remark input matches a case-insensitive phrase within any one care note.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_PATIENT_PHONE + " 87\n"
             + "Name searches also support: find KEYWORD [MORE_KEYWORDS]...";
 
