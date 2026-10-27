@@ -44,6 +44,19 @@ public class CheckupCommandParserTest {
     }
 
     @Test
+    public void parse_extraWhitespaceBetweenFields_returnsCommand() {
+        String date = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        CheckupCommand expected = new CheckupCommand(Index.fromOneBased(1),
+                new CheckupAppointment(date + " 10:00"));
+        for (String whitespace : List.of(" ", "   ", "\t", " \t ")) {
+            assertParseSuccess(parser, whitespace + "1" + whitespace + date + whitespace + "10:00" + whitespace,
+                    expected);
+            assertParseSuccess(parser, whitespace + "1" + whitespace + "delete" + whitespace,
+                    CheckupCommand.delete(Index.fromOneBased(1)));
+        }
+    }
+
+    @Test
     public void parse_missingFieldsOrInvalidIndex_throwsParseException() {
         for (String args : List.of("", "1", "0 01/01/2030 12:00", "-1 01/01/2030 12:00",
                 "abc 01/01/2030 12:00", "2147483648 01/01/2030 12:00")) {

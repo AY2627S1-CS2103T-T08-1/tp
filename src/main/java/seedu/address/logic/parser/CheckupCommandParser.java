@@ -13,7 +13,7 @@ import seedu.address.model.person.CheckupAppointment;
 public class CheckupCommandParser implements Parser<CheckupCommand> {
     @Override
     public CheckupCommand parse(String args) throws ParseException {
-        String[] parts = args.trim().split("\\s+", 2);
+        String[] parts = args.trim().replaceAll("\\s+", " ").split(" ", 2);
         if (parts.length != 2) {
             throw invalidFormat();
         }
