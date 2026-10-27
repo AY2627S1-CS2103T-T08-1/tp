@@ -425,7 +425,7 @@ Deletes the specified person from CareBook.
 Format: `delete INDEX [/confirm]`
 
 * Deletes the person at the specified `INDEX`.
-* Deleting is **permanent**: it also removes the person's notes and checkup, and cannot be undone.
+* Deleting is **permanent**: it cannot be undone.
 * `delete INDEX` on its own does **not** delete anything. It shows a warning with the person's details and the command to confirm.
 * To go ahead, enter `delete INDEX /confirm`. Check the person shown in the warning first: if the displayed list changes in between (for example after `find` or `list`), the index may refer to someone else.
 * The index refers to the index number shown in the displayed person list.

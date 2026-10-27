@@ -22,13 +22,12 @@ public class DeleteCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Deletes the person identified by the index number used in the displayed person list.\n"
             + "Parameters: INDEX (must be a positive integer) [" + CONFIRM_FLAG + "]\n"
-            + "Deleting is permanent and also removes the person's notes and checkup, so the command first "
-            + "shows a warning. Add " + CONFIRM_FLAG + " to confirm.\n"
+            + "Deleting is permanent, so the command first shows a warning. Add " + CONFIRM_FLAG + " to confirm.\n"
             + "Examples: " + COMMAND_WORD + " 1, " + COMMAND_WORD + " 1 " + CONFIRM_FLAG;
 
     public static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted person: %1$s";
-    public static final String MESSAGE_CONFIRM_DELETE = "Warning: this will permanently delete the person below, "
-            + "together with their notes and checkup. This cannot be undone.\n%1$s\n"
+    public static final String MESSAGE_CONFIRM_DELETE = "Warning: this will permanently delete the person below. "
+            + "This cannot be undone.\n%1$s\n"
             + "To confirm, enter: " + COMMAND_WORD + " %2$d " + CONFIRM_FLAG;
     public static final String MESSAGE_EMPTY_LIST = "There are no persons in the displayed list to delete.";
     public static final String MESSAGE_INDEX_OUT_OF_RANGE = "The index provided is out of range. "
