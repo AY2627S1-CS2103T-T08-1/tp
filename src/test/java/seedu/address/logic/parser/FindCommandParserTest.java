@@ -54,6 +54,15 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_keywordsMixedWithCriterion_usesSameFormatErrorAsEmptyInput() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+        for (String input : List.of("", " ", "Alice /address A", "Alice Bob /name Kim", "Alice /ADDRESS A",
+                "Alice \t /patientNo 87", "Alice /tag HIGH", "Alice /unknown input", "Alice /address")) {
+            assertParseFailure(parser, input, expectedMessage);
+        }
+    }
+
+    @Test
     public void parse_fieldCriteria_returnsFindCommand() {
         for (Map.Entry<Prefix, FindCriterion> entry : CRITERIA.entrySet()) {
             assertParseSuccess(parser, " " + entry.getKey() + " 87 ",

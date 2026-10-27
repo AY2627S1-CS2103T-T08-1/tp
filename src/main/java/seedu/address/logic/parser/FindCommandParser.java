@@ -47,7 +47,11 @@ public class FindCommandParser implements Parser<FindCommand> {
 
         String[] tokens = trimmedArgs.split("\\s+", 2);
         if (!tokens[0].startsWith("/")) {
-            return new FindCommand(new NameContainsKeywordsPredicate(List.of(trimmedArgs.split("\\s+"))));
+            List<String> keywords = List.of(trimmedArgs.split("\\s+"));
+            if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
+                throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            }
+            return new FindCommand(new NameContainsKeywordsPredicate(keywords));
         }
 
         FindCriterion criterion = CRITERIA.entrySet().stream()
