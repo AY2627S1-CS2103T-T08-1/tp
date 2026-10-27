@@ -297,11 +297,8 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
    It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
    `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
    `Model#setPerson()`.
-1. `view` now selects a contact without narrowing the displayed list. `Model#setPerson()` updates the
-   selected contact reference, so changes to its notes appear immediately in the details panel while
-   the current filter and sort order are preserved. The command retains a fallback for a predicate that
-   no longer contains the replaced person; ordinary name, address and priority filters are unaffected
-   by changes to notes.
+1. `RemarkCommand` does not change the displayed list. No `find` or `filter` criterion looks at notes, so the
+   changed person still matches the current search, and the search results and sort order stay as they are.
 
 **Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
 are never lost because of a missing argument. A missing or invalid index or note number causes a
@@ -944,8 +941,9 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `remark 1 Visits after 3pm`, then `edit 1 /address 1 Test Street`<br>
       Expected: The address changes and the note is still shown.
 
-   1. Test case: `view 2`, then `remark 1 Diabetic` and `remark 1 Uses a wheelchair`<br>
-      Expected: The second contact stays on screen and has both notes.
+   1. Test case: `find` with a name that matches some, but not all, persons, then `remark 1 Diabetic` and
+      `remark 1 Uses a wheelchair`<br>
+      Expected: The search results stay on screen, and the first result has both notes.
 
    1. Test case: Add a note, close CareBook and relaunch it.<br>
       Expected: The note is still shown.
