@@ -80,8 +80,10 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_add() throws Exception {
         Person person = new PersonBuilder().build();
-        AddCommand command = (AddCommand) parser.parseCommand(PersonUtil.getAddCommand(person));
-        assertEquals(new AddCommand(person), command);
+        String arguments = PersonUtil.getAddCommand(person).substring(AddCommand.COMMAND_WORD.length());
+        for (String word : List.of("add", "adD", "aDd", "aDD", "Add", "AdD", "ADd", "ADD")) {
+            assertEquals(new AddCommand(person), parser.parseCommand(word + arguments));
+        }
     }
 
     @Test
@@ -148,9 +150,12 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_find() throws Exception {
         List<String> keywords = List.of("foo", "bar", "baz");
-        FindCommand command = (FindCommand) parser.parseCommand(
-                FindCommand.COMMAND_WORD + " " + keywords.stream().collect(Collectors.joining(" ")));
-        assertEquals(new FindCommand(new NameContainsKeywordsPredicate(keywords)), command);
+        for (String word : List.of("find", "finD", "fiNd", "fiND", "fInd", "fInD", "fINd", "fIND",
+                "Find", "FinD", "FiNd", "FiND", "FInd", "FInD", "FINd", "FIND")) {
+            FindCommand command = (FindCommand) parser.parseCommand(
+                    word + " " + keywords.stream().collect(Collectors.joining(" ")));
+            assertEquals(new FindCommand(new NameContainsKeywordsPredicate(keywords)), command);
+        }
     }
 
     @Test
@@ -158,6 +163,7 @@ public class AddressBookParserTest {
         FindCommand expected =
                 new FindCommand(new PersonContainsKeywordsPredicate(FindCriterion.PATIENT_PHONE, List.of("87")));
         assertEquals(expected, parser.parseCommand("find /patientNo 87"));
+        assertEquals(expected, parser.parseCommand("FiNd /patientNo 87"));
     }
 
     @Test
