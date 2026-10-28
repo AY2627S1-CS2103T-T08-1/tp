@@ -97,7 +97,7 @@ public class EditCommand extends Command {
                 && personToEdit.equals(editedPerson)) {
             return new CommandResult(MESSAGE_NO_TAG_CHANGE);
         }
-      
+
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
                 .filter(person -> !person.equals(personToEdit)).toList();
 
@@ -105,7 +105,7 @@ public class EditCommand extends Command {
             logger.fine("Edit rejected: patient contact details already exist");
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
-      
+
         if (otherPersons.stream().anyMatch(editedPerson::hasSameNameAndAddress)) {
             throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
         }

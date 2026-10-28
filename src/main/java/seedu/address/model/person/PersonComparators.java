@@ -105,6 +105,9 @@ public class PersonComparators {
     /** Folds case the same way as {@link String#CASE_INSENSITIVE_ORDER}. */
     private static char foldCase(char c) {
         return Character.toLowerCase(Character.toUpperCase(c));
+    }
+
+    /**
      * Returns a comparator ordering persons by checkup appointment date and time. Persons without a checkup
      * appointment always come last. Persons with the same appointment (or none) are ordered by name, A to Z.
      *
