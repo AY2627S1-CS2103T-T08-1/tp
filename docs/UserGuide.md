@@ -99,6 +99,13 @@ Adds a person to CareBook.
 
 Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] `
 
+* `add` is case-insensitive. `Add`, `ADD`, `ADd` and other variants are all accepted.
+* The email fields are optional and can be added later with `edit`.
+* `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
+* Duplicate names are allowed as long as the patients' handphone numbers and emails are not identical.
+* For duplicate names and addresses, add a differentiator (such as an index or identifier)
+  * An example of this would be `Rosalind 1` and `Rosalind 2`
+* No special characters are allowed in the fields!
 Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
 
 The `/` character is reserved for valid prefixes and is **not allowed in any field value**, including names and addresses. Separate each prefix from its value with a space. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
@@ -121,6 +128,9 @@ Two contacts count as the same person, and the second is rejected, if they have 
 
 **Tip:** A person can have no priority tag or one priority tag: `HIGH`, `MEDIUM`, or `LOW`. Repeating the same tag stores it only once.
 </box>
+
+| Incorrect input or situation | Result | How to correct it |
+| `add `,  `add /name CG` | Invalid command format | Ensure parameters are included correctly |
 
 Examples:
 * `add /name Aunty Rosalind /patientNo 81268767 /familyNo 90783658 /address Goonvale Street Block 2 #01-09`
@@ -429,6 +439,8 @@ Finds persons by the selected contact field using partial matches.
 
 Format: `find /CRITERION INPUT` and `find KEYWORD`
 
+* Both formats are case-insensitive.
+
 For `find /CRITERION INPUT`:
 
 | Criterion | Searches |
@@ -451,22 +463,19 @@ For `find /CRITERION INPUT`:
   The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
 * Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
-* For non-phone searches, whitespace separates keywords. A contact matches if the selected field contains
-  at least one keyword (an `OR` search); keyword order does not matter.
 * Contacts without an optional email or tag do not match searches on that absent field.
 * Searches consider all stored contacts, replacing the current display filter without changing stored data.
   Use `list` to display all contacts again. A search with no matches displays an empty list.
-* Missing input, an unknown criterion, multiple criteria, or invalid phone input produces an error and
-  leaves the displayed list unchanged.
+* To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
+
 
 Examples:
 * `find /patientNo 87` finds patient numbers containing `87` consecutively.
 * `find /email gmail` searches both email fields for `gmail`.
 * `find /address street` searches addresses for `street`.
 * `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
 * `find j` returns `John Doe`<br> ![result for 'find j'](images/findJ.png)
+* `find Alex David` returns `alex david` but not `alex` and `david`
 
 ### Filtering persons by name, tag and address: `filter`
 
@@ -485,6 +494,7 @@ Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases. Extra spaces are ignored, so `/address clementi ave` also finds an address saved as `5 Clementi  Ave 3`.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
+* The command word `filter` and the prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
 * When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
@@ -527,7 +537,7 @@ Examples:
 * `list` followed by `delete 2` shows a warning for the 2nd person in CareBook; `delete 2 /confirm` then deletes them.
 * `find Betsy` followed by `delete 1 /confirm` deletes the 1st person in the results of the `find` command (after reviewing the warning from `delete 1`).
 
-Common errors:
+**Common errors:**
 
 Input | Error message shown | How to fix
 ------|---------------------|-----------
