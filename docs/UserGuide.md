@@ -273,6 +273,7 @@ Format: `view INDEX`
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
+* Type the command word in lowercase: `View 1` is not recognised.
 * Each successful `view INDEX` scrolls to its contact, even if that contact is already selected.
 * The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
   Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
@@ -572,8 +573,10 @@ Format: `clear`
 
 * The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
+* Type the command word in lowercase: `Clear` and `CLEAR` are not recognised.
 * Works even if the displayed list is already empty.
-* Use `list` to show all contacts again, or `find KEYWORD` to search the stored contacts.
+* Use `list` to show all active contacts again, or `list archive` to show archived contacts.
+  You can also use `find KEYWORD` to search within the current active or archive list.
 * Commands such as `view INDEX`, `edit INDEX` and `delete INDEX` use the currently displayed list.
   After `clear`, display contacts with `list` or `find` before using these index-based commands.
 * Does not write to the contact data file. Saved contacts remain available after restarting CareBook.
@@ -593,7 +596,8 @@ Exits the program.
 
 Format: `exit`
 
-Trailing whitespace is allowed. Extra arguments are rejected to prevent accidental exits:
+Type the command word in lowercase: `Exit` and `EXIT` are not recognised. Surrounding whitespace
+is allowed. Extra arguments are rejected to prevent accidental exits:
 `exit Alice` or `exit 1` leaves CareBook open without changing any contacts and shows:
 
 ```text

@@ -288,6 +288,23 @@ vertical scrolling and bounded bottom-edge resize handles for longer content. Th
 the same sizing behaviour for every command. A coloured card border and a `Selected contact` heading link the
 details to the list without treating a changing list index as a permanent contact identifier.
 
+### Clearing the display and exiting
+
+`AddressBookParser#parseCommand()` recognises the lowercase `clear` and `exit` command words and
+rejects non-blank arguments before creating their command objects. Other letter-case variants are
+unknown commands. A parse error leaves the display and stored contacts unchanged.
+
+`ClearCommand#execute()` calls `Model#updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS)`.
+The predicate hides every contact in the current display but does not remove any from the address
+book. When the selected contact is no longer in the filtered list, `ModelManager` sets its transient
+selection to `null`; the details panel and highlight disappear. `list` restores the active list,
+`list archive` restores the archive list, and `find` searches within the current scope.
+`ClearCommand#modifiesData()` returns `false`, so `LogicManager` does not save the display change.
+
+`ExitCommand#execute()` returns a `CommandResult` with the exit flag. `MainWindow` checks that flag
+after showing the feedback and calls its exit handler. `ExitCommand#modifiesData()` also returns
+`false`; neither an invalid `exit` command nor a successful one changes contact data.
+
 ### Editing a contact
 
 `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] ... [/tag PRIORITY]` changes the given fields of a displayed
@@ -1440,6 +1457,28 @@ testers are expected to do more *exploratory* testing.
    1. Relaunch the app with `java -jar carebook.jar`.<br>
        Expected: The most recent window size and location are retained.
 
+
+### Viewing, clearing and exiting
+
+1. Start with two active contacts visible. Enter `view 2`.<br>
+   Expected: The second displayed contact is highlighted and its full details appear above the list;
+   both contact cards remain visible.
+1. Enter `view 3`, then `View 1`.<br>
+   Expected: The first command reports that 3 is outside the displayed range of 1 to 2; the second
+   is an unknown command. Neither changes the selected contact.
+1. Enter `clear`, then `view 1`.<br>
+   Expected: The list, highlight and details panel are hidden, but the contacts are not deleted.
+   `view 1` reports that no contacts are currently displayed.
+1. Enter `list`, then `view 1` again.<br>
+   Expected: Both contacts return and the first contact can be selected. `list` does not reselect
+   the previously selected contact by itself.
+1. Enter `clear 1`, then `Clear`.<br>
+   Expected: The first command reports the `clear` usage; the second is an unknown command.
+   The displayed contacts stay unchanged.
+1. Enter `exit 1`, then `Exit`.<br>
+   Expected: The first reports that `exit` takes no arguments; the second is an unknown command.
+   The application stays open. Enter lowercase `exit` to close it, then relaunch CareBook and enter
+   `list`. The same two contacts are still saved.
 
 ### Adding a person
 
