@@ -544,7 +544,9 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `patientEmail` | No    | The patient's email address. Leave it out if the patient has no email. |
 | `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
-| `archived` | No | `true` for archived contacts; defaults to `false` when omitted. |
+| `archived` | No | `true` for archived contacts, `false` (or left out) for active ones. It must be exactly `true` or `false`, without quotes. |
+| `checkupAppointment` | No | The contact's checkup appointment in the format `dd/MM/yyyy HH:mm`, e.g. `"25/12/2030 14:30"`. Leave it out if there is no appointment. |
+| `checkupMarked` | No | `true` if the checkup has been marked as done, `false` (or left out) otherwise. It must be exactly `true` or `false`, and can only be `true` if `checkupAppointment` is given. |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
 | `remarks`   | No       | A list of the contact's notes in order, e.g. `[ "Allergic to penicillin" ]`. Each note must not be blank or start with a space, and the notes can have at most 500 characters in total. Leave it out or use `[]` for no notes. |
 
