@@ -1327,7 +1327,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
       
 **Use case: Filter contacts**
 
-**MSS**
+**MSS:**
 
 1.  User requests to filter contacts by one or more criteria (name, tag, address)
 2.  CareBook validates the command
@@ -1351,7 +1351,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 **Use case: Sort contacts**
 
-**MSS**
+**MSS:**
 
 1.  User requests to sort the displayed contacts by a criterion (priority, name or recent) and an optional direction
 2.  CareBook validates the command
