@@ -122,10 +122,6 @@ public class RemarkCommand extends Command {
 
         Person changedPerson = personToChange.withRemark(new Remark(updatedNotes));
         model.setPerson(personToChange, changedPerson);
-        // a person shown by view is matched on every field, so keep showing them now that their remark changed
-        if (!model.getFilteredPersonList().contains(changedPerson)) {
-            model.updateFilteredPersonList(person -> person.isSamePerson(changedPerson));
-        }
         logger.info("Changed the remark of the contact at index " + personIndex.getOneBased() + " (" + action + ")");
         return new CommandResult(getSuccessMessage(personToChange, updatedNotes));
     }

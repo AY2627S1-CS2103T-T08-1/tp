@@ -39,6 +39,15 @@ public class FilterCommandParserTest {
     }
 
     @Test
+    public void parse_unsupportedPrefix_throwsParseException() {
+        assertParseFailure(parser, " /patientNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name ali /patientNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /tag HIGH /familyNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /address clementi /pEmail a@b.com", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name ali /unknown x", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
     public void parse_emptyValue_throwsParseException() {
         assertParseFailure(parser, " /name", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " /name   ", MESSAGE_INVALID_FORMAT);
@@ -77,6 +86,15 @@ public class FilterCommandParserTest {
         // address only, kept as a phrase
         assertParseSuccess(parser, " /address clementi ave",
                 command(List.of(), List.of(), List.of("clementi ave")));
+    }
+
+    @Test
+    public void parse_extraWhitespaceBeforePrefix_prefixStillRecognized() {
+        FilterCommand expected = new FilterCommand(new PersonMatchesFilterPredicate(
+                List.of("Alice"), List.of("HIGH"), List.of()));
+        assertParseSuccess(parser, " /name Alice     /tag HIGH", expected);
+        assertParseSuccess(parser, " /name Alice\t/tag HIGH", expected);
+        assertParseSuccess(parser, " /name Alice \n /tag HIGH", expected);
     }
 
     @Test
