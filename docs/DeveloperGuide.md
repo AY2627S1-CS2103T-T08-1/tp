@@ -263,6 +263,20 @@ Priority tags use the existing `/tag` prefix and `Tag` model, with names restric
 
 For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` is rejected, and `edit 1 /tag` clears them.
 
+### Removing a checkup appointment
+
+`checkup INDEX /delete` removes the selected contact's appointment and checkup mark. `CheckupCommandParser`
+normalizes whitespace, validates the displayed index and recognizes `/delete` ignoring letter case before
+creating the command through `CheckupCommand.delete(index)`. The slash is required; bare `delete` is not
+recognized as the deletion option and follows the existing date-validation path during execution.
+
+`CheckupCommand` represents deletion with a null `appointmentValue`. During execution, it validates the
+displayed index and checks that the contact has an appointment, otherwise throwing `MESSAGE_NO_APPOINTMENT`.
+It replaces the immutable `Person` with an absent appointment and a cleared checkup mark through
+`Model#setPerson()`, preserving the remaining details. The contact card hides the appointment row and
+removes the mark indicator. Deletion also works for archived contacts; the archive, date/time and booking
+conflict checks apply when setting an appointment. `LogicManager` saves the changed contact as usual.
+
 ### Remarks
 
 The `remark` command keeps numbered care notes on a contact, such as allergies or visiting rules. One command

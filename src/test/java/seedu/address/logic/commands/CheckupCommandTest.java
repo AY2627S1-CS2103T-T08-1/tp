@@ -48,7 +48,7 @@ public class CheckupCommandTest {
         model.addPerson(scheduled);
         new ViewCommand(Index.fromOneBased(1)).execute(model);
 
-        Command command = new AddressBookParser().parseCommand("checkup 1 delete");
+        Command command = new AddressBookParser().parseCommand("checkup 1 /delete");
         assertTrue(command.modifiesData());
         assertEquals("Deleted checkup appointment for Alice.", command.execute(model).getFeedbackToUser());
         assertEquals(List.of(original), model.getFilteredPersonList());
@@ -64,13 +64,13 @@ public class CheckupCommandTest {
         model.addPerson(scheduledBob);
         AddressBookParser parser = new AddressBookParser();
         parser.parseCommand("filter /tag HIGH").execute(model);
-        parser.parseCommand("checkup 1 delete").execute(model);
+        parser.parseCommand("checkup 1 /delete").execute(model);
         assertEquals(List.of(bob), model.getFilteredPersonList());
         assertEquals(List.of(scheduledAlice, bob), model.getAddressBook().getPersonList());
 
         parser.parseCommand("list").execute(model);
         parser.parseCommand("sort name desc").execute(model);
-        parser.parseCommand("checkup 2 delete").execute(model);
+        parser.parseCommand("checkup 2 /delete").execute(model);
         assertEquals(List.of(bob, alice), model.getFilteredPersonList());
     }
 
@@ -90,7 +90,7 @@ public class CheckupCommandTest {
         model.addPerson(scheduled);
         StorageManager storage = new StorageManager(new JsonAddressBookStorage(testFolder.resolve("contacts.json")),
                 new JsonUserPrefsStorage(testFolder.resolve("preferences.json")));
-        new LogicManager(model, storage).execute("checkup 1 delete");
+        new LogicManager(model, storage).execute("checkup 1 /delete");
         assertEquals(List.of(alice), storage.readAddressBook().orElseThrow().getPersonList());
         assertEquals(CheckupCommand.delete(Index.fromOneBased(1)), CheckupCommand.delete(Index.fromOneBased(1)));
         assertFalse(CheckupCommand.delete(Index.fromOneBased(1)).equals(
@@ -114,7 +114,7 @@ public class CheckupCommandTest {
         model.addPerson(alice);
         AddressBookParser parser = new AddressBookParser();
         for (String value : List.of("31/02/2030 12:00", "01/01/2030 24:00", "not a date",
-                "01/01/2030", "01/01/2030 12:00 extra")) {
+                "01/01/2030", "01/01/2030 12:00 extra", "delete", "/delete extra")) {
             assertCommandFailure(parser.parseCommand("checkup 1 " + value), model,
                     CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE);
         }

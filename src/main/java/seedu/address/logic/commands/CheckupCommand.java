@@ -20,7 +20,7 @@ public class CheckupCommand extends Command {
     public static final String COMMAND_WORD = "checkup";
     public static final String MESSAGE_USAGE = "checkup INDEX dd/mm/yyyy HH:mm: Sets a checkup appointment.\n"
             + "INDEX must be a positive displayed index. Use a valid 24-hour time and a date today or later.\n"
-            + "Use checkup INDEX delete to remove an appointment and its mark.\n"
+            + "Use checkup INDEX /delete to remove an appointment and its mark.\n"
             + "Example: checkup 1 25/12/2030 14:30";
     public static final String MESSAGE_SUCCESS = "Checkup appointment for %1$s: %2$s";
     public static final String MESSAGE_DELETE_SUCCESS = "Deleted checkup appointment for %1$s.";
