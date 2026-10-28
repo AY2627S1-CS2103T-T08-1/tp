@@ -39,6 +39,9 @@ public class NameTest {
         assertFalse(Name.isValidName(" ")); // spaces only
         assertFalse(Name.isValidName("^")); // only non-alphanumeric characters
         assertFalse(Name.isValidName("peter*")); // contains non-alphanumeric characters
+        assertFalse(Name.isValidName("-Ann")); // starts with a hyphen
+        assertFalse(Name.isValidName("'Brien")); // starts with an apostrophe
+        assertFalse(Name.isValidName("Ravi s/o Kumar")); // slashes are reserved for prefixes
 
         // valid name
         assertTrue(Name.isValidName("peter jack")); // alphabets only
@@ -46,6 +49,12 @@ public class NameTest {
         assertTrue(Name.isValidName("peter the 2nd")); // alphanumeric characters
         assertTrue(Name.isValidName("Capital Tan")); // with capital letters
         assertTrue(Name.isValidName("David Roger Jackson Ray Jr 2nd")); // long names
+        assertTrue(Name.isValidName("Marie-Ann Tan")); // hyphen
+        assertTrue(Name.isValidName("Siobhan O'Brien")); // apostrophe
+        assertTrue(Name.isValidName("Siobhan O\u2019Brien")); // typographic apostrophe
+        assertTrue(Name.isValidName("Ravi S. Kumar")); // full stop
+        assertTrue(Name.isValidName("Tan, Mei Ling")); // comma
+        assertTrue(Name.isValidName("Jos\u00e9 N\u00fa\u00f1ez")); // accented letters
     }
 
     @Test
