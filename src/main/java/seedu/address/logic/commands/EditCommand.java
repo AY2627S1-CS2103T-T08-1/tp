@@ -57,7 +57,7 @@ public class EditCommand extends Command {
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in CareBook.";
+    public static final String MESSAGE_DUPLICATE_PERSON = "Someone with this patient HP or email already exists in CareBook.";
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
