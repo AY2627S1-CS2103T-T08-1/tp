@@ -1,8 +1,6 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
-import static seedu.address.model.Model.PREDICATE_SHOW_ARCHIVED_PERSONS;
 
 import seedu.address.model.Model;
 
@@ -17,6 +15,8 @@ public class ListCommand extends Command {
             + ": Lists all persons and resets filters and sorting.\nExample: " + COMMAND_WORD;
 
     public static final String MESSAGE_SUCCESS = "Listed all persons.";
+
+    public static final String MESSAGE_NO_CONTACTS = "CareBook is empty";
 
     public static final String MESSAGE_ARCHIVE_SUCCESS = "Listed archived persons.";
 
@@ -42,8 +42,11 @@ public class ListCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.updateFilteredPersonList(showArchive ? PREDICATE_SHOW_ARCHIVED_PERSONS : PREDICATE_SHOW_ALL_PERSONS);
+        model.setArchiveScope(showArchive);
         model.resetSortedPersonList();
+        if (model.getFilteredPersonList().isEmpty()) {
+            return new CommandResult(MESSAGE_NO_CONTACTS);
+        }
         return new CommandResult(showArchive ? MESSAGE_ARCHIVE_SUCCESS : MESSAGE_SUCCESS);
     }
 }

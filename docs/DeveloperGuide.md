@@ -102,9 +102,10 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 How the `Logic` component works, using `delete 1` as the example:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex`.
+1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex` and whether the optional `/confirm` flag was given.
 1. The `DeleteCommand` is returned to the `LogicManager` and executed. It first calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
-1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex` and calls `Model#deletePerson(personToDelete)`.
+1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex`. If the command was not confirmed, it returns a `CommandResult` containing a warning (and the `delete INDEX /confirm` command to enter) without changing the model, and `modifiesData()` is false so nothing is saved.
+1. If the command was confirmed, it calls `Model#deletePerson(personToDelete)`.
 1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
 
 The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter /tag HIGH")`.
@@ -114,7 +115,11 @@ The `filter` command follows the same flow, as shown in the sequence diagram bel
 How the `filter` command works:
 
 1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse(" /tag HIGH")`.
+1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if `/name` is given more than once (using `ArgumentMultimap#verifyNoDuplicatePrefixesFor`, so the message lists the repeated prefix), if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
+1. `FilterCommandParser` replaces every run of whitespace (spaces, tabs and newlines) with a single space before tokenizing, so a prefix is recognized after any whitespace and not only after a literal space.
 1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
+1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND). Name, tag and address matching ignore case, and address matching also collapses each run of whitespace into a single space in both the stored address and the phrase.
+1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/` but is not one of these prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
 1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND).
 1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons matching the criteria. It does not modify the address book data.
 1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
@@ -228,6 +233,9 @@ contact leaves selection unchanged. Updating a filter clears selection only if i
 therefore `clear` also hides the details panel. With no selection, the panel and its placeholder are
 invisible and unmanaged, so they reserve no layout space. Selection is never serialized.
 
+`setPerson` clears selection instead of retaining the replacement if it leaves the displayed list.
+This also handles archiving an active selected contact and restoring one from the archive list.
+
 **Cross-feature integration:** `getFilteredPersonList()` exposes the `SortedList` over the filtered
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
 contact rather than selecting whichever contact moves into its former row. `PersonDetailsFormatter`
@@ -299,11 +307,8 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
    It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
    `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
    `Model#setPerson()`.
-1. `view` now selects a contact without narrowing the displayed list. `Model#setPerson()` updates the
-   selected contact reference, so changes to its notes appear immediately in the details panel while
-   the current filter and sort order are preserved. The command retains a fallback for a predicate that
-   no longer contains the replaced person; ordinary name, address and priority filters are unaffected
-   by changes to notes.
+1. `RemarkCommand` does not change the displayed list. No `find` or `filter` criterion looks at notes, so the
+   changed person still matches the current search, and the search results and sort order stay as they are.
 
 **Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
 are never lost because of a missing argument. A missing or invalid index or note number causes a
@@ -354,7 +359,9 @@ return zero matches. It focuses on parsing and execution; helper calls and UI up
 2. `FindCommandParser#parse()` extracts the slash-prefixed criterion and validates the input. It creates a
    `PersonContainsKeywordsPredicate` containing the criterion and keywords, then a `FindCommand` using that
    predicate. Legacy name searches continue to use `NameContainsKeywordsPredicate`.
-3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
+3. `FindCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)` to replace the search criteria
+   within the selected active or archive scope. `ModelManager` stores this scope as a boolean; list switches
+   call `Model#setArchiveScope(boolean)` explicitly, so filtering never infers scope from predicate identity.
    `PersonContainsKeywordsPredicate#test()` selects the requested field and checks for matching substrings.
    Absent optional emails or tags do not match. The UI observes the filtered list and updates the contact cards.
 4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
@@ -366,13 +373,14 @@ return zero matches. It focuses on parsing and execution; helper calls and UI up
 or phone input other than a single sequence of at least two digits causes `FindCommandParser#parse()` to
 throw a `ParseException` with the command usage. This leaves stored contacts and the display filter unchanged.
 A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
-Use `list` to display all contacts again after a successful search.
+Use `list` to display all active (unarchived) contacts again after a successful search.
+Use `list archive` to display all archived contacts.
 
 
 ### Sort command
 
-The `sort` command changes the order in which contacts are displayed. It supports three criteria:
-`sort priority [asc|desc]`, `sort name [asc|desc]` and `sort recent`.
+The `sort` command changes the order in which contacts are displayed. It supports four criteria:
+`sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|desc]` and `sort recent`.
 
 **Design.** `ModelManager` keeps a `SortedList` that wraps the `FilteredList`, and
 `Model#getFilteredPersonList()` returns the sorted list. This means:
@@ -386,7 +394,12 @@ The `sort` command changes the order in which contacts are displayed. It support
 
 `PersonComparators` provides the orderings:
 
+* `byName(ascending)` compares names ignoring case and compares each run of digits by its numeric value, so `Ethan2`
+  comes before `Ethan10`. It is also the tie-breaker of `byPriority`.
 * `byName(ascending)` compares names ignoring case.
+* `byCheckup(ascending)` orders by checkup appointment date and time, earliest first when ascending. Contacts without a
+  checkup appointment are always last in both directions, and ties are ordered by name. `CheckupAppointment` implements
+  `Comparable` for this.
 * `byPriority(mostUrgentFirst)` orders `HIGH`, `MEDIUM`, `LOW` (or the reverse). Contacts without a priority tag
   are always last in both directions, and ties are ordered by name. In the user-facing command, `desc` means most
   urgent first, so `SortCommand` passes `!ascending` as `mostUrgentFirst`.
@@ -396,7 +409,7 @@ How the `sort` command works:
 1. `AddressBookParser` recognises `sort` and creates a `SortCommandParser`.
 2. `SortCommandParser#parse()` lowercases and splits the arguments. It throws a `ParseException` if there is no
    criterion, the criterion or direction is unknown, `recent` is given a direction, or there are extra arguments.
-   Priority defaults to descending and name defaults to ascending. It creates a `SortCommand`.
+   Priority defaults to descending; name and checkup default to ascending. It creates a `SortCommand`.
 3. `SortCommand#execute()` calls `Model#updateSortedPersonList(comparator)` (or `Model#sortPersonsByMostRecent()`
    for `recent`) and returns a `CommandResult` describing the order.
 4. `SortCommand#modifiesData()` returns `false`, so `LogicManager` does not save. The UI observes the sorted list
@@ -588,7 +601,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1.  User requests to list persons
 2.  CareBook shows a list of persons
 3.  User requests to delete a specific person in the list
-4.  CareBook deletes the person
+4.  CareBook shows a warning with the person's details and the command to confirm the deletion
+5.  User confirms the deletion with `delete INDEX /confirm`
+6.  CareBook deletes the person
 
     Use case ends.
 
@@ -603,6 +618,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3a1. CareBook shows an error message.
 
       Use case resumes at step 2.
+
+* 5a. User does not enter the confirm command.
+
+    * 5a1. CareBook keeps the person. Nothing is deleted or saved.
+
+      Use case ends.
 
 **Use case: Edit a contact**
 
@@ -704,14 +725,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
-**Use case: List all contacts**
+**Use case: List all active contacts**
 
 **MSS:**
 
-1. User requests to view all contacts 
+1. User requests to view all active contacts using `list`
 2. CareBook validates the command format
-3. CareBook displays all contacts currently stored 
-4. CareBook displays a confirmation that all contacts have been shown
+3. CareBook displays all active (unarchived) contacts
+4. CareBook displays a confirmation that all active contacts have been shown
 
    Use case ends.
 
@@ -729,11 +750,42 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
         Use case resumes at step 3. 
 
-*3a. No contacts are stored in the address book.
+*3a. No active contacts are stored in the address book.
 
-    *3a1. CareBook shows No contacts found.
+    *3a1. CareBook shows `CareBook is empty`.
 
         Use case ends.
+
+**Use case: List all archived contacts**
+
+**MSS:**
+
+1. User requests to view all archived contacts using `list archive`.
+2. CareBook validates the command format.
+3. CareBook displays all archived contacts in the order they were added, clearing any search filters and sorting.
+4. CareBook displays a confirmation that all archived contacts have been shown.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The command format is invalid.
+
+    * 2a1. CareBook shows an error message.
+
+      Use case ends.
+
+* 2b. The command contains leading or trailing whitespace.
+
+    * 2b1. CareBook ignores the whitespace and validates the command.
+
+      Use case resumes at step 3.
+
+* 3a. No archived contacts are stored in the address book.
+
+    * 3a1. CareBook displays an empty list and shows `CareBook is empty`.
+
+      Use case ends.
 
 **Use case: View contact details**
 
@@ -874,11 +926,14 @@ testers are expected to do more *exploratory* testing.
 
 ### Deleting a person
 
-1. Deleting a person while all persons are being shown
+1. Deleting a person while all active contacts are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with multiple persons in the list.
 
    1. Test case: `delete 1`<br>
+      Expected: No person is deleted. The status message shows a warning with the first contact's details and asks you to enter `delete 1 /confirm`.
+
+   1. Test case: `delete 1 /confirm`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
 
    1. Test case: `delete 0`<br>
@@ -891,9 +946,9 @@ testers are expected to do more *exploratory* testing.
 
 ### Editing a person
 
-1. Editing a person while all persons are being shown
+1. Editing a person while all active contacts are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with at least two persons in the list.
 
    1. Test case: `edit 1 /patientNo 91234567 /pEmail patient@example.com`<br>
       Expected: The first contact's patient phone number and patient email change, and its other fields stay the same. The status message shows the edited contact's details.
@@ -924,7 +979,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Adding, editing and deleting notes
 
-   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with at least two persons in the list.
 
    1. Test case: `remark 1 Allergic to penicillin`<br>
       Expected: The first contact's card shows `Remark:` and `1. Allergic to penicillin`. The status message shows the added note.
@@ -944,7 +999,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `remark 1`<br>
       Expected: No note changes. The status message shows the correct usage.
 
-   1. Other incorrect remark commands to try: `remark 0 note`, `remark x note` (where x is larger than the list size), `remark 1 /delete 9` and `remark 1 /edit 1`<br>
+   1. Other incorrect remark commands to try: `remark /clear` (no index), `remark 0 note`, `remark x note` (where x is larger than the list size), `remark 1 /delete 9` and `remark 1 /edit 1`<br>
       Expected: No note changes. The status message shows error details.
 
 1. Keeping notes after other commands
@@ -952,8 +1007,9 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `remark 1 Visits after 3pm`, then `edit 1 /address 1 Test Street`<br>
       Expected: The address changes and the note is still shown.
 
-   1. Test case: `view 2`, then `remark 1 Diabetic` and `remark 1 Uses a wheelchair`<br>
-      Expected: The second contact stays on screen and has both notes.
+   1. Test case: `find` with a name that matches some, but not all, persons, then `remark 1 Diabetic` and
+      `remark 1 Uses a wheelchair`<br>
+      Expected: The search results stay on screen, and the first result has both notes.
 
    1. Test case: Add a note, close CareBook and relaunch it.<br>
       Expected: The note is still shown.

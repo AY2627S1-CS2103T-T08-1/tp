@@ -33,7 +33,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
    * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to the CareBook.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `delete 3` : Shows a warning for the 3rd contact shown in the current list. Enter `delete 3 /confirm` to delete them.
 
    * `clear` : Clears the displayed contact list without deleting contacts.
 
@@ -61,6 +61,8 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
 
+* After `add`, `edit`, `archive`, `unarchive` and `delete`, the success message shows the contact's details, including the checkup appointment (if any) and the remark (if any).
+
 * The `help`, `clear`, and `exit` commands reject extra parameters; enter these commands on their own.<br>
   For example, `help 123` will be rejected. The `list` command accepts only the optional `archive` argument.
 
@@ -72,7 +74,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 Opens a resizable, scrollable Help window listing the available commands, their usage, and examples.
 The command list includes `add`, `edit`, `delete`, `find`, `filter`, `list`, `sort`, `view`,
 `checkup`, `remark`, `clear`, `help`, and `exit`. It covers search criteria, sorting by name,
-priority or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
+priority, checkup date or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
 
 The window also provides the user guide URL and a **Copy URL** button.
 
@@ -98,6 +100,10 @@ Adds a person to CareBook.
 Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] `
 
 Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
+
+The `/` character is reserved for valid prefixes and is **not allowed in any field value**, including names and addresses. Separate each prefix from its value with a space. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
+
+Unknown or mistyped prefixes cause an error and the contact is not added. For example, `/address 4 St /phone 123` is rejected because `/phone` is not a valid prefix; use `/patientNo` or `/familyNo`. Addresses such as `4/5 Main St` are also rejected; write them without `/`. The same rule applies when editing contact fields with `edit`.
 
 <box type="tip" seamless>
 
@@ -198,15 +204,19 @@ shown in the order they were added.
 Changes the order in which persons are displayed. Sorting only changes what you see; it does not
 reorder the saved data, and it works on top of any `find` or `filter` result.
 
-Format: `sort priority [asc|desc]`, `sort name [asc|desc]` or `sort recent`
+Format: `sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|desc]` or `sort recent`
 
 * `sort priority` orders by priority tag.
   * `desc` (the default) shows `HIGH`, then `MEDIUM`, then `LOW`.
   * `asc` is the reverse: `LOW`, then `MEDIUM`, then `HIGH`.
   * Persons without a priority tag are always shown last, in either direction.
   * Persons with the same priority are ordered by name, A to Z.
-* `sort name` orders alphabetically by name, ignoring case.
+* `sort name` orders alphabetically by name, ignoring case. Numbers inside names are compared by value, so `Ethan2` comes before `Ethan10`.
   * `asc` (the default) shows A to Z; `desc` shows Z to A.
+* `sort checkup` orders by checkup appointment date and time.
+  * `asc` (the default) shows the earliest appointment first; `desc` shows the latest first.
+  * Persons without a checkup appointment are always shown last, in either direction.
+  * Persons with the same appointment are ordered by name, A to Z.
 * `sort recent` shows the most recently added person first. It takes no direction.
 * The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
   lowercase.
@@ -217,6 +227,8 @@ Examples:
 * `sort priority asc` lists `LOW` persons first.
 * `sort name desc` lists persons from Z to A.
 * `filter /tag HIGH` followed by `sort name` lists only `HIGH` persons, from A to Z.
+* `sort checkup` lists the person with the nearest checkup appointment first.
+* `filter /tag HIGH` followed by `sort checkup` lists only `HIGH` persons, ordered by checkup date.
 * `sort recent` lists the most recently added person at the top.
 
 **Common errors:**
@@ -224,7 +236,7 @@ Examples:
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
 | `sort` (no criterion) | `Invalid command format!` followed by the correct usage | Give a criterion, e.g. `sort priority`. |
-| `sort address` (unknown criterion) | `Invalid command format!` followed by the correct usage | Use `priority`, `name` or `recent`. |
+| `sort address` (unknown criterion) | `Invalid command format!` followed by the correct usage | Use `priority`, `name`, `checkup` or `recent`. |
 | `sort priority up` (unknown direction) | `Invalid command format!` followed by the correct usage | Use `asc` or `desc`. |
 | `sort recent desc` (direction with `recent`) | `Invalid command format!` followed by the correct usage | Use `sort recent` on its own. |
 
@@ -329,6 +341,7 @@ Examples:
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
 | `remark 1` (no note) | `Invalid command format!` followed by the correct usage | Add a note, e.g. `remark 1 Allergic to penicillin`, or use `remark 1 /clear` to delete all notes. |
+| `remark /clear` or `remark Diabetic` (no index) | `Invalid command format!` followed by the correct usage | Put the person's index first, e.g. `remark 1 /clear` or `remark 1 Diabetic`. |
 | `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
 | `remark 99 Diabetic` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
 | `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
@@ -393,9 +406,11 @@ Each `filter` replaces the previous filter criteria while keeping the same list,
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
 * At least one of `/name`, `/tag` or `/address` must be given.
+* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`. `/name` can be given only once; put all the keywords after it.
+* At least one of `/name`, `/tag` or `/address` must be given. Any other prefix, such as `/patientNo` or `/email`, is not a filter criterion and is rejected.
 * **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`.
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
-* **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases.
+* **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases. Extra spaces are ignored, so `/address clementi ave` also finds an address saved as `5 Clementi  Ave 3`.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
 * When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
@@ -413,8 +428,10 @@ Examples:
 | `filter` (no criteria) | `Invalid command format!` followed by the correct usage | Give at least one criterion, e.g. `filter /tag MEDIUM`. |
 | `filter MEDIUM` (no prefix) | `Invalid command format!` followed by the correct usage | Start each criterion with its prefix, e.g. `filter /tag MEDIUM`. |
 | `filter /name` (empty value) | `Invalid command format!` followed by the correct usage | Put a value after each prefix, e.g. `filter /name ali`. |
+| `filter /name ali /name bob` (`/name` repeated) | `Multiple values specified for the following single-valued field(s): /name` | Give `/name` once with all keywords: `filter /name ali bob`. |
 | `filter /tag URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
 | `filter /tag HIGH LOW` (several tags in one prefix) | `Invalid command format!` followed by the correct usage | Repeat the prefix: `filter /tag HIGH /tag LOW`. |
+| `filter /name ali /patientNo 91234567` (unsupported prefix) | `Invalid command format!` followed by the correct usage | Use only `/name`, `/tag` and `/address`. |
 
 After a `filter` command, use `list` to display all persons again.
 
@@ -422,16 +439,20 @@ After a `filter` command, use `list` to display all persons again.
 
 Deletes the specified person from CareBook.
 
-Format: `delete INDEX`
+Format: `delete INDEX [/confirm]`
 
 * Deletes the person at the specified `INDEX`.
+* Deleting is **permanent**: it cannot be undone.
+* `delete INDEX` on its own does **not** delete anything. It shows a warning with the person's details and the command to confirm.
+* To go ahead, enter `delete INDEX /confirm`. Check the person shown in the warning first: if the displayed list changes in between (for example after `find` or `list`), the index may refer to someone else.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* The success message shows everything that was deleted, including the person's checkup appointment (if any) and remark.
 * The command word `delete` is case-insensitive, e.g. `Delete 1` and `DELETE 1` also work.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in CareBook.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `list` followed by `delete 2` shows a warning for the 2nd person in CareBook; `delete 2 /confirm` then deletes them.
+* `find Betsy` followed by `delete 1 /confirm` deletes the 1st person in the results of the `find` command (after reviewing the warning from `delete 1`).
 
 Common errors:
 
@@ -440,6 +461,7 @@ Input | Error message shown | How to fix
 `delete` (no index) | `Invalid command format!` followed by the correct usage | Supply an index, e.g. `delete 1`
 `delete abc` | `Invalid command format!` followed by the correct usage | Use a number, not text
 `delete 1 2` | `Invalid command format!` followed by the correct usage | Use a single index per command
+`delete 1 confirm` | `Invalid command format!` followed by the correct usage | Write the flag with the slash: `delete 1 /confirm`
 `delete 0` / `delete -1` | `Index must be a positive integer.` | Use an index of 1 or more
 `delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list
 `delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first 
@@ -557,14 +579,14 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
 **Archive** | `archive INDEX`<br> e.g., `archive 3`
 **List**   | `list` or `list archive`
 **Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
-**Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
+**Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]`, `sort checkup [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
 **Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`

@@ -11,5 +11,6 @@ public enum FindCriterion {
     PATIENT_EMAIL,
     FAMILY_EMAIL,
     EMAIL,
-    TAG
+    TAG,
+    REMARK
 }
