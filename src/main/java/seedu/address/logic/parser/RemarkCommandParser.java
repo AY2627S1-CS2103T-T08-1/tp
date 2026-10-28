@@ -20,6 +20,9 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
 
     public static final String MESSAGE_INVALID_NOTE_NUMBER = "Note number must be a positive integer.";
 
+    /** Matches a whole number with an optional minus sign, which is what an attempted index looks like. */
+    private static final String INTEGER_REGEX = "-?\\d+";
+
     /** Splits text into its first word and the rest, which may be empty. */
     private static final Pattern FIRST_WORD_FORMAT = Pattern.compile("(?<first>\\S+)\\s*(?<rest>.*)");
 
@@ -31,7 +34,12 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     public RemarkCommand parse(String args) throws ParseException {
         requireNonNull(args);
         Matcher indexAndDetails = splitFirstWord(args.trim());
-        Index personIndex = ParserUtil.parseIndex(indexAndDetails.group("first"));
+        String firstWord = indexAndDetails.group("first");
+        // a first word that is not a number means the index was left out, not that it was mistyped
+        if (!firstWord.matches(INTEGER_REGEX)) {
+            throw invalidFormat();
+        }
+        Index personIndex = ParserUtil.parseIndex(firstWord);
         String details = indexAndDetails.group("rest");
 
         // a missing note is an error rather than a way to clear, so notes are never lost by accident

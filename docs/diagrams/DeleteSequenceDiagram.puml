@@ -31,12 +31,12 @@ AddressBookParser -> DeleteCommandParser : parse("1")
 activate DeleteCommandParser
 
 note right of DeleteCommandParser
-  Throws ParseException if the argument
-  is not a positive integer.
+  Throws ParseException if the argument is not a
+  positive integer, optionally followed by /confirm.
 end note
 
 create DeleteCommand
-DeleteCommandParser -> DeleteCommand : DeleteCommand(targetIndex)
+DeleteCommandParser -> DeleteCommand : DeleteCommand(targetIndex, isConfirmed)
 activate DeleteCommand
 
 DeleteCommand --> DeleteCommandParser :
@@ -65,14 +65,21 @@ note right of DeleteCommand
   or targetIndex is out of range.
 end note
 
-DeleteCommand -> Model : deletePerson(personToDelete)
-activate Model
+alt command is confirmed (delete 1 /confirm)
+    DeleteCommand -> Model : deletePerson(personToDelete)
+    activate Model
 
-Model --> DeleteCommand
-deactivate Model
+    Model --> DeleteCommand
+    deactivate Model
+else command is not confirmed (delete 1)
+    note right of DeleteCommand
+      Only a warning is returned.
+      Nothing is deleted or saved.
+    end note
+end
 
 create CommandResult
-DeleteCommand -> CommandResult : CommandResult(successMessage)
+DeleteCommand -> CommandResult : CommandResult(message)
 activate CommandResult
 
 CommandResult --> DeleteCommand
@@ -81,6 +88,12 @@ deactivate CommandResult
 DeleteCommand --> LogicManager : r
 deactivate DeleteCommand
 
-[<--LogicManager
+LogicManager -> DeleteCommand : modifiesData()
+activate DeleteCommand
+
+DeleteCommand --> LogicManager : isConfirmed
+deactivate DeleteCommand
+
+[<-- LogicManager : r
 deactivate LogicManager
 @enduml

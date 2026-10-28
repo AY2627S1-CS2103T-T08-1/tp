@@ -65,7 +65,7 @@ deactivate AddressBookParser
 LogicManager -> FindCommand : execute(m)
 activate FindCommand
 
-FindCommand -> Model : isShowingArchiveList()
+FindCommand -> Model : filterPersonsInCurrentList(p)
 activate Model
 Model --> FindCommand : archiveScope
 deactivate Model

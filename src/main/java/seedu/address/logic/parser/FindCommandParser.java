@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.List;
@@ -31,7 +32,8 @@ public class FindCommandParser implements Parser<FindCommand> {
             PREFIX_PATIENT_EMAIL, FindCriterion.PATIENT_EMAIL,
             PREFIX_FAMILY_EMAIL, FindCriterion.FAMILY_EMAIL,
             PREFIX_LEGACY_EMAIL, FindCriterion.EMAIL,
-            PREFIX_TAG, FindCriterion.TAG);
+            PREFIX_TAG, FindCriterion.TAG,
+            PREFIX_REMARK, FindCriterion.REMARK);
 
     /**
      * Parses the given {@code String} of arguments in the context of the FindCommand
@@ -71,7 +73,9 @@ public class FindCommandParser implements Parser<FindCommand> {
         if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
-        return new FindCommand(new PersonContainsKeywordsPredicate(criterion, keywords));
+        List<String> searchTerms = criterion == FindCriterion.REMARK
+                ? List.of(input.trim().replaceAll("\\s+", " ")) : keywords;
+        return new FindCommand(new PersonContainsKeywordsPredicate(criterion, searchTerms));
     }
 
 }

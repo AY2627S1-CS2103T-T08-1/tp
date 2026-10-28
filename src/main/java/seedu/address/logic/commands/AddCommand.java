@@ -31,6 +31,8 @@ public class AddCommand extends Command {
             + "[" + PREFIX_FAMILY_EMAIL + " FAMILY_EMAIL] "
             + PREFIX_ADDRESS + " ADDRESS "
             + "[" + PREFIX_TAG + " PRIORITY]\n"
+            + "Note: The '/' character is reserved for valid prefixes and is not allowed in any field value.\n"
+            + "Separate each prefix from its value with a space.\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + " Aunty Rosalind "
             + PREFIX_PATIENT_PHONE + " 81268767 "
@@ -38,7 +40,8 @@ public class AddCommand extends Command {
             + PREFIX_ADDRESS + " Goonvale Street Block 2 #01-09";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in CareBook.";
+    public static final String MESSAGE_DUPLICATE_PERSON =
+            "Someone with this patient HP or email already exists in CareBook.";
 
     private final Person toAdd;
 
@@ -55,6 +58,9 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasPerson(toAdd)) {
+            if (model.getAddressBook().getPersonList().stream().noneMatch(toAdd::hasSamePatientContactDetails)) {
+                throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+            }
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 
