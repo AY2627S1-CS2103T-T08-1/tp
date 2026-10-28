@@ -162,12 +162,26 @@ public class FindCommandTest {
      */
     @Test
     public void execute_zeroKeywords_noPersonFound() {
-        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0);
+        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0)
+                + "\nUse 'list archive' to search through archived contacts";
         NameContainsKeywordsPredicate predicate = preparePredicate(" ");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
         assertEquals(List.of(), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_noMatches_appendsArchiveHintInEitherScope() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0)
+                + "\nUse 'list archive' to search through archived contacts";
+        for (String listCommand : List.of("list", "list archive")) {
+            parser.parseCommand(listCommand).execute(model);
+            CommandResult result = parser.parseCommand("find NobodyMatchesThisName").execute(model);
+            assertEquals(expectedMessage, result.getFeedbackToUser());
+            assertTrue(model.getFilteredPersonList().isEmpty());
+        }
     }
 
     /**

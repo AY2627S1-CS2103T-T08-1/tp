@@ -26,6 +26,7 @@ import seedu.address.model.person.Person;
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
+    public static final String MESSAGE_NO_MATCHES_HINT = "Use 'list archive' to search through archived contacts";
 
     public static final String MESSAGE_USAGE = "find /CRITERION INPUT: Finds contacts by a field "
             + "using case-insensitive partial matches.\n"
@@ -63,8 +64,12 @@ public class FindCommand extends Command {
         model.updateFilteredPersonList(model.isShowingArchiveList()
                 ? Model.PREDICATE_SHOW_ARCHIVED_PERSONS : Model.PREDICATE_SHOW_ALL_PERSONS);
         model.filterPersonsInCurrentList(predicate);
-        return new CommandResult(
-                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
+        int matchCount = model.getFilteredPersonList().size();
+        String feedback = String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, matchCount);
+        if (matchCount == 0) {
+            feedback += "\n" + MESSAGE_NO_MATCHES_HINT;
+        }
+        return new CommandResult(feedback);
     }
 
     /**
