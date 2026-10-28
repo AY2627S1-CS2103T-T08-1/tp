@@ -87,6 +87,15 @@ public class FilterCommandParserTest {
     }
 
     @Test
+    public void parse_extraWhitespaceBeforePrefix_prefixStillRecognized() {
+        FilterCommand expected = new FilterCommand(new PersonMatchesFilterPredicate(
+                List.of("Alice"), List.of("HIGH"), List.of()));
+        assertParseSuccess(parser, " /name Alice     /tag HIGH", expected);
+        assertParseSuccess(parser, " /name Alice\t/tag HIGH", expected);
+        assertParseSuccess(parser, " /name Alice \n /tag HIGH", expected);
+    }
+
+    @Test
     public void parse_repeatedPrefixes_accumulatesValues() {
         assertParseSuccess(parser, " /tag HIGH /tag MEDIUM",
                 command(List.of(), List.of("HIGH", "MEDIUM"), List.of()));
