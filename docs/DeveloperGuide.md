@@ -102,9 +102,10 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 How the `Logic` component works, using `delete 1` as the example:
 
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex`.
+1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex` and whether the optional `/confirm` flag was given.
 1. The `DeleteCommand` is returned to the `LogicManager` and executed. It first calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
-1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex` and calls `Model#deletePerson(personToDelete)`.
+1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex`. If the command was not confirmed, it returns a `CommandResult` containing a warning (and the `delete INDEX /confirm` command to enter) without changing the model, and `modifiesData()` is false so nothing is saved.
+1. If the command was confirmed, it calls `Model#deletePerson(personToDelete)`.
 1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
 
 The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter /tag HIGH")`.
@@ -591,7 +592,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1.  User requests to list persons
 2.  CareBook shows a list of persons
 3.  User requests to delete a specific person in the list
-4.  CareBook deletes the person
+4.  CareBook shows a warning with the person's details and the command to confirm the deletion
+5.  User confirms the deletion with `delete INDEX /confirm`
+6.  CareBook deletes the person
 
     Use case ends.
 
@@ -606,6 +609,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3a1. CareBook shows an error message.
 
       Use case resumes at step 2.
+
+* 5a. User does not enter the confirm command.
+
+    * 5a1. CareBook keeps the person. Nothing is deleted or saved.
+
+      Use case ends.
 
 **Use case: Edit a contact**
 
@@ -907,6 +916,9 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: List all active contacts using the `list` command, with multiple persons in the list.
 
    1. Test case: `delete 1`<br>
+      Expected: No person is deleted. The status message shows a warning with the first contact's details and asks you to enter `delete 1 /confirm`.
+
+   1. Test case: `delete 1 /confirm`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
 
    1. Test case: `delete 0`<br>

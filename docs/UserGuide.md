@@ -33,7 +33,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
    * `add /name John Doe /patientNo 98765432 /familyNo 91234567 /pEmail johnd@example.com /fEmail family@example.com /address John street, block 123, #01-01` : Adds a contact named `John Doe` to the CareBook.
 
-   * `delete 3` : Deletes the 3rd contact shown in the current list.
+   * `delete 3` : Shows a warning for the 3rd contact shown in the current list. Enter `delete 3 /confirm` to delete them.
 
    * `clear` : Clears the displayed contact list without deleting contacts.
 
@@ -430,17 +430,20 @@ After a `filter` command, use `list` to display all persons again.
 
 Deletes the specified person from CareBook.
 
-Format: `delete INDEX`
+Format: `delete INDEX [/confirm]`
 
 * Deletes the person at the specified `INDEX`.
+* Deleting is **permanent**: it cannot be undone.
+* `delete INDEX` on its own does **not** delete anything. It shows a warning with the person's details and the command to confirm.
+* To go ahead, enter `delete INDEX /confirm`. Check the person shown in the warning first: if the displayed list changes in between (for example after `find` or `list`), the index may refer to someone else.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * The success message shows everything that was deleted, including the person's checkup appointment (if any) and remark.
 * The command word `delete` is case-insensitive, e.g. `Delete 1` and `DELETE 1` also work.
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in CareBook.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+* `list` followed by `delete 2` shows a warning for the 2nd person in CareBook; `delete 2 /confirm` then deletes them.
+* `find Betsy` followed by `delete 1 /confirm` deletes the 1st person in the results of the `find` command (after reviewing the warning from `delete 1`).
 
 Common errors:
 
@@ -449,6 +452,7 @@ Input | Error message shown | How to fix
 `delete` (no index) | `Invalid command format!` followed by the correct usage | Supply an index, e.g. `delete 1`
 `delete abc` | `Invalid command format!` followed by the correct usage | Use a number, not text
 `delete 1 2` | `Invalid command format!` followed by the correct usage | Use a single index per command
+`delete 1 confirm` | `Invalid command format!` followed by the correct usage | Write the flag with the slash: `delete 1 /confirm`
 `delete 0` / `delete -1` | `Index must be a positive integer.` | Use an index of 1 or more
 `delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list
 `delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first 
@@ -564,7 +568,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
-**Delete** | `delete INDEX`<br> e.g., `delete 3`
+**Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
 **Archive** | `archive INDEX`<br> e.g., `archive 3`
