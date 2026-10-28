@@ -9,6 +9,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.util.List;
+import java.util.Optional;
+
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -40,8 +43,7 @@ public class AddCommand extends Command {
             + PREFIX_ADDRESS + " Goonvale Street Block 2 #01-09";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON =
-            "Someone with this patient HP or email already exists in CareBook.";
+    public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private final Person toAdd;
 
@@ -57,11 +59,15 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        if (model.hasPerson(toAdd)) {
-            if (model.getAddressBook().getPersonList().stream().noneMatch(toAdd::hasSamePatientContactDetails)) {
-                throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
-            }
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+        List<Person> persons = model.getAddressBook().getPersonList();
+        Optional<Person> sameContactDetails = persons.stream().filter(toAdd::hasSamePatientContactDetails).findFirst();
+        if (sameContactDetails.isPresent()) {
+            throw new CommandException(Messages.withArchivedHint(MESSAGE_DUPLICATE_PERSON, sameContactDetails.get()));
+        }
+        Optional<Person> sameNameAndAddress = persons.stream().filter(toAdd::hasSameNameAndAddress).findFirst();
+        if (sameNameAndAddress.isPresent()) {
+            throw new CommandException(
+                    Messages.withArchivedHint(Person.MESSAGE_NAME_ADDRESS_CONFLICT, sameNameAndAddress.get()));
         }
 
         model.addPerson(toAdd);
