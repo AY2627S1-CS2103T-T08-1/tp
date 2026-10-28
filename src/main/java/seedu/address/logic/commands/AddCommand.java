@@ -40,7 +40,8 @@ public class AddCommand extends Command {
             + PREFIX_ADDRESS + " Goonvale Street Block 2 #01-09";
 
     public static final String MESSAGE_SUCCESS = "New person added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in CareBook.";
+    public static final String MESSAGE_DUPLICATE_PERSON =
+            "Someone with this patient HP or email already exists in CareBook.";
 
     private final Person toAdd;
 
@@ -57,6 +58,9 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         if (model.hasPerson(toAdd)) {
+            if (model.getAddressBook().getPersonList().stream().noneMatch(toAdd::hasSamePatientContactDetails)) {
+                throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+            }
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
 

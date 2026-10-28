@@ -27,7 +27,8 @@ import seedu.address.testutil.PersonBuilder;
 public class CheckupCommandTest {
     private final Model model = new ModelManager();
     private final Person alice = new PersonBuilder().withName("Alice").withTags("LOW").build();
-    private final Person bob = new PersonBuilder().withName("Bob").withTags("HIGH").build();
+    private final Person bob = new PersonBuilder().withName("Bob").withTags("HIGH")
+            .withPhone("91234567").withEmail("bob@example.com").build();
     private final CheckupAppointment appointment = appointmentOn(LocalDate.now().plusDays(1));
 
     @Test
@@ -158,7 +159,8 @@ public class CheckupCommandTest {
         model.addPerson(new PersonBuilder(alice).withCheckupAppointment(appointment.toString()).build());
         model.addPerson(new PersonBuilder(bob).withFamilyNo("91234567")
                 .withCheckupAppointment(appointment.toString()).build());
-        Person charlie = new PersonBuilder(alice).withName("Charlie").build();
+        Person charlie = new PersonBuilder(alice).withName("Charlie")
+                .withPhone("93456789").withEmail("charlie@example.com").build();
         model.addPerson(charlie);
 
         assertCommandFailure(new CheckupCommand(Index.fromOneBased(3), appointment), model,

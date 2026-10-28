@@ -34,7 +34,8 @@ public class FindCommandTest {
     public void execute_phoneCriterion_filtersConsecutiveDigitsWithoutChangingStoredContacts() {
         Model phoneModel = new ModelManager();
         Person match = new PersonBuilder().withName("Alice").withPatientNo("900087000").build();
-        Person nonMatch = new PersonBuilder().withName("Bob").withPatientNo("89700000").build();
+        Person nonMatch = new PersonBuilder().withName("Bob").withPatientNo("89700000")
+                .withEmail("bob@example.com").build();
         phoneModel.addPerson(match);
         phoneModel.addPerson(nonMatch);
         phoneModel.updateFilteredPersonList(person -> false);
