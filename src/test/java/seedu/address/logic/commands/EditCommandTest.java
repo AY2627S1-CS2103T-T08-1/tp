@@ -7,6 +7,7 @@ import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
@@ -138,7 +139,8 @@ public class EditCommandTest {
 
     @Test
     public void execute_archivedPerson_keepsArchiveListShown() throws Exception {
-        Person active = new PersonBuilder().withName(VALID_NAME_BOB).build();
+        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).build();
         Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
         Model archiveModel = new ModelManager();
         archiveModel.addPerson(active);
@@ -155,7 +157,8 @@ public class EditCommandTest {
 
     @Test
     public void execute_activePerson_showsActiveList() throws Exception {
-        Person active = new PersonBuilder().withName(VALID_NAME_BOB).build();
+        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).build();
         Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
         Model archiveModel = new ModelManager();
         archiveModel.addPerson(active);
