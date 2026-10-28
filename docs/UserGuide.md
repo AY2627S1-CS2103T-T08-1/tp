@@ -291,6 +291,7 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * Priority values must be `HIGH`, `MEDIUM`, or `LOW`, in any letter case (see [Priority tags](#priority-tags)).
 * Supplying `/tag PRIORITY` replaces the person's existing priority tag. Omitting `/tag` leaves their tags unchanged.
 * To remove a person's priority tag, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
+* Editing an archived person in `list archive` keeps them archived, and the archive list stays on screen.
 
 Examples:
 *  `edit 1 /patientNo 91234567 /pEmail johndoe@example.com` Edits the patient phone number and patient email of the 1st person to be `91234567` and `johndoe@example.com` respectively.

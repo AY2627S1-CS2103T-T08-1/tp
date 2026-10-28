@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
@@ -17,6 +19,8 @@ import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -132,6 +136,41 @@ public class EditCommandTest {
                 .execute(checkupModel);
         assertEquals(new PersonBuilder(scheduled).withName(VALID_NAME_BOB).build(),
                 checkupModel.getAddressBook().getPersonList().get(0));
+    }
+
+    @Test
+    public void execute_archivedPerson_keepsArchiveListShown() throws Exception {
+        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).build();
+        Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
+        Model archiveModel = new ModelManager();
+        archiveModel.addPerson(active);
+        archiveModel.addPerson(archived);
+        archiveModel.setArchiveScope(true);
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
+                .execute(archiveModel);
+
+        Person editedArchived = new PersonBuilder(archived).withAddress(VALID_ADDRESS_BOB).build();
+        assertTrue(editedArchived.isArchived());
+        assertEquals(List.of(editedArchived), archiveModel.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_activePerson_showsActiveList() throws Exception {
+        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).build();
+        Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
+        Model archiveModel = new ModelManager();
+        archiveModel.addPerson(active);
+        archiveModel.addPerson(archived);
+        archiveModel.setArchiveScope(false);
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
+                .execute(archiveModel);
+
+        Person editedActive = new PersonBuilder(active).withAddress(VALID_ADDRESS_BOB).build();
+        assertEquals(List.of(editedActive), archiveModel.getFilteredPersonList());
     }
 
     @Test

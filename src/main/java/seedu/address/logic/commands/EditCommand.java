@@ -112,7 +112,7 @@ public class EditCommand extends Command {
 
         model.setPerson(personToEdit, editedPerson);
         logger.info("Edited contact at index " + index.getOneBased());
-        model.setArchiveScope(false);
+        model.setArchiveScope(editedPerson.isArchived());
         return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
     }
 
