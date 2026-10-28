@@ -22,8 +22,10 @@ public class ViewIntegrationTest {
     private final Model model = new ModelManager();
     private final AddressBookParser parser = new AddressBookParser();
     private final Person alpha = new PersonBuilder().withName("Alpha").withTags("LOW").build();
-    private final Person beta = new PersonBuilder().withName("Beta").withTags("HIGH").build();
-    private final Person gamma = new PersonBuilder().withName("Gamma").withTags("HIGH").build();
+    private final Person beta = new PersonBuilder().withName("Beta").withTags("HIGH")
+            .withPhone("91234567").withEmail("beta@example.com").build();
+    private final Person gamma = new PersonBuilder().withName("Gamma").withTags("HIGH")
+            .withPhone("92345678").withEmail("gamma@example.com").build();
 
     @BeforeEach
     public void setUp() {

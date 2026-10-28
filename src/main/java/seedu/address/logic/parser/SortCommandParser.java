@@ -16,7 +16,8 @@ public class SortCommandParser implements Parser<SortCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the SortCommand
      * and returns a SortCommand object for execution. Criterion and direction are case-insensitive.
-     * Priority defaults to descending (HIGH first) and name defaults to ascending (A to Z).
+     * Priority defaults to descending (HIGH first); name and checkup default to ascending
+     * (A to Z, earliest first).
      * @throws ParseException if the criterion or direction is unknown, a direction is given for
      *     {@code recent}, or there are extra arguments
      */
@@ -35,6 +36,7 @@ public class SortCommandParser implements Parser<SortCommand> {
         return switch (tokens[0]) {
             case "priority" -> new SortCommand(Criterion.PRIORITY, hasDirection && parseAscending(tokens[1]));
             case "name" -> new SortCommand(Criterion.NAME, !hasDirection || parseAscending(tokens[1]));
+            case "checkup" -> new SortCommand(Criterion.CHECKUP, !hasDirection || parseAscending(tokens[1]));
             case "recent" -> {
                 if (hasDirection) {
                     throw invalidFormat();

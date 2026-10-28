@@ -17,11 +17,19 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
 
     /**
      * Parses the given {@code String} of arguments in the context of the DeleteCommand
-     * and returns a DeleteCommand object for execution.
+     * and returns a DeleteCommand object for execution. The index may be followed by {@code /confirm}
+     * to confirm the deletion; without it the command only shows a warning.
      * @throws ParseException if the user input does not conform to the expected format
      */
     public DeleteCommand parse(String args) throws ParseException {
         String trimmedArgs = args.trim();
+
+        boolean isConfirmed = false;
+        String[] tokens = trimmedArgs.split("\\s+");
+        if (tokens.length == 2 && tokens[1].equalsIgnoreCase(DeleteCommand.CONFIRM_FLAG)) {
+            isConfirmed = true;
+            trimmedArgs = tokens[0];
+        }
 
         // missing index, non-numeric index or extra arguments
         if (!trimmedArgs.matches(INTEGER_REGEX)) {
@@ -34,7 +42,7 @@ public class DeleteCommandParser implements Parser<DeleteCommand> {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
 
-        return new DeleteCommand(parsePositiveIndex(trimmedArgs));
+        return new DeleteCommand(parsePositiveIndex(trimmedArgs), isConfirmed);
     }
 
     /**

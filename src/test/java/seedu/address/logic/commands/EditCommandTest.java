@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.parser.EditCommandParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -37,6 +38,89 @@ import seedu.address.testutil.PersonBuilder;
 public class EditCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_unchangedTag_reportsNoChange() throws Exception {
+        for (String priority : new String[] {"", "HIGH", "MEDIUM", "LOW"}) {
+            Person person = priority.isEmpty() ? new PersonBuilder().withTags().build()
+                    : new PersonBuilder().withTags(priority).build();
+            Model tagModel = new ModelManager();
+            tagModel.addPerson(person);
+            Model expectedModel = new ModelManager(tagModel.getAddressBook(), new UserPrefs());
+            EditCommand command = new EditCommandParser().parse("1 /tag " + priority.toLowerCase());
+
+            assertCommandSuccess(command, tagModel, "No change to tag", expectedModel);
+        }
+    }
+
+    @Test
+    public void execute_changedTag_reportsEditedPerson() throws Exception {
+        for (String priority : new String[] {"", "HIGH", "LOW"}) {
+            Person person = new PersonBuilder().withTags("MEDIUM").build();
+            Person editedPerson = priority.isEmpty() ? new PersonBuilder(person).withTags().build()
+                    : new PersonBuilder(person).withTags(priority).build();
+            Model tagModel = new ModelManager();
+            tagModel.addPerson(person);
+            Model expectedModel = new ModelManager();
+            expectedModel.addPerson(editedPerson);
+            EditCommand command = new EditCommandParser().parse("1 /tag " + priority);
+
+            assertCommandSuccess(command, tagModel,
+                    String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)),
+                    expectedModel);
+        }
+    }
+
+    @Test
+    public void execute_unchangedTagWithChangedName_editsName() throws Exception {
+        Person person = new PersonBuilder().withTags("MEDIUM").build();
+        Person editedPerson = new PersonBuilder(person).withName(VALID_NAME_BOB).build();
+        Model tagModel = new ModelManager();
+        tagModel.addPerson(person);
+        Model expectedModel = new ModelManager();
+        expectedModel.addPerson(editedPerson);
+        EditCommand command = new EditCommandParser().parse("1 /tag MEDIUM /name " + VALID_NAME_BOB);
+
+        assertCommandSuccess(command, tagModel,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+      
+    @Test
+    public void execute_duplicatePatientPhoneWithUnchangedName_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withPhone(first.getPatientNo().value).build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    @Test
+    public void execute_sameNameWithDifferentAddress_success() throws Exception {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(first.getName().fullName).build();
+        new EditCommand(INDEX_SECOND_PERSON, descriptor).execute(model);
+        assertEquals(first.getName(), model.getAddressBook().getPersonList().get(1).getName());
+    }
+
+    @Test
+    public void execute_sameNameAndNormalizedAddress_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(first.getName().fullName)
+                .withAddress(first.getAddress().value.toUpperCase().replace(" ", "")).build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+    }
+
+    @Test
+    public void execute_duplicatePatientEmailWithUnchangedPhone_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        model.setPerson(first, new PersonBuilder(first).withEmail("alice@example.com").build());
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withPatientEmail("ALICE@example.com").build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
+    }
 
     @Test
     public void execute_otherFields_preservesCheckupAppointment() throws Exception {

@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -33,9 +34,27 @@ public class FindCommandParserTest {
             PREFIX_PATIENT_EMAIL, FindCriterion.PATIENT_EMAIL,
             PREFIX_FAMILY_EMAIL, FindCriterion.FAMILY_EMAIL,
             PREFIX_LEGACY_EMAIL, FindCriterion.EMAIL,
-            PREFIX_TAG, FindCriterion.TAG);
+            PREFIX_TAG, FindCriterion.TAG,
+            PREFIX_REMARK, FindCriterion.REMARK);
 
     private FindCommandParser parser = new FindCommandParser();
+
+    @Test
+    public void parse_remark_normalizesWhitespaceAndAcceptsMixedCaseCriterion() {
+        FindCommand expected = new FindCommand(new PersonContainsKeywordsPredicate(
+                FindCriterion.REMARK, List.of("Needs assistance")));
+        for (String prefix : List.of("/remark", "/REMARK", "/ReMaRk")) {
+            assertParseSuccess(parser, "  " + prefix + "   Needs     assistance  \t ", expected);
+        }
+    }
+
+    @Test
+    public void parse_remarkWithMissingInputOrAnotherCriterion_failure() {
+        for (String input : List.of("/remark", "/REMARK    ", "/remark Needs assistance /name Alice")) {
+            assertParseFailure(parser, input,
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+        }
+    }
 
     @Test
     public void parse_emptyArg_throwsParseException() {
