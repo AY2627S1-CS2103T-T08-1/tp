@@ -426,9 +426,9 @@ Examples:
 * `remark 1 /delete 1` deletes the 1st person's 1st note, so `Visits after 4pm only` becomes note 1.
 * `remark 3 /clear` deletes all notes of the 3rd person.
 
-After `view 1` and `remark 1 /edit 3 Visits after 4pm only`, the card and the details panel both show the numbered notes:
+After `remark 1 /edit 3 Visits after 4pm only`, the person's card shows the numbered notes. Use `view 1` to see them in the details panel as well:
 
-![The contact card and details panel after editing a note](images/remarkResult.png)
+![The contact card after editing a note](images/remarkResult.png)
 
 **Common errors:**
 
