@@ -1074,6 +1074,9 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `remark 1`<br>
       Expected: No note changes. The status message shows the correct usage.
 
+   1. Test case: `remark 1 Allergic to penicillin` twice<br>
+      Expected: The second command is rejected because the person already has this note. The notes are unchanged.
+
    1. Other incorrect remark commands to try: `remark /clear` (no index), `remark 0 note`, `remark x note` (where x is larger than the list size), `remark 1 /delete 9` and `remark 1 /edit 1`<br>
       Expected: No note changes. The status message shows error details.
 
