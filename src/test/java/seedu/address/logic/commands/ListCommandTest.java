@@ -55,7 +55,7 @@ public class ListCommandTest {
     public void execute_emptyAddressBook_showsEmptyList() {
         model = new ModelManager();
         expectedModel = new ModelManager();
-        assertCommandSuccess(new ListCommand(), model, "No contacts found", expectedModel);
+        assertCommandSuccess(new ListCommand(), model, "CareBook is empty", expectedModel);
     }
 
     @Test

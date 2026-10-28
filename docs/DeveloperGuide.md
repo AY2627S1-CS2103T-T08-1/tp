@@ -730,7 +730,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 *3a. No active contacts are stored in the address book.
 
-    *3a1. CareBook shows No contacts found.
+    *3a1. CareBook shows `CareBook is empty`.
 
         Use case ends.
 
@@ -761,7 +761,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3a. No archived contacts are stored in the address book.
 
-    * 3a1. CareBook displays an empty list and shows `No contacts found`.
+    * 3a1. CareBook displays an empty list and shows `CareBook is empty`.
 
       Use case ends.
 
