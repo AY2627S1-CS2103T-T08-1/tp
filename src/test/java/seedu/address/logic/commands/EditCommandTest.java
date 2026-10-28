@@ -305,8 +305,22 @@ public class EditCommandTest {
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
+        // the search results stay on screen, and the edited person stays in them though the name changed
+        expectedModel.updateFilteredPersonList(editedPerson::equals);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_filteredList_keepsOtherResultsAndOrder() throws Exception {
+        model.updateFilteredPersonList(person -> person.getName().fullName.contains("Meier"));
+        List<Person> resultsBefore = List.copyOf(model.getFilteredPersonList());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
+                .execute(model);
+
+        Person editedPerson = new PersonBuilder(resultsBefore.get(0)).withAddress(VALID_ADDRESS_BOB).build();
+        assertEquals(List.of(editedPerson, resultsBefore.get(1)), model.getFilteredPersonList());
     }
 
     @Test

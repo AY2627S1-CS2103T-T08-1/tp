@@ -121,7 +121,7 @@ public class RemarkCommand extends Command {
         }
 
         Person changedPerson = personToChange.withRemark(new Remark(updatedNotes));
-        model.setPerson(personToChange, changedPerson);
+        model.setPersonKeepingDisplayed(personToChange, changedPerson);
         logger.info("Changed the remark of the contact at index " + personIndex.getOneBased() + " (" + action + ")");
         return new CommandResult(getSuccessMessage(personToChange, updatedNotes));
     }
