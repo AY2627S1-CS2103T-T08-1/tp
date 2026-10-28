@@ -39,6 +39,44 @@ public class EditCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void execute_duplicatePatientPhoneWithUnchangedName_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withPhone(first.getPatientNo().value).build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    @Test
+    public void execute_sameNameWithDifferentAddress_success() throws Exception {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(first.getName().fullName).build();
+        new EditCommand(INDEX_SECOND_PERSON, descriptor).execute(model);
+        assertEquals(first.getName(), model.getAddressBook().getPersonList().get(1).getName());
+    }
+
+    @Test
+    public void execute_sameNameAndNormalizedAddress_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(first.getName().fullName)
+                .withAddress(first.getAddress().value.toUpperCase().replace(" ", "")).build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+    }
+
+    @Test
+    public void execute_duplicatePatientEmailWithUnchangedPhone_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        model.setPerson(first, new PersonBuilder(first).withEmail("alice@example.com").build());
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withPatientEmail("ALICE@example.com").build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    @Test
     public void execute_otherFields_preservesCheckupAppointment() throws Exception {
         Model checkupModel = new ModelManager();
         Person scheduled = new PersonBuilder().withCheckupAppointment("01/01/2030 12:00").build();

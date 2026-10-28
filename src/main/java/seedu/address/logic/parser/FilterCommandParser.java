@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -21,13 +22,20 @@ public class FilterCommandParser implements Parser<FilterCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the FilterCommand
      * and returns a FilterCommand object for execution.
+     * Any run of whitespace (spaces, tabs, newlines) is treated as a single space, so prefixes are recognized
+     * after any whitespace.
      * Name keywords are separated by whitespace; tags and addresses are given by repeating their prefix.
      * @throws ParseException if no criterion is given, a value is empty, a tag is not a valid tag,
-     *     or there is text before the first prefix
+     *     there is text before the first prefix, or a prefix other than name, tag and address is given
      */
     public FilterCommand parse(String args) throws ParseException {
+        String normalizedArgs = args.trim().replaceAll("\\s+", " ");
+        if (hasUnsupportedPrefix(args)) {
+            throw invalidFormat();
+        }
+
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(" " + args.trim(), PREFIX_NAME, PREFIX_TAG, PREFIX_ADDRESS);
+                ArgumentTokenizer.tokenize(" " + normalizedArgs, PREFIX_NAME, PREFIX_TAG, PREFIX_ADDRESS);
 
         if (!argMultimap.getPreamble().isEmpty()) {
             throw invalidFormat();
@@ -58,6 +66,18 @@ public class FilterCommandParser implements Parser<FilterCommand> {
         }
 
         return new FilterCommand(new PersonMatchesFilterPredicate(nameKeywords, tags, addressPhrases));
+    }
+
+    /**
+     * Returns true if any whitespace-separated token looks like a prefix (starts with {@code /}) but is not
+     * one of the prefixes supported by filter.
+     */
+    private static boolean hasUnsupportedPrefix(String args) {
+        return Arrays.stream(args.trim().split("\\s+"))
+                .filter(token -> token.startsWith("/"))
+                .anyMatch(token -> Stream.of(PREFIX_NAME, PREFIX_TAG, PREFIX_ADDRESS)
+                        .noneMatch(prefix -> token.regionMatches(true, 0, prefix.getPrefix(), 0,
+                                prefix.getPrefix().length())));
     }
 
     private static ParseException invalidFormat() {
