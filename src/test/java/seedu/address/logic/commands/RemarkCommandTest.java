@@ -44,6 +44,36 @@ public class RemarkCommandTest {
         return withNotes;
     }
 
+    @Test
+    public void execute_addExistingNote_throwsCommandException() {
+        Person withNotes = giveFirstPersonTwoNotes(model);
+        String expectedMessage = String.format(RemarkCommand.MESSAGE_DUPLICATE_NOTE, withNotes.getName(), 2);
+
+        assertCommandFailure(RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_VISITS), model, expectedMessage);
+        assertCommandFailure(RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_VISITS.toUpperCase()), model,
+                expectedMessage);
+    }
+
+    @Test
+    public void execute_editNoteToAnotherExistingNote_throwsCommandException() {
+        Person withNotes = giveFirstPersonTwoNotes(model);
+        String expectedMessage = String.format(RemarkCommand.MESSAGE_DUPLICATE_NOTE, withNotes.getName(), 1);
+
+        assertCommandFailure(RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_SECOND, NOTE_ALLERGY), model,
+                expectedMessage);
+    }
+
+    @Test
+    public void execute_editNoteToItselfInOtherCase_success() throws Exception {
+        Person withNotes = giveFirstPersonTwoNotes(model);
+        String upperAllergy = NOTE_ALLERGY.toUpperCase();
+
+        RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_FIRST, upperAllergy).execute(model);
+
+        assertEquals(List.of(upperAllergy, NOTE_VISITS),
+                model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()).getRemark().getNotes());
+    }
+
     private static Model expectedModelWith(Model model, Person original, Person changed) {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(original, changed);
@@ -150,10 +180,19 @@ public class RemarkCommandTest {
     public void execute_invalidPersonIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
-        assertCommandFailure(RemarkCommand.add(outOfBoundIndex, NOTE_ALLERGY), model,
-                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        assertCommandFailure(RemarkCommand.clear(outOfBoundIndex), model,
-                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        String expectedMessage = Messages.getMessageForIndexNotDisplayed(outOfBoundIndex.getOneBased(),
+                model.getFilteredPersonList().size());
+
+        assertCommandFailure(RemarkCommand.add(outOfBoundIndex, NOTE_ALLERGY), model, expectedMessage);
+        assertCommandFailure(RemarkCommand.clear(outOfBoundIndex), model, expectedMessage);
+    }
+
+    @Test
+    public void execute_emptyDisplayedList_throwsCommandException() {
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_NO_PERSONS);
+
+        assertCommandFailure(RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_ALLERGY), model,
+                Messages.MESSAGE_EMPTY_DISPLAYED_LIST);
     }
 
     @Test
@@ -161,7 +200,7 @@ public class RemarkCommandTest {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
 
         assertCommandFailure(RemarkCommand.add(INDEX_SECOND_PERSON, NOTE_ALLERGY), model,
-                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+                Messages.getMessageForIndexNotDisplayed(2, 1));
     }
 
     @Test

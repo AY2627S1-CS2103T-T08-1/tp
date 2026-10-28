@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import seedu.address.commons.core.LogsCenter;
@@ -38,6 +39,7 @@ public class RemarkCommand extends Command {
     public static final String MESSAGE_DELETE_SUCCESS = "Deleted note %1$d of %2$s: %3$s";
     public static final String MESSAGE_CLEAR_SUCCESS = "Cleared all notes of %1$s.";
     public static final String MESSAGE_NOTE_NOT_FOUND = "There is no note %1$d. %2$s has %3$d note(s).";
+    public static final String MESSAGE_DUPLICATE_NOTE = "%1$s already has this note (note %2$d).";
 
     private static final Logger logger = LogsCenter.getLogger(RemarkCommand.class);
 
@@ -96,7 +98,8 @@ public class RemarkCommand extends Command {
 
         if (personIndex.getZeroBased() >= lastShownList.size()) {
             logger.fine("Remark rejected: index " + personIndex.getOneBased() + " is not in the displayed list");
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            throw new CommandException(
+                    Messages.getMessageForIndexNotDisplayed(personIndex.getOneBased(), lastShownList.size()));
         }
 
         Person personToChange = lastShownList.get(personIndex.getZeroBased());
@@ -107,6 +110,8 @@ public class RemarkCommand extends Command {
             throw new CommandException(String.format(MESSAGE_NOTE_NOT_FOUND, noteIndex.getOneBased(),
                     personToChange.getName(), remark.getNotes().size()));
         }
+
+        requireNoteNotAlreadyThere(personToChange, remark);
 
         List<String> updatedNotes = switch (action) {
             case ADD -> remark.withNoteAdded(note);
@@ -124,6 +129,22 @@ public class RemarkCommand extends Command {
         model.setPersonKeepingDisplayed(personToChange, changedPerson);
         logger.info("Changed the remark of the contact at index " + personIndex.getOneBased() + " (" + action + ")");
         return new CommandResult(getSuccessMessage(personToChange, updatedNotes));
+    }
+
+    /**
+     * Throws a {@code CommandException} if the person already has the note being added or edited in,
+     * ignoring letter case. Editing a note to itself, e.g. to change its letter case, is allowed.
+     */
+    private void requireNoteNotAlreadyThere(Person personToChange, Remark remark) throws CommandException {
+        if (note == null) {
+            return;
+        }
+        Optional<Index> sameNote = remark.findNoteIgnoringCase(note);
+        if (sameNote.isPresent() && !sameNote.get().equals(noteIndex)) {
+            logger.fine("Remark rejected: the person already has this note");
+            throw new CommandException(String.format(MESSAGE_DUPLICATE_NOTE, personToChange.getName(),
+                    sameNote.get().getOneBased()));
+        }
     }
 
     private String getSuccessMessage(Person personToChange, List<String> updatedNotes) {

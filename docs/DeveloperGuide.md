@@ -163,6 +163,67 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
 
+### Add command
+
+The `add` command creates an active contact with a name, patient phone number, family phone number and
+address. Patient email, family email and a priority tag are optional. The command word is case-insensitive:
+`add`, `Add` and `ADD` follow the same parsing and execution path.
+
+#### Parsing and validation
+
+`AddressBookParser#parseCommand()` recognises the command word and delegates to `AddCommandParser#parse()`.
+The parser tokenizes the supported prefixes, checks required fields and rejects repeated non-tag prefixes
+before constructing the field objects and a `Person`. Supported prefixes are `/name`, `/patientNo`,
+`/familyNo`, `/pEmail`, `/fEmail`, `/address` and `/tag`. Only the `/tag` prefix is case-insensitive.
+The legacy `/email` prefix is rejected with instructions to use `/pEmail` or `/fEmail`.
+
+Every `/` must start a complete recognised prefix, separated from its value by whitespace. A literal `/`
+cannot be stored in any field value. Strict tokenization therefore rejects `/address 4 St /phone 123`,
+`/addressExtra 4 St` and `/address 4/5 Main St` instead of silently storing the extra text as an address.
+The invalid-format response includes `AddCommand.MESSAGE_USAGE`, which also supplies the Add entry in
+the Help window and explains the slash restriction.
+
+`ParserUtil` validates individual fields and trims surrounding whitespace. `Name` also collapses repeated
+spaces, so `Kim    Lee   ` is stored as `Kim Lee` and cannot bypass duplicate detection through spacing.
+Priority normalization and validation follow the rules in [Priority tags](#priority-tags).
+
+#### Duplicate detection and execution
+
+`AddCommand#execute()` checks the candidate against the full address book, including archived contacts;
+the current display filter and sort order do not limit duplicate checks. `Person#isSamePerson()` and
+`UniquePersonList` enforce the contact identity rules:
+
+* A matching patient phone number or a matching non-empty patient email is a duplicate, even if the names
+  differ. Patient email comparison ignores case; two omitted patient emails are not a match.
+* A shared name alone is allowed when the patient contact details and address distinguish the contacts.
+* The same name and address require a name differentiator. Names are compared ignoring case after
+  normalization; addresses are compared ignoring case and all whitespace. This comparison does not remove
+  internal spaces from the stored address. Different names may share an address.
+
+The sequence diagram below shows a successful add after input and duplicate validation. Error branches
+stop before the model is changed; their messages are described below.
+
+<puml src="diagrams/AddSequenceDiagram.puml" alt="Sequence of validating, adding and saving a new contact" />
+
+1. `AddCommandParser` creates the validated `Person` and an `AddCommand` containing it.
+1. `AddCommand` calls `Model#hasPerson()` to check for a duplicate. A duplicate patient phone or email
+   produces `AddCommand.MESSAGE_DUPLICATE_PERSON`: `This person already exists in CareBook.`
+1. A same-name, same-address conflict without a duplicate patient phone or email instead produces
+   `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+1. Otherwise, `Model#addPerson()` adds the contact and restores the active list. The command returns the
+   new contact's details in a `CommandResult`.
+1. `AddCommand#modifiesData()` returns `true`, so `LogicManager` saves the updated address book through
+   `Storage#saveAddressBook()`.
+
+**Error handling:** Invalid prefixes, missing required fields, duplicate prefixes and invalid values cause a
+`ParseException`. Duplicate contacts cause a `CommandException`. Neither path adds a contact or saves a
+partial entry. Shared family phone numbers and family emails are allowed; patient contact details provide
+the uniqueness checks.
+
+**Design consideration:** Normalizing names when constructing `Name` gives parsing, storage loading and
+duplicate checks the same representation. Checking the full address book prevents a hidden or archived
+contact from being added again, while allowing different patients to share a name or family contact.
+
 ### Viewing a contact's full details
 
 The `view INDEX` command displays one contact from the currently displayed list and returns their full details
@@ -390,6 +451,66 @@ would be too long cause a `CommandException`. In each case the person is unchang
 
 ### Find command
 
+The `find` command searches names using `find INPUT`, or one selected field using `find /CRITERION INPUT`.
+The command word and criterion are case-insensitive. Supported criteria are `/name`, `/patientNo`,
+`/familyNo`, `/address`, `/pEmail`, `/fEmail`, `/email` (either email) and `/tag`.
+It changes the displayed contacts and returns the match count without modifying stored contacts.
+
+#### Parsing and phrase matching
+
+`FindCommandParser#parse()` trims surrounding whitespace and collapses repeated whitespace within the
+input. Plain input creates a `NameContainsKeywordsPredicate`; criterion input creates a
+`PersonContainsKeywordsPredicate`. In both cases, the normalized input is passed as one search phrase,
+not as separate alternative keywords. Text matching uses case-insensitive substrings.
+
+* `find D       Est` searches for the continuous phrase `D Est`. It matches `D Est` and `Dr D Est Tan`,
+  but not `D Tan`, `Est Lee` or `D Middle Est`.
+* `find alex david` does not return `Alex Yeoh` and `David Li` separately; the name must contain
+  `alex david` together in that order.
+* Single substrings still work: `find dy` matches `Brandy`. `/name` uses the same phrase semantics.
+* Phone searches require one sequence of at least two digits and match consecutive digits:
+  `87` matches `900087000`, but not `89700000`. Spaces within a phone number are rejected.
+
+`PersonContainsKeywordsPredicate#test()` selects the requested field before matching. Missing optional
+emails or tags do not match. Leading and trailing whitespace never creates an additional search term.
+
+#### Search scope and execution
+
+Search scope is determined by the active or archive list selected by the user, not by which contacts happen
+to be visible. The model retains this scope separately from the search predicate and sort comparator.
+
+* In the active scope, `find` searches all active contacts, replacing any previous search or filter criteria.
+* After `list archive`, `find` searches archived contacts only. Repeated searches, filters, sorting and
+  zero-match results retain the archive scope and cannot expose active contacts.
+* `list` restores the active scope; `list archive` restores the archive scope. A search does not accumulate
+  the previous search terms, and it preserves the current sort order.
+
+The sequence diagram below shows parsing and executing `find /name D       Est`, including the choice
+between active and archive scope. Helper calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of a normalized phrase search within active or archived contacts" />
+
+1. `AddressBookParser#parseCommand()` recognises `find` and delegates to `FindCommandParser`.
+1. The parser validates one syntax, normalizes the search phrase and creates the corresponding predicate
+   and `FindCommand`.
+1. `FindCommand#execute()` checks the model's list scope, selects the corresponding active or archived
+   base predicate, then calls `Model#filterPersonsInCurrentList()` with the search predicate.
+1. The model combines the scope and search predicates, updates the observable list and clears selection
+   if the selected contact no longer appears. The UI updates the contact cards.
+1. The command uses `Model#getFilteredPersonList().size()` to format
+   `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` in a `CommandResult`.
+1. `FindCommand#modifiesData()` returns `false`, so `LogicManager` skips saving.
+
+**Error handling:** Empty input, missing criterion input, multiple criteria, invalid phone input and mixed
+syntax such as `find Alice /address A` cause a `ParseException`. Mixed syntax uses the same invalid-format
+response as bare `find`, including `Use either find KEYWORD or find /CRITERION INPUT.` and the supported
+criteria. An unknown criterion reports `Unknown criterion: /...`. Parsing errors leave stored contacts,
+selection and the current display unchanged. A valid search with no matches instead succeeds, displays
+an empty list and reports `0 person(s) listed!` without losing its active or archive scope.
+
+**Design consideration:** Passing one normalized phrase to the existing predicate classes preserves partial
+matching while preventing multiword input from matching unrelated contacts one word at a time. Retaining
+scope in the model keeps archive searches reliable even when the current results are empty.
 
 The `find /CRITERION INPUT` command searches one selected contact field and returns the number of
 matches in the result box. Supported criteria are `/name`, `/patientNo`, `/familyNo`, `/address`,
@@ -549,6 +670,26 @@ How the `sort` command works:
 4. `SortCommand#modifiesData()` returns `false`, so `LogicManager` does not save. The UI observes the sorted list
    and reorders the contact cards.
 
+#### Design considerations
+
+**Aspect: How sorting is applied**
+
+* **Alternative 1 (current choice):** Wrap the filtered list in a `SortedList` and change only its comparator.
+  * Pros: The stored order and the saved data never change, and sorting combines with `find` and `filter` in either order.
+  * Cons: Indices refer to the displayed order, so every command that takes an `INDEX` must read the displayed list (they do).
+* **Alternative 2:** Reorder the contacts in the address book itself.
+  * Pros: No second list to maintain.
+  * Cons: Sorting would change and save the stored data, `list` could not restore the order contacts were added, and `recent` would need a timestamp.
+
+**Aspect: How `recent` is determined**
+
+* **Alternative 1 (current choice):** Reverse the order in which contacts are stored, since new contacts are appended.
+  * Pros: No new field in the model or the saved file.
+  * Cons: Relies on the stored order never being changed, which is why sorting must not reorder the address book.
+* **Alternative 2:** Store a creation timestamp for each contact.
+  * Pros: Does not depend on the stored order.
+  * Cons: Needs a new field, and the saved file format and existing data files must be updated.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -681,6 +822,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
+| `* *`    | user                                       | filter contacts by name, tag and address | focus on the patients I need to look after right now |
+| `* *`    | user                                       | sort contacts by name, priority or when they were added | see the most urgent or most recent patients first |
 | `* * *`  | caregiver                                  | keep care notes on a contact | remember allergies, medication times and visiting rules |
 | `* *`    | caregiver                                  | edit or delete one care note | keep notes up to date without retyping the others |
 | `* *`    | caregiver                                  | add checkup appointment dates |  kepe track of future appointments                                                 |
@@ -738,6 +881,24 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 3.
 
+*2d. A prefix is unknown or mistyped, or a field value contains `/`.
+
+    *2d1. CareBook rejects the command and shows the correct format and slash restriction.
+
+        Use case resumes at step 1.
+
+*2e. Another active or archived contact has the same patient phone number or non-empty patient email.
+
+    *2e1. CareBook shows `This person already exists in CareBook.` and does not add the contact.
+
+        Use case resumes at step 1.
+
+*2f. Another contact has the same normalized name and address, with distinct patient contact details.
+
+    *2f1. CareBook shows `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+
+        Use case resumes at step 1.
+
 **Use case: Delete a person**
 
 **MSS**
@@ -755,7 +916,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 2a. The list is empty.
 
-  Use case ends.
+    * 2a1. CareBook shows an error message saying there are no persons in the displayed list to delete.
+
+      Use case ends.
 
 * 3a. The given index is invalid.
 
@@ -1118,6 +1281,55 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
       Use case resumes at step 6.
 
+      
+**Use case: Filter contacts**
+
+**MSS**
+
+1.  User requests to filter contacts by one or more criteria (name, tag, address)
+2.  CareBook validates the command
+3.  CareBook shows the contacts in the current list (active or archived) that match all of the criteria
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. No criterion is given, a prefix has an empty value, there is text before the first prefix, or a tag is not `HIGH`, `MEDIUM` or `LOW`.
+
+    * 2a1. CareBook shows an invalid command format error with the correct usage. The displayed list does not change.
+
+      Use case resumes at step 1.
+
+* 3a. No contact matches the criteria.
+
+    * 3a1. CareBook shows an empty list and the message "0 person(s) listed!". The next filter searches the same list (active or archived).
+
+      Use case ends.
+
+**Use case: Sort contacts**
+
+**MSS**
+
+1.  User requests to sort the displayed contacts by a criterion (priority, name or recent) and an optional direction
+2.  CareBook validates the command
+3.  CareBook reorders the displayed contacts and shows a message describing the new order
+
+    Use case ends.
+
+**Extensions**
+
+* 2a. The criterion is missing or unknown, the direction is unknown, a direction is given for `recent`, or there are extra arguments.
+
+    * 2a1. CareBook shows an invalid command format error with the correct usage. The order does not change.
+
+      Use case resumes at step 1.
+
+* 3a. User wants to see the contacts in the order they were added again.
+
+    * 3a1. User requests to list persons. CareBook clears the sort and shows all active contacts in the order they were added.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed
@@ -1168,6 +1380,69 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
+### Adding a person
+
+1. Adding contacts with similar details
+
+   1. Prerequisites: Use a test address book with no contact named `Kim Lee` and no patient phone numbers
+      `91001001` or `91001002`.
+
+   1. Test case: `ADD /name Kim    Lee /patientNo 91001001 /familyNo 92002001 /address 1 Test Street`<br>
+      Expected: A contact named `Kim Lee` is added. Command capitalization and repeated name spaces are accepted.
+
+   1. Test case: `add /name Kim Lee /patientNo 91001002 /familyNo 92002001 /address 2 Test Street`<br>
+      Expected: A second contact is added despite sharing a name and family phone number. Both patient emails are absent.
+
+   1. Test case: Add another contact with patient phone `91001001`, or reuse a non-empty patient email already in the test address book.<br>
+      Expected: No contact is added. Duplicate detection includes hidden and archived contacts.
+
+   1. Test case: `add /name Kim Lee /patientNo 91001003 /familyNo 92002001 /address 1TESTstreet`<br>
+      Expected: No contact is added. The same-address warning asks for a name differentiator.
+
+   1. Test case: Repeat the previous command with `/name Kim Lee 2`.<br>
+      Expected: The contact is added because the name now distinguishes it.
+
+1. Rejecting invalid prefixes and literal slashes
+
+   1. Test case: `add /name Test Patient /patientNo 91001004 /familyNo 92002001 /address 4 St /phone 123`<br>
+      Expected: Invalid command format. `/phone 123` is not saved into the address.
+
+   1. Other incorrect address arguments to try: `/addressExtra 4 St` and `/address 4/5 Main St`.<br>
+      Expected: No contact is added; the usage explains that `/` is reserved for valid prefixes.
+
+### Finding contacts
+
+1. Phrase matching and whitespace
+
+   1. Prerequisites: Active contacts named `D Est`, `Dr D Est Tan`, `D Tan`, `Est Lee`, `D Middle Est`,
+      `Alex Yeoh`, `David Li` and `Brandy`.
+
+   1. Test case: `find D       Est   `<br>
+      Expected: `D Est` and `Dr D Est Tan` match. `D Tan`, `Est Lee` and `D Middle Est` do not match.
+      `find /name D Est` and mixed-case `FiNd /NAME d est` give the same results.
+
+   1. Test case: `find alex david`<br>
+      Expected: Neither `Alex Yeoh` nor `David Li` matches separately. A name containing `Alex David` would match.
+
+   1. Test case: `find dy`<br>
+      Expected: `Brandy` matches the contiguous substring. Surrounding spaces do not affect the search.
+
+   1. Test cases: `find`, `find Alice /address A` and `find /name Alice /address A`.<br>
+      Expected: The same invalid-format response with usage and supported criteria; the current display is unchanged.
+
+1. Retaining archive scope
+
+   1. Prerequisites: At least one active and one archived contact with `Kim` in their names.
+
+   1. Test case: Run `list archive`, then `find Kim`.<br>
+      Expected: Only archived matches appear.
+
+   1. Test case: Run `find NobodyMatchesThis`, then `sort name`, then `find Kim`.<br>
+      Expected: The first search shows zero matches; the final search still returns only archived matches.
+
+   1. Test case: Run `filter /name Kim`, then `find Kim`, then `list`, then `find Kim`.<br>
+      Expected: The search after the filter stays within archived contacts. After `list`, only active matches appear.
+
 ### Deleting a person
 
 1. Deleting a person while all active contacts are being shown
@@ -1183,8 +1458,66 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `delete 0`<br>
       Expected: No person is deleted. The status message shows error details.
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
+   1. Other incorrect delete commands to try: `delete`, `delete abc`, `delete 1 2`, `delete 99` (where 99 is larger than the list size)<br>
       Expected: Similar to previous.
+
+### Filtering persons
+
+1. Filtering the contacts that are being shown
+
+   1. Prerequisites: List all persons using the `list` command, with persons that have different names, priority tags and addresses.
+
+   1. Test case: `filter /tag HIGH`<br>
+      Expected: Only persons tagged `HIGH` are shown. The status message shows "N person(s) listed!" with the number shown.
+
+   1. Test case: `filter /tag HIGH /tag LOW`<br>
+      Expected: Persons tagged `HIGH` or `LOW` are shown.
+
+   1. Test case: `filter /name ali /tag HIGH`<br>
+      Expected: Only persons whose name contains `ali` and who are tagged `HIGH` are shown.
+
+   1. Test case: `filter /address clementi ave`<br>
+      Expected: Only persons whose address contains the text `clementi ave` are shown, ignoring case.
+
+   1. Test case: `filter /tag URGENT`<br>
+      Expected: The displayed list does not change. The status message shows `Invalid command format!` followed by the filter usage.
+
+   1. Other incorrect filter commands to try: `filter`, `filter HIGH`, `filter /name`, `filter /tag HIGH LOW`<br>
+      Expected: Similar to previous.
+
+1. Filtering the archived contacts
+
+   1. Prerequisites: Archive at least one contact tagged `HIGH`, then run `list archive`.
+
+   1. Test case: `filter /tag HIGH`<br>
+      Expected: Only archived persons tagged `HIGH` are shown. Running `list` and then `filter /tag HIGH` shows only active persons.
+
+### Sorting persons
+
+1. Sorting the contacts that are being shown
+
+   1. Prerequisites: List all persons using the `list` command, with persons that have different names and priority tags.
+
+   1. Test case: `sort name`<br>
+      Expected: Persons are shown from A to Z, ignoring case. The status message shows "Sorted by name: A to Z."
+
+   1. Test case: `sort name desc`<br>
+      Expected: Persons are shown from Z to A. The status message shows "Sorted by name: Z to A."
+
+   1. Test case: `sort priority`<br>
+      Expected: `HIGH` persons are shown first, then `MEDIUM`, then `LOW`, and persons without a priority tag are last. Persons with the same priority are ordered by name. The status message shows "Sorted by priority: HIGH to LOW."
+
+   1. Test case: `sort recent`<br>
+      Expected: The most recently added person is shown first. The status message shows "Sorted by most recently added."
+
+   1. Test case: `filter /tag HIGH` followed by `sort name`<br>
+      Expected: Only `HIGH` persons are shown, from A to Z.
+
+   1. Test case: `list` after any sort<br>
+      Expected: All active persons are shown again in the order they were added.
+
+   1. Incorrect sort commands to try: `sort`, `sort address`, `sort priority up`, `sort recent desc`<br>
+      Expected: The order does not change. The status message shows `Invalid command format!` followed by the sort usage.
 
 1. _{ more test cases … }_
 
@@ -1285,6 +1618,9 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `remark 1`<br>
       Expected: No note changes. The status message shows the correct usage.
+
+   1. Test case: `remark 1 Allergic to penicillin` twice<br>
+      Expected: The second command is rejected because the person already has this note. The notes are unchanged.
 
    1. Other incorrect remark commands to try: `remark /clear` (no index), `remark 0 note`, `remark x note` (where x is larger than the list size), `remark 1 /delete 9` and `remark 1 /edit 1`<br>
       Expected: No note changes. The status message shows error details.

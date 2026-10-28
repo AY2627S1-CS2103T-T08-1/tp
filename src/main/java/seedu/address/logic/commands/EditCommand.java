@@ -59,8 +59,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
     public static final String MESSAGE_NO_TAG_CHANGE = "No change to tag";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_PERSON =
-            "Someone with this patient HP or email already exists in CareBook.";
+    public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
@@ -86,7 +85,8 @@ public class EditCommand extends Command {
 
         if (index.getZeroBased() >= lastShownList.size()) {
             logger.fine("Edit rejected: index " + index.getOneBased() + " is not in the displayed list");
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            throw new CommandException(
+                    Messages.getMessageForIndexNotDisplayed(index.getOneBased(), lastShownList.size()));
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
@@ -101,13 +101,19 @@ public class EditCommand extends Command {
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
                 .filter(person -> !person.equals(personToEdit)).toList();
 
-        if (otherPersons.stream().anyMatch(editedPerson::hasSamePatientContactDetails)) {
+        Optional<Person> sameContactDetails = otherPersons.stream()
+                .filter(editedPerson::hasSamePatientContactDetails).findFirst();
+        if (sameContactDetails.isPresent()) {
             logger.fine("Edit rejected: patient contact details already exist");
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+            throw new CommandException(Messages.withArchivedHint(MESSAGE_DUPLICATE_PERSON, sameContactDetails.get()));
         }
 
-        if (otherPersons.stream().anyMatch(editedPerson::hasSameNameAndAddress)) {
-            throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+        Optional<Person> sameNameAndAddress = otherPersons.stream()
+                .filter(editedPerson::hasSameNameAndAddress).findFirst();
+        if (sameNameAndAddress.isPresent()) {
+            logger.fine("Edit rejected: another contact has the same name and address");
+            throw new CommandException(
+                    Messages.withArchivedHint(Person.MESSAGE_NAME_ADDRESS_CONFLICT, sameNameAndAddress.get()));
         }
 
         model.setPersonKeepingDisplayed(personToEdit, editedPerson);
