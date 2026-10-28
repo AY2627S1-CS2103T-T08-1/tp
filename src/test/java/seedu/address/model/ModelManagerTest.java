@@ -29,6 +29,24 @@ public class ModelManagerTest {
     private ModelManager modelManager = new ModelManager();
 
     @Test
+    public void setPersonKeepingDisplayed_noLongerMatchesSearch_staysDisplayed() {
+        modelManager = new ModelManager(new AddressBookBuilder().withPerson(ALICE).withPerson(BENSON).build(),
+                new UserPrefs());
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        modelManager.selectPerson(ALICE);
+        Person renamed = new PersonBuilder(ALICE).withName("Zed").build();
+
+        modelManager.setPersonKeepingDisplayed(ALICE, renamed);
+
+        assertEquals(List.of(renamed), modelManager.getFilteredPersonList());
+        assertEquals(renamed, modelManager.selectedPersonProperty().get());
+
+        // a new search no longer keeps the person displayed
+        modelManager.updateFilteredPersonList(new NameContainsKeywordsPredicate(List.of("Alice")));
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
     public void setArchiveScope_switchesListsClearsFiltersAndPreservesSort() {
         Person archivedBenson = BENSON.copyWithArchivedStatus(true);
         Person archivedCarl = CARL.copyWithArchivedStatus(true);

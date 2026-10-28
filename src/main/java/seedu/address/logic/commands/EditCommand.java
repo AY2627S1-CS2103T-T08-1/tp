@@ -110,9 +110,8 @@ public class EditCommand extends Command {
             throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
         }
 
-        model.setPerson(personToEdit, editedPerson);
+        model.setPersonKeepingDisplayed(personToEdit, editedPerson);
         logger.info("Edited contact at index " + index.getOneBased());
-        model.setArchiveScope(editedPerson.isArchived());
         return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
     }
 
