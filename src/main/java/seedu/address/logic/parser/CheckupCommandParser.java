@@ -22,7 +22,17 @@ public class CheckupCommandParser implements Parser<CheckupCommand> {
         } catch (ParseException e) {
             throw invalidFormat();
         }
-        return new CheckupCommand(index, parts[1]);
+   
+        final CheckupAppointment appointment;
+        try {
+            appointment = new CheckupAppointment(parts[1]);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException(CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE, e);
+        }
+        if (appointment.isBeforeNow()) {
+            throw new ParseException(CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+        }
+        return new CheckupCommand(index, appointment);
     }
 
     private ParseException invalidFormat() {
