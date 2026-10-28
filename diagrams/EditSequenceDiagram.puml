@@ -1,0 +1,62 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":EditCommandParser" as EditCommandParser LOGIC_COLOR
+participant "d:EditPersonDescriptor" as Descriptor LOGIC_COLOR
+participant "c:EditCommand" as EditCommand LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+end box
+
+[-> LogicManager : execute("edit 1 /pEmail")
+activate LogicManager
+
+LogicManager -> EditCommandParser : parse("1 /pEmail")
+activate EditCommandParser
+note right of LogicManager : via AddressBookParser
+
+create Descriptor
+EditCommandParser -> Descriptor
+EditCommandParser -> Descriptor : setPatientEmail(empty)
+activate Descriptor
+note right of Descriptor : marks the patient\nemail as edited
+Descriptor --> EditCommandParser
+deactivate Descriptor
+
+create EditCommand
+EditCommandParser -> EditCommand : EditCommand(1, d)
+activate EditCommand
+EditCommand --> EditCommandParser
+deactivate EditCommand
+
+EditCommandParser --> LogicManager : c
+deactivate EditCommandParser
+
+LogicManager -> EditCommand : execute(m)
+activate EditCommand
+
+EditCommand -> Model : getFilteredPersonList()
+activate Model
+Model --> EditCommand : persons
+deactivate Model
+
+EditCommand -> EditCommand : createEditedPerson()\nkeeps unchanged fields,\nremoves the patient email
+
+EditCommand -> EditCommand : check for duplicates
+
+EditCommand -> Model : setPersonKeepingDisplayed(\nperson, editedPerson)
+activate Model
+Model --> EditCommand
+deactivate Model
+
+EditCommand --> LogicManager : result
+deactivate EditCommand
+
+[<-- LogicManager : result
+deactivate LogicManager
+@enduml

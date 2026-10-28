@@ -40,7 +40,7 @@
       "src": "DeveloperGuide.md",
       "title": "Developer Guide",
       "headings": {
-        "ab-3-developer-guide": "AB-3 Developer Guide",
+        "carebook-developer-guide": "CareBook Developer Guide",
         "acknowledgements": "Acknowledgements",
         "setting-up-getting-started": "Setting up, getting started",
         "design": "Design",
@@ -54,6 +54,7 @@
         "saving-data": "Saving data",
         "add-command": "Add command",
         "viewing-a-contact-s-full-details": "Viewing a contact's full details",
+        "editing-a-contact": "Editing a contact",
         "priority-tags": "Priority tags",
         "checkup-appointments": "Checkup appointments",
         "removing-a-checkup-appointment": "Removing a checkup appointment",
@@ -63,7 +64,6 @@
         "filter-command": "Filter command",
         "sort-command": "Sort command",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
-        "proposed-data-archiving": "[Proposed] Data archiving",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
         "appendix-requirements": "Appendix: Requirements",
         "product-scope": "Product scope",
@@ -82,7 +82,7 @@
         "checkup-appointments-2": "Checkup appointments",
         "keeping-care-notes": "Keeping care notes",
         "priority-tags-2": "Priority tags",
-        "saving-data-2": "Saving data"
+        "saving-and-loading-data": "Saving and loading data"
       },
       "headingKeywords": {}
     },
