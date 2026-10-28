@@ -159,7 +159,8 @@ public class CheckupCommandTest {
         model.addPerson(new PersonBuilder(alice).withCheckupAppointment(appointment.toString()).build());
         model.addPerson(new PersonBuilder(bob).withFamilyNo("91234567")
                 .withCheckupAppointment(appointment.toString()).build());
-        Person charlie = new PersonBuilder(alice).withName("Charlie").build();
+        Person charlie = new PersonBuilder(alice).withName("Charlie")
+                .withPhone("93456789").withEmail("charlie@example.com").build();
         model.addPerson(charlie);
 
         assertCommandFailure(new CheckupCommand(Index.fromOneBased(3), appointment), model,
