@@ -48,6 +48,8 @@ public class Messages {
                 .append(person.getAddress())
                 .append("; Tags: ");
         person.getTags().forEach(builder::append);
+        person.getCheckupAppointment()
+                .ifPresent(appointment -> builder.append("; Checkup Appointment: ").append(appointment));
         if (!person.getRemark().isEmpty()) {
             builder.append("; Remark: ").append(person.getRemark());
         }

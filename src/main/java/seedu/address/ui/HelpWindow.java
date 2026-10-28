@@ -53,7 +53,7 @@ public class HelpWindow extends UiPart<Stage> {
             DeleteCommand.MESSAGE_USAGE,
             ARCHIVE_USAGE,
             UNARCHIVE_USAGE,
-            FindCommand.MESSAGE_USAGE,
+            FindCommand.COMMAND_WORD + ": " + FindCommand.MESSAGE_USAGE,
             FilterCommand.MESSAGE_USAGE,
             ListCommand.MESSAGE_USAGE + "\n" + LIST_ARCHIVE_USAGE,
             SortCommand.MESSAGE_USAGE,
@@ -134,9 +134,11 @@ public class HelpWindow extends UiPart<Stage> {
     }
 
     /**
-     * Focuses on the help window.
+     * Restores the help window if minimised and brings it to the front.
      */
     public void focus() {
+        getRoot().setIconified(false);
+        getRoot().toFront();
         getRoot().requestFocus();
     }
 

@@ -34,6 +34,14 @@ public class FilterCommandTest {
     }
 
     @Test
+    public void messageUsage_prefixesSeparatedFromValues() {
+        assertTrue(FilterCommand.MESSAGE_USAGE.contains(
+                "[/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]..."));
+        assertTrue(FilterCommand.MESSAGE_USAGE.contains(
+                "filter /name ali bob /tag HIGH /tag MEDIUM /address clementi"));
+    }
+
+    @Test
     public void execute_activeList_excludesArchivedMatches() throws Exception {
         model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
         AddressBook original = new AddressBook(model.getAddressBook());
@@ -74,15 +82,16 @@ public class FilterCommandTest {
     }
 
     @Test
-    public void execute_afterFindFromArchiveList_filtersActiveContacts() throws Exception {
+    public void execute_afterFindFromArchiveList_filtersArchivedContacts() throws Exception {
         model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
         AddressBookParser parser = new AddressBookParser();
         parser.parseCommand("list archive").execute(model);
         parser.parseCommand("find NobodyMatches").execute(model);
+        assertTrue(model.getFilteredPersonList().isEmpty());
 
         parser.parseCommand("filter /tag HIGH").execute(model);
 
-        assertEquals(List.of(DANIEL), model.getFilteredPersonList());
+        assertEquals(List.of(ALICE.copyWithArchivedStatus(true)), model.getFilteredPersonList());
     }
 
     @Test

@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
@@ -21,12 +22,50 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandTest {
+
+    @Test
+    public void execute_sameNameWithDifferentPatientDetails_addsContact() throws Exception {
+        Model model = new ModelManager();
+        model.addPerson(ALICE);
+        Person anotherAlice = new PersonBuilder(ALICE).withPhone("91234567")
+                .withAddress("Another Street").build();
+        new AddCommand(anotherAlice).execute(model);
+        assertEquals(List.of(ALICE, anotherAlice), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_samePatientPhoneOrEmail_rejectsContact() {
+        Person existing = new PersonBuilder(ALICE).withPatientEmail("alice@example.com").build();
+        Model model = new ModelManager();
+        model.addPerson(existing);
+        Person samePhone = new PersonBuilder(existing).withName("Another Patient")
+                .withPatientEmail("other@example.com").withAddress("Another Street").build();
+        Person sameEmail = new PersonBuilder(existing).withName("Another Patient").withPhone("91234567")
+                .withPatientEmail("ALICE@EXAMPLE.COM").withAddress("Another Street").build();
+        assertCommandFailure(new AddCommand(samePhone), model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+        assertCommandFailure(new AddCommand(sameEmail), model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    @Test
+    public void execute_sameNameAndAddressIgnoringCaseAndSpacing_requiresDifferentiator() throws Exception {
+        Model model = new ModelManager();
+        Person existing = new PersonBuilder(ALICE).withAddress("Block 123 Main Street #01-02").build();
+        model.addPerson(existing.copyWithArchivedStatus(true));
+        Person sameAddress = new PersonBuilder(existing).withPhone("91234567")
+                .withAddress("bLoCk123   MAINstreet#01-02  ").build();
+        assertCommandFailure(new AddCommand(sameAddress), model,
+                Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+        Person differentiated = new PersonBuilder(sameAddress).withName("Alice Pauline 2").build();
+        new AddCommand(differentiated).execute(model);
+        assertEquals(2, model.getAddressBook().getPersonList().size());
+    }
 
     @Test
     public void constructor_nullPerson_throwsNullPointerException() {
@@ -145,12 +184,27 @@ public class AddCommandTest {
         }
 
         @Override
+        public void setPersonKeepingDisplayed(Person target, Person editedPerson) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public ObservableList<Person> getFilteredPersonList() {
             throw new AssertionError("This method should not be called.");
         }
 
         @Override
         public void filterPersonsInCurrentList(Predicate<Person> predicate) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public boolean isShowingArchiveList() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void setArchiveScope(boolean archiveScope) {
             throw new AssertionError("This method should not be called.");
         }
 
@@ -190,6 +244,13 @@ public class AddCommandTest {
         public boolean hasPerson(Person person) {
             requireNonNull(person);
             return this.person.isSamePerson(person);
+        }
+
+        @Override
+        public ReadOnlyAddressBook getAddressBook() {
+            AddressBook addressBook = new AddressBook();
+            addressBook.addPerson(person);
+            return addressBook;
         }
     }
 

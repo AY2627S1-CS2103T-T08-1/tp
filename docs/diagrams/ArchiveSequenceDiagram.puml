@@ -1,0 +1,113 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":ArchiveCommandParser" as ArchiveCommandParser LOGIC_COLOR
+participant "a:ArchiveCommand" as ArchiveCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+participant "personToArchive:Person" as Person MODEL_COLOR
+end box
+
+[-> LogicManager : execute("archive 1")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("archive 1")
+activate AddressBookParser
+
+create ArchiveCommandParser
+AddressBookParser -> ArchiveCommandParser
+activate ArchiveCommandParser
+
+ArchiveCommandParser --> AddressBookParser
+deactivate ArchiveCommandParser
+
+AddressBookParser -> ArchiveCommandParser : parse(" 1")
+activate ArchiveCommandParser
+
+note right of ArchiveCommandParser
+  Throws ParseException for missing, non-numeric,
+  non-positive or extra arguments.
+  Positive integers exceeding Integer.MAX_VALUE
+  are capped for the command's range check.
+end note
+
+create ArchiveCommand
+ArchiveCommandParser -> ArchiveCommand : ArchiveCommand(targetIndex)
+activate ArchiveCommand
+
+ArchiveCommand --> ArchiveCommandParser
+deactivate ArchiveCommand
+
+ArchiveCommandParser --> AddressBookParser : a
+deactivate ArchiveCommandParser
+'Hidden arrow to position the destroy marker below the end of the activation bar.
+ArchiveCommandParser -[hidden]-> AddressBookParser
+destroy ArchiveCommandParser
+
+AddressBookParser --> LogicManager : a
+deactivate AddressBookParser
+
+LogicManager -> ArchiveCommand : execute(m)
+activate ArchiveCommand
+
+ArchiveCommand -> Model : getFilteredPersonList()
+activate Model
+
+Model --> ArchiveCommand : lastShownList
+deactivate Model
+
+note right of ArchiveCommand
+  Throws CommandException if lastShownList is empty
+  or targetIndex is out of range.
+  Otherwise, personToArchive is obtained from
+  lastShownList at targetIndex.getZeroBased().
+end note
+
+ArchiveCommand -> Person : isArchived()
+activate Person
+
+Person --> ArchiveCommand : false
+deactivate Person
+
+note right of ArchiveCommand
+  Throws CommandException if already archived.
+  The successful flow continues below.
+end note
+
+ArchiveCommand -> Person : copyWithArchivedStatus(true)
+activate Person
+
+Person --> ArchiveCommand : archivedPerson
+deactivate Person
+
+ArchiveCommand -> Model : setPerson(personToArchive, archivedPerson)
+activate Model
+
+Model --> ArchiveCommand
+deactivate Model
+
+create CommandResult
+ArchiveCommand -> CommandResult : CommandResult(successMessage)
+activate CommandResult
+
+CommandResult --> ArchiveCommand
+deactivate CommandResult
+
+ArchiveCommand --> LogicManager : r
+deactivate ArchiveCommand
+
+note right of LogicManager
+  Data persistence after successful execution
+  is omitted from this diagram.
+end note
+
+[<--LogicManager : r
+deactivate LogicManager
+@enduml

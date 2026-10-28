@@ -31,6 +31,7 @@ public class UnmarkCommandTest {
     private final Person alice = new PersonBuilder().withName("Alice").withTags("LOW")
             .withCheckupAppointment("01/01/2030 09:05").withRemarks("Needs assistance").build();
     private final Person bob = new PersonBuilder().withName("Bob").withTags("HIGH")
+            .withPhone("91234567").withEmail("bob@example.com")
             .withCheckupAppointment("01/01/2030 10:00").build();
 
     @Test
