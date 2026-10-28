@@ -30,8 +30,9 @@ public class RemarkCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Adds, edits or deletes the notes of the person identified by the index number used in the "
             + "displayed person list.\n"
-            + "Parameters: INDEX NOTE, or INDEX " + KEYWORD_EDIT + " NOTE_NUMBER NOTE, or INDEX " + KEYWORD_DELETE
-            + " NOTE_NUMBER, or INDEX " + KEYWORD_CLEAR + " (INDEX and NOTE_NUMBER must be positive integers)\n"
+            + "Parameters: INDEX NOTE, or INDEX " + KEYWORD_EDIT + " NOTE_NUMBER NOTE, or INDEX "
+            + KEYWORD_DELETE + " NOTE_NUMBER, or INDEX " + KEYWORD_CLEAR
+            + " (INDEX and NOTE_NUMBER must be positive integers)\n"
             + "Example: " + COMMAND_WORD + " 1 Allergic to penicillin";
 
     public static final String MESSAGE_ADD_SUCCESS = "Added note %1$d to %2$s: %3$s";
@@ -40,6 +41,9 @@ public class RemarkCommand extends Command {
     public static final String MESSAGE_CLEAR_SUCCESS = "Cleared all notes of %1$s.";
     public static final String MESSAGE_NOTE_NOT_FOUND = "There is no note %1$d. %2$s has %3$d note(s).";
     public static final String MESSAGE_DUPLICATE_NOTE = "%1$s already has this note (note %2$d).";
+    public static final String MESSAGE_NO_NOTES_TO_CLEAR = "%1$s has no notes to clear.";
+    public static final String MESSAGE_TOO_LONG = Remark.MESSAGE_TOO_LONG
+            + " Use " + KEYWORD_DELETE + " to remove a note or " + KEYWORD_CLEAR + " to remove them all.";
 
     private static final Logger logger = LogsCenter.getLogger(RemarkCommand.class);
 
@@ -48,7 +52,9 @@ public class RemarkCommand extends Command {
 
     private final Index personIndex;
     private final Action action;
+    /** The note to edit or delete; {@code null} for ADD and CLEAR. */
     private final Index noteIndex;
+    /** The new note to add or edit in; {@code null} for DELETE and CLEAR. */
     private final String note;
 
     private RemarkCommand(Index personIndex, Action action, Index noteIndex, String note) {
@@ -68,7 +74,8 @@ public class RemarkCommand extends Command {
     }
 
     /**
-     * Creates a command that replaces note {@code noteIndex} of the person at {@code personIndex} with {@code note}.
+     * Creates a command that replaces note {@code noteIndex} of the person at {@code personIndex}
+     * with {@code note}.
      */
     public static RemarkCommand edit(Index personIndex, Index noteIndex, String note) {
         requireNonNull(noteIndex);
@@ -94,24 +101,45 @@ public class RemarkCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
+        Person personToChange = getPersonToChange(model);
+        List<String> updatedNotes = getUpdatedNotes(personToChange);
+
+        Person changedPerson = personToChange.withRemark(new Remark(updatedNotes));
+        model.setPersonKeepingDisplayed(personToChange, changedPerson);
+        logger.info("Changed the remark of the contact at index " + personIndex.getOneBased()
+                + " (" + action + ")");
+        return new CommandResult(getSuccessMessage(personToChange, updatedNotes));
+    }
+
+    /**
+     * Returns the person at {@code personIndex} in the displayed list.
+     *
+     * @throws CommandException if the index is not in the displayed list.
+     */
+    private Person getPersonToChange(Model model) throws CommandException {
         List<Person> lastShownList = model.getFilteredPersonList();
-
         if (personIndex.getZeroBased() >= lastShownList.size()) {
-            logger.fine("Remark rejected: index " + personIndex.getOneBased() + " is not in the displayed list");
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            logger.fine("Remark rejected: index " + personIndex.getOneBased()
+                    + " is not in the displayed list");
+            throw new CommandException(
+                    Messages.getMessageForIndexNotDisplayed(personIndex.getOneBased(), lastShownList.size()));
         }
+        return lastShownList.get(personIndex.getZeroBased());
+    }
 
-        Person personToChange = lastShownList.get(personIndex.getZeroBased());
+    /**
+     * Returns the notes of {@code personToChange} after this command's action.
+     *
+     * @throws CommandException if the action cannot be done on the person's notes,
+     *     or the notes would be too long.
+     */
+    private List<String> getUpdatedNotes(Person personToChange) throws CommandException {
         Remark remark = personToChange.getRemark();
-
-        if (noteIndex != null && !remark.hasNote(noteIndex)) {
-            logger.fine("Remark rejected: note " + noteIndex.getOneBased() + " does not exist");
-            throw new CommandException(String.format(MESSAGE_NOTE_NOT_FOUND, noteIndex.getOneBased(),
-                    personToChange.getName(), remark.getNotes().size()));
-        }
-
+        requireNoteExists(personToChange, remark);
         requireNoteNotAlreadyThere(personToChange, remark);
+        requireNotesToClear(personToChange, remark);
 
+        // the Remark methods return a list rather than a Remark, since the result may be over the limit
         List<String> updatedNotes = switch (action) {
             case ADD -> remark.withNoteAdded(note);
             case EDIT -> remark.withNoteReplaced(noteIndex, note);
@@ -121,13 +149,24 @@ public class RemarkCommand extends Command {
 
         if (!Remark.isWithinLengthLimit(updatedNotes)) {
             logger.fine("Remark rejected: the notes would be too long");
-            throw new CommandException(Remark.MESSAGE_TOO_LONG);
+            throw new CommandException(MESSAGE_TOO_LONG);
         }
+        return updatedNotes;
+    }
 
-        Person changedPerson = personToChange.withRemark(new Remark(updatedNotes));
-        model.setPersonKeepingDisplayed(personToChange, changedPerson);
-        logger.info("Changed the remark of the contact at index " + personIndex.getOneBased() + " (" + action + ")");
-        return new CommandResult(getSuccessMessage(personToChange, updatedNotes));
+    private void requireNoteExists(Person personToChange, Remark remark) throws CommandException {
+        if (noteIndex != null && !remark.hasNote(noteIndex)) {
+            logger.fine("Remark rejected: note " + noteIndex.getOneBased() + " does not exist");
+            throw new CommandException(String.format(MESSAGE_NOTE_NOT_FOUND, noteIndex.getOneBased(),
+                    personToChange.getName(), remark.getNotes().size()));
+        }
+    }
+
+    private void requireNotesToClear(Person personToChange, Remark remark) throws CommandException {
+        if (action == Action.CLEAR && remark.isEmpty()) {
+            logger.fine("Remark rejected: there are no notes to clear");
+            throw new CommandException(String.format(MESSAGE_NO_NOTES_TO_CLEAR, personToChange.getName()));
+        }
     }
 
     /**
@@ -148,8 +187,10 @@ public class RemarkCommand extends Command {
 
     private String getSuccessMessage(Person personToChange, List<String> updatedNotes) {
         return switch (action) {
-            case ADD -> String.format(MESSAGE_ADD_SUCCESS, updatedNotes.size(), personToChange.getName(), note);
-            case EDIT -> String.format(MESSAGE_EDIT_SUCCESS, noteIndex.getOneBased(), personToChange.getName(), note);
+            case ADD -> String.format(MESSAGE_ADD_SUCCESS, updatedNotes.size(), personToChange.getName(),
+                    note);
+            case EDIT -> String.format(MESSAGE_EDIT_SUCCESS, noteIndex.getOneBased(), personToChange.getName(),
+                    note);
             case DELETE -> String.format(MESSAGE_DELETE_SUCCESS, noteIndex.getOneBased(), personToChange.getName(),
                     personToChange.getRemark().getNotes().get(noteIndex.getZeroBased()));
             case CLEAR -> String.format(MESSAGE_CLEAR_SUCCESS, personToChange.getName());

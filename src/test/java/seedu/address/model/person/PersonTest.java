@@ -158,7 +158,7 @@ public class PersonTest {
                 + ", patientEmail=" + ALICE.getPatientEmail().orElse(null)
                 + ", familyEmail=" + ALICE.getFamilyEmail().orElse(null)
                 + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags()
-                + ", checkupAppointment=null, remark=" + ALICE.getRemark() + ", checkupMarked=false}";
+                + ", checkupAppointment=null, remark=" + ALICE.getRemark() + ", archived=false, checkupMarked=false}";
         assertEquals(expected, ALICE.toString());
     }
 }

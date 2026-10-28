@@ -59,8 +59,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
     public static final String MESSAGE_NO_TAG_CHANGE = "No change to tag";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
-    public static final String MESSAGE_DUPLICATE_PERSON =
-            "Someone with this patient HP or email already exists in CareBook.";
+    public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
 
@@ -86,7 +85,8 @@ public class EditCommand extends Command {
 
         if (index.getZeroBased() >= lastShownList.size()) {
             logger.fine("Edit rejected: index " + index.getOneBased() + " is not in the displayed list");
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            throw new CommandException(
+                    Messages.getMessageForIndexNotDisplayed(index.getOneBased(), lastShownList.size()));
         }
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
@@ -101,13 +101,19 @@ public class EditCommand extends Command {
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
                 .filter(person -> !person.equals(personToEdit)).toList();
 
-        if (otherPersons.stream().anyMatch(editedPerson::hasSamePatientContactDetails)) {
+        Optional<Person> sameContactDetails = otherPersons.stream()
+                .filter(editedPerson::hasSamePatientContactDetails).findFirst();
+        if (sameContactDetails.isPresent()) {
             logger.fine("Edit rejected: patient contact details already exist");
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+            throw new CommandException(Messages.withArchivedHint(MESSAGE_DUPLICATE_PERSON, sameContactDetails.get()));
         }
 
-        if (otherPersons.stream().anyMatch(editedPerson::hasSameNameAndAddress)) {
-            throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+        Optional<Person> sameNameAndAddress = otherPersons.stream()
+                .filter(editedPerson::hasSameNameAndAddress).findFirst();
+        if (sameNameAndAddress.isPresent()) {
+            logger.fine("Edit rejected: another contact has the same name and address");
+            throw new CommandException(
+                    Messages.withArchivedHint(Person.MESSAGE_NAME_ADDRESS_CONFLICT, sameNameAndAddress.get()));
         }
 
         model.setPersonKeepingDisplayed(personToEdit, editedPerson);
@@ -125,18 +131,24 @@ public class EditCommand extends Command {
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
         Phone updatedPatientNo = editPersonDescriptor.getPatientNo().orElse(personToEdit.getPatientNo());
         Phone updatedFamilyNo = editPersonDescriptor.getFamilyNo().orElse(personToEdit.getFamilyNo());
-        Email updatedPatientEmail = editPersonDescriptor.isPatientEmailEdited()
-                ? editPersonDescriptor.getPatientEmail().orElse(null)
-                : personToEdit.getPatientEmail().orElse(null);
-        Email updatedFamilyEmail = editPersonDescriptor.isFamilyEmailEdited()
-                ? editPersonDescriptor.getFamilyEmail().orElse(null)
-                : personToEdit.getFamilyEmail().orElse(null);
+        Email updatedPatientEmail = chooseEmail(editPersonDescriptor.isPatientEmailEdited(),
+                editPersonDescriptor.getPatientEmail(), personToEdit.getPatientEmail());
+        Email updatedFamilyEmail = chooseEmail(editPersonDescriptor.isFamilyEmailEdited(),
+                editPersonDescriptor.getFamilyEmail(), personToEdit.getFamilyEmail());
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
         return new Person(updatedName, updatedPatientNo, updatedFamilyNo, updatedPatientEmail,
                 updatedFamilyEmail, updatedAddress, updatedTags, personToEdit.getCheckupAppointment().orElse(null),
                 personToEdit.getRemark(), personToEdit.isArchived(), personToEdit.isCheckupMarked());
+    }
+
+    /**
+     * Returns the email to keep after an edit: {@code newEmail} if the email was edited (empty means it was
+     * removed), otherwise {@code oldEmail}. Either result may be {@code null}, meaning no email.
+     */
+    private static Email chooseEmail(boolean isEdited, Optional<Email> newEmail, Optional<Email> oldEmail) {
+        return (isEdited ? newEmail : oldEmail).orElse(null);
     }
 
     @Override
@@ -187,6 +199,7 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setPatientNo(toCopy.patientNo);
             setFamilyNo(toCopy.familyNo);
+            // the email setters would mark the emails as edited, so the fields and flags are copied directly
             patientEmail = toCopy.patientEmail;
             familyEmail = toCopy.familyEmail;
             isPatientEmailEdited = toCopy.isPatientEmailEdited;

@@ -174,6 +174,17 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_samePatientPhoneAsArchivedContact_mentionsArchive() {
+        Person archived = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setPerson(archived, archived.copyWithArchivedStatus(true));
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withPhone(archived.getPatientNo().value).build());
+
+        assertCommandFailure(editCommand, model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON + " " + Messages.MESSAGE_CLASHING_PERSON_ARCHIVED);
+    }
+
+    @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Person editedPerson = new PersonBuilder().build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
@@ -350,7 +361,17 @@ public class EditCommandTest {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build();
         EditCommand editCommand = new EditCommand(outOfBoundIndex, descriptor);
 
-        assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(editCommand, model, Messages.getMessageForIndexNotDisplayed(
+                outOfBoundIndex.getOneBased(), model.getFilteredPersonList().size()));
+    }
+
+    @Test
+    public void execute_emptyDisplayedList_failure() {
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_NO_PERSONS);
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build());
+
+        assertCommandFailure(editCommand, model, Messages.MESSAGE_EMPTY_DISPLAYED_LIST);
     }
 
     /**
@@ -367,7 +388,8 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(outOfBoundIndex,
                 new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build());
 
-        assertCommandFailure(editCommand, model, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertCommandFailure(editCommand, model, "Index 2 is out of range. "
+                + "The displayed list has 1 contact. Enter an index from 1 to 1.");
     }
 
     @Test

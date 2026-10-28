@@ -21,13 +21,13 @@ public class Remark {
 
     public static final String MESSAGE_CONSTRAINTS = "Notes can take any values, and should not be blank";
     public static final String MESSAGE_TOO_LONG = "A contact's notes can be at most " + MAX_TOTAL_LENGTH
-            + " characters in total. Use /delete to remove a note or /clear to remove them all.";
+            + " characters in total.";
 
     /*
-     * The first character of a note must not be a whitespace,
-     * otherwise " " (a blank string) becomes a valid input.
+     * The first character of a note must not be a whitespace or another space character such as a
+     * non-breaking space, otherwise " " (a blank string) becomes a valid input.
      */
-    public static final String VALIDATION_REGEX = "[^\\s].*";
+    public static final String VALIDATION_REGEX = "[^\\s\\p{Z}].*";
 
     /** A remark with no notes. */
     public static final Remark EMPTY = new Remark(List.of());

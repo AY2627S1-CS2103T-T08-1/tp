@@ -4,7 +4,7 @@
   pageNav: 3
 ---
 
-# AB-3 Developer Guide
+# CareBook Developer Guide
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -148,7 +148,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Saving data
 
-CareBook saves the contact list to `data/contacts.json` only after a command that changes it. Each `Command` has a `modifiesData()` method that returns `true` by default. Commands that only change what is displayed or show information (`list`, `find`, `filter`, `view`, `clear`, `help` and `exit`) override it to return `false`.
+CareBook saves the contact list to `data/contacts.json` only after a command that changes it. Each `Command` has a `modifiesData()` method that returns `true` by default. Commands that only change what is displayed or show information (`list`, `find`, `filter`, `sort`, `view`, `clear`, `help` and `exit`) override it to return `false`. `delete INDEX` without `/confirm` only shows a warning, so it returns `false` too. Every other command, including `archive`, `checkup`, `edit` and `remark`, saves.
 
 The sequence diagram below shows how `LogicManager` decides whether to save after executing a command.
 
@@ -305,6 +305,53 @@ selection to `null`; the details panel and highlight disappear. `list` restores 
 after showing the feedback and calls its exit handler. `ExitCommand#modifiesData()` also returns
 `false`; neither an invalid `exit` command nor a successful one changes contact data.
 
+### Editing a contact
+
+`edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] ... [/tag PRIORITY]` changes the given fields of a displayed
+contact and keeps everything else, including the contact's notes, checkup appointment, checkup mark and archived
+status.
+
+<puml src="diagrams/EditSequenceDiagram.puml" alt="Sequence of parsing and executing a successful edit 1 /pEmail command" />
+
+1. `EditCommandParser` splits the input with `ArgumentTokenizer#tokenizeStrict()`, which rejects unknown prefixes
+   and `/` inside a value. The preamble is the index.
+1. Each given field is parsed with `ParserUtil` and stored in an `EditPersonDescriptor`. A field that is not given
+   stays empty in the descriptor, which means "keep the current value".
+1. `EditCommand#execute()` checks the index against the displayed list, then builds the edited contact in
+   `createEditedPerson()` from the descriptor and the current contact.
+1. The edited contact is rejected if another contact has the same patient phone number or patient email
+   (`Person#hasSamePatientContactDetails()`), or the same name and address (`Person#hasSameNameAndAddress()`).
+   Archived contacts count too.
+1. `Model#setPersonKeepingDisplayed()` replaces the contact. The displayed list (search results, archive list and
+   sort order) stays as it is, and the edited contact stays in it even if it no longer matches the search, so the
+   indices on screen do not change. `LogicManager` then saves the data.
+
+**Keeping, setting and removing an email:** emails are optional, so `edit` has to tell three cases apart. A missing
+`/pEmail` keeps the email, `/pEmail new@example.com` sets it, and an empty `/pEmail` removes it. An empty
+`Optional<Email>` alone cannot separate "keep" from "remove", so `EditPersonDescriptor` also records
+`isPatientEmailEdited` (and `isFamilyEmailEdited`). `EditCommand#chooseEmail()` uses the new email only when the
+flag is set. Tags work the same way: a single empty `/tag` clears the priority.
+
+#### Design considerations
+
+**Aspect: how to remove an optional field**
+
+* **Alternative 1 (current choice):** an empty value, e.g. `edit 1 /pEmail`.
+  * Pros: One command, using the prefix the user already knows.
+  * Cons: Needs the extra "edited" flag in `EditPersonDescriptor`.
+* **Alternative 2:** a separate command or keyword, e.g. `unset 1 /pEmail` or `/pEmail none`.
+  * Pros: Removing data is more explicit.
+  * Cons: Another command or keyword to learn, and `none` could not be used as a real value.
+
+**Aspect: what the list shows after an edit**
+
+* **Alternative 1 (current choice):** the same list, with the edited contact kept in it.
+  * Pros: The indices the user just saw stay valid, so a follow-up command changes the intended contact.
+  * Cons: The list can contain a contact that no longer matches the search until the next `list` or `find`.
+* **Alternative 2:** the full active list (CareBook's behaviour before v1.5).
+  * Pros: Always shows every contact.
+  * Cons: The user loses their search, and indices change under them.
+
 ### Priority tags
 
 Priority tags use the existing `/tag` prefix and `Tag` model, with names restricted to `HIGH`, `MEDIUM`, and `LOW`.
@@ -408,13 +455,14 @@ word accepts four formats:
 
 #### Model and storage
 
-`Remark` is an immutable list of notes held by every `Person`. A person with no notes holds `Remark.EMPTY`, so
-`Person#getRemark()` never returns `null`. Each note must not be blank, and the notes can have at most
+`Remark` is an immutable list of notes held by every `Person`. A person with no notes holds an empty `Remark`
+(equal to `Remark.EMPTY`), so `Person#getRemark()` never returns `null`. Each note must not be blank or start with
+a space, a person cannot have the same note twice, and the notes can have at most
 `Remark.MAX_TOTAL_LENGTH` (500) characters in total, which stops one contact's card from filling the list.
 The `Remark` constructor enforces both rules, so an invalid remark cannot exist in the model.
 
-The notes count towards `Person#equals()` but not `Person#isSamePerson()`, so two contacts with the same name are
-still duplicates whatever their notes. `EditCommand` copies the remark unchanged into the edited person.
+The notes count towards `Person#equals()` but not `Person#isSamePerson()`, so notes never decide whether two
+contacts are the same person. `EditCommand` copies the remark unchanged into the edited person.
 `JsonAdaptedPerson` stores the notes as a `remarks` list of strings. A missing `remarks` field loads as no notes,
 so data files saved by v1.4 and earlier still load.
 
@@ -433,8 +481,7 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
    `#clear()`. Each stores the action and only the values that action needs.
 1. `RemarkCommand#execute()` checks the index against the displayed list and that the note number exists.
    It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
-   `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
-   `Model#setPerson()`.
+   `withNoteRemoved()`), checks the total length, and creates the changed person with `Person#withRemark()`.
 1. `RemarkCommand` replaces the person with `Model#setPersonKeepingDisplayed()` instead of `Model#setPerson()`.
    `find /remark` searches notes, so a changed note can stop the person from matching the current search.
    This method keeps the person in the displayed list anyway, so the search results, the indices on screen and
@@ -465,6 +512,18 @@ would be too long cause a `CommandException`. In each case the person is unchang
 * **Alternative 2:** One block of free text that `remark` replaces.
   * Pros: Simpler model.
   * Cons: Changing one detail means retyping the whole remark.
+
+**Aspect: how the four formats are implemented**
+
+* **Alternative 1 (current choice):** one `RemarkCommand` class with an `Action` enum, created through the factory
+  methods `add()`, `edit()`, `delete()` and `clear()`. `execute()` switches on the action once to compute the notes,
+  and `getSuccessMessage()` switches again for the message.
+  * Pros: The shared steps (finding the person, the length check, saving) are written once, and all four formats
+    stay in one place that matches the single `remark` command word.
+  * Cons: Two switches on the same action, and `noteIndex` and `note` are `null` for actions that do not use them.
+* **Alternative 2:** one command class per format, e.g. `AddRemarkCommand` and `DeleteRemarkCommand`.
+  * Pros: Each class holds only the fields it needs, with no switches.
+  * Cons: Four classes repeat the shared steps, or need a common superclass for them.
 
 ### Find command
 
@@ -796,10 +855,6 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
-### \[Proposed\] Data archiving
-
-_{Explain here how the data archiving feature will be implemented}_
-
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -918,7 +973,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Use case: Delete a person**
 
-**MSS**
+**MSS:**
 
 1.  User requests to list persons
 2.  CareBook shows a list of persons
@@ -951,7 +1006,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Use case: Edit a contact**
 
-**MSS**
+**MSS:**
 
 1.  User requests to list persons
 2.  CareBook shows a list of persons
@@ -996,14 +1051,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 4.
 
-**Use case: Keep a care note on a contact**
+**Use case: Manage the care notes of a contact**
 
-**MSS**
+**MSS:**
 
 1.  User requests to list persons
 2.  CareBook shows a list of persons
-3.  User requests to add a note to a specific person in the list
-4.  CareBook adds the note after the person's last note and shows it with its number
+3.  User requests to add, change or delete a note of a specific person in the list
+4.  CareBook updates the person's notes and shows the result
 
     Use case ends.
 
@@ -1031,11 +1086,11 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-* 3d. The user requests to edit or delete one of the person's notes by its number instead.
+* 3d. The person already has the note being added.
 
-    * 3d1. CareBook replaces or deletes that note and shows the result.
+    * 3d1. CareBook shows an error message with the number of that note, and leaves the notes unchanged.
 
-      Use case ends.
+      Use case resumes at step 2.
 
 * 3e. The user requests to edit or delete a note number the person does not have.
 
@@ -1043,9 +1098,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-* 3f. The user requests to clear the person's notes instead.
+* 3f. The user requests to delete all of the person's notes.
 
-    * 3f1. CareBook deletes all of the person's notes, and the card no longer shows a `Remark:` line.
+    * 3f1. CareBook deletes all of the person's notes and confirms it.
 
       Use case ends.
 
@@ -1155,7 +1210,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 **Use case: Save contact list after an update**
 
-**MSS**
+**MSS:**
 
 1. User requests to list persons.
 2. CareBook shows a list of persons.
@@ -1301,7 +1356,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
       
 **Use case: Filter contacts**
 
-**MSS**
+**MSS:**
 
 1.  User requests to filter contacts by one or more criteria (name, tag, address)
 2.  CareBook validates the command
@@ -1325,7 +1380,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 **Use case: Sort contacts**
 
-**MSS**
+**MSS:**
 
 1.  User requests to sort the displayed contacts by a criterion (priority, name or recent) and an optional direction
 2.  CareBook validates the command
@@ -1364,7 +1419,14 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Recovery**: Patient is deemed to have reached their normal level of physical and physiological function
 * **Relevant contacts**: A patient's emergency contact, or other family contacts
-* **Active contacts**: Contacts that are not archived
+* **Active contact**: A contact that is not archived. `list` shows the active contacts
+* **Archived contact**: A contact moved out of the active list with `archive`, kept with all its details and shown by `list archive`
+* **Displayed list**: The contacts currently shown, after any `list`, `find`, `filter` or `sort`. Indices refer to this list
+* **Index**: The number shown next to a contact in the displayed list, starting from 1
+* **Care note (note)**: One numbered piece of free text about a contact, such as an allergy, added with `remark`. A contact's notes together are its remark
+* **Note number**: The number shown before a note on the contact's card, used by `remark INDEX /edit` and `/delete`
+* **Priority tag**: A contact's priority, `HIGH`, `MEDIUM` or `LOW`
+* **Data file**: `data/contacts.json`, where CareBook saves the contacts automatically
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -1385,15 +1447,16 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
+   1. Open a terminal in that folder and run `java -jar carebook.jar`.<br>
       Expected: The GUI opens with an empty contact list. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar carebook.jar`.<br>
        Expected: The most recent window size and location are retained.
+
 
 ### Viewing, clearing and exiting
 
@@ -1556,7 +1619,6 @@ testers are expected to do more *exploratory* testing.
    1. Incorrect sort commands to try: `sort`, `sort address`, `sort priority up`, `sort recent desc`<br>
       Expected: The order does not change. The status message shows `Invalid command format!` followed by the sort usage.
 
-1. _{ more test cases … }_
 
 ### Editing a person
 
@@ -1576,8 +1638,8 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `edit 1 /email someone@example.com`<br>
       Expected: No person is edited. The status message says that `/email` is no longer supported and to use `/pEmail` or `/fEmail` instead.
 
-   1. Test case: `edit 1 /name NAME`, where `NAME` is the name of the second person.<br>
-      Expected: No person is edited. The status message shows `This person already exists in CareBook.`
+   1. Test case: `edit 1 /patientNo PHONE`, where `PHONE` is the second person's patient phone number.<br>
+      Expected: No person is edited. The status message shows `Someone with this patient HP or email already exists in CareBook.`
 
    1. Other incorrect edit commands to try: `edit 1`, `edit 0 /name Amy`, `edit x /name Amy` (where x is larger than the list size), `edit 1 /patientNo abc` and `edit 1 /pEmail john`<br>
       Expected: No person is edited. The status message shows error details.
@@ -1592,6 +1654,13 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `edit 1 /name Zachary Tan`<br>
       Expected: The first person is renamed and stays first in the results, even though the new name no longer
       matches the search. `list` shows the full list again.
+
+1. Editing an archived contact
+
+   1. Prerequisites: Archive a contact with `archive 1`, then run `list archive`.
+
+   1. Test case: `edit 1 /address 2 Archive Road`<br>
+      Expected: The address changes, the contact stays archived, and the archive list stays on screen.
 
 ### Checkup appointments
 
@@ -1679,6 +1748,13 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Add a note, close CareBook and relaunch it.<br>
       Expected: The note is still shown.
 
+   1. Test case: Archive a contact, run `list archive`, then `remark 1 Moved to a care home`<br>
+      Expected: The note is added, and the contact stays archived and on screen in the archive list.
+
+   1. Test case: Close CareBook, change a contact's `remarks` in `data/contacts.json` to `[ " " ]`, then relaunch.<br>
+      Expected: The data file is treated as invalid: CareBook starts with an empty contact list and shows
+      "Data file could not be loaded. Starting with an empty contact list."
+
 ### Priority tags
 
 1. Adding priority tags
@@ -1716,7 +1792,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Back up `data/contacts.json`, close CareBook, and change a stored tag string to `"friends"`, `"high"`, or `" HIGH "`. Also test a list containing `["HIGH", "LOW"]`. Relaunch for each case.<br>
       Expected: CareBook starts with an empty contact list and shows "Data file could not be loaded. Starting with an empty contact list." Close CareBook and restore the backup before continuing.
 
-### Saving data
+### Saving and loading data
 
 1. Dealing with missing/corrupted data files
 

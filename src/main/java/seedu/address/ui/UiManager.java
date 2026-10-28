@@ -25,7 +25,7 @@ public class UiManager implements Ui {
 
     private Logic logic;
     private Path dataFilePath;
-    private String startupMessage;
+    private final String startupMessage;
     private MainWindow mainWindow;
 
     /**

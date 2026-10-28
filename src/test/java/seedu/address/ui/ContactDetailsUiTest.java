@@ -208,7 +208,7 @@ public class ContactDetailsUiTest {
             window.enter("remark 1 /clear");
             assertFalse(window.detailsPanel().isVisible());
             window.enter("view 1");
-            assertTrue(window.detailsText().getText().contains("Remarks: None"));
+            assertTrue(window.detailsText().getText().contains("Remark: None"));
             assertFalse(window.detailsText().getText().contains("Call family"));
             assertTrue(window.detailsPanel().isVisible());
         });

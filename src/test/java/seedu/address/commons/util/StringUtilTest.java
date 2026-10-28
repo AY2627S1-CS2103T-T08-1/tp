@@ -32,6 +32,7 @@ public class StringUtilTest {
         // EP: signed numbers
         assertFalse(StringUtil.isNonZeroUnsignedInteger("-1"));
         assertFalse(StringUtil.isNonZeroUnsignedInteger("+1"));
+        assertFalse(StringUtil.isNonZeroUnsignedInteger("\u0661")); // Arabic-Indic digit one
 
         // EP: numbers with white space
         assertFalse(StringUtil.isNonZeroUnsignedInteger(" 10 ")); // Leading/trailing spaces
