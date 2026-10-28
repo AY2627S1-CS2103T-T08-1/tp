@@ -203,13 +203,13 @@ class JsonAdaptedPerson {
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException(CheckupAppointment.MESSAGE_CONSTRAINTS);
         }
-        final boolean modelArchived = toModelBoolean(archived, "archived");
-        final boolean modelCheckupMarked = toModelBoolean(checkupMarked, "checkupMarked");
-        if (modelCheckupMarked && modelAppointment == null) {
+        final boolean isArchived = toModelBoolean(archived, "archived");
+        final boolean isCheckupMarked = toModelBoolean(checkupMarked, "checkupMarked");
+        if (isCheckupMarked && modelAppointment == null) {
             throw new IllegalValueException(Person.MESSAGE_MARK_WITHOUT_CHECKUP);
         }
         return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
-                modelAddress, modelTags, modelAppointment, toModelRemark(), modelArchived, modelCheckupMarked);
+                modelAddress, modelTags, modelAppointment, toModelRemark(), isArchived, isCheckupMarked);
     }
 
     /**
