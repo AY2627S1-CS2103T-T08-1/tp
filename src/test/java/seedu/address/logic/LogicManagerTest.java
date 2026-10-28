@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
@@ -18,6 +19,7 @@ import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -48,6 +50,7 @@ import seedu.address.testutil.PersonUtil;
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
     private static final IOException DUMMY_AD_EXCEPTION = new AccessDeniedException("dummy access denied exception");
+    private static final IOException DUMMY_FAE_EXCEPTION = new FileAlreadyExistsException("data");
 
     @TempDir
     public Path temporaryFolder;
@@ -79,7 +82,70 @@ public class LogicManagerTest {
     @Test
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
-        assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+        assertCommandSuccess(listCommand, ListCommand.MESSAGE_NO_CONTACTS, model);
+    }
+
+    @Test
+    public void execute_successfulNonViewCommands_clearSelectionWithoutOverridingTheirResults() throws Exception {
+        for (String command : List.of("list", "sort name desc", "find Amy", "filter /name Amy", "help",
+                "edit 1 /address Updated Road", "remark 1 Care note", "archive 1", "delete 1", "clear", "exit",
+                PersonUtil.getAddCommand(new PersonBuilder().withName("Case Preserved").build()))) {
+            model = new ModelManager();
+            setUp();
+            model.addPerson(AMY);
+            model.addPerson(BOB);
+            logic.execute("view 1");
+
+            logic.execute(command);
+
+            assertNull(model.selectedPersonProperty().get(), command);
+            if (command.startsWith("find") || command.startsWith("filter")) {
+                assertEquals(List.of(AMY), model.getFilteredPersonList(), command);
+            } else if (command.equals("sort name desc")) {
+                assertEquals(List.of(BOB, AMY), model.getFilteredPersonList());
+            }
+        }
+    }
+
+    @Test
+    public void execute_checkupAndArchiveWorkflow_closesDetailsAfterEachSuccessfulUpdate() throws Exception {
+        model.addPerson(AMY);
+        for (String command : List.of("checkup 1 25/12/2099 14:30", "mark 1", "unmark 1", "archive 1")) {
+            logic.execute("view 1");
+            logic.execute(command);
+            assertNull(model.selectedPersonProperty().get(), command);
+        }
+        logic.execute("list archive");
+        logic.execute("view 1");
+        logic.execute("unarchive 1");
+        assertNull(model.selectedPersonProperty().get());
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertEquals(1, model.getAddressBook().getPersonList().size());
+        assertFalse(model.getAddressBook().getPersonList().getFirst().isArchived());
+    }
+
+    @Test
+    public void execute_repeatedView_preservesSelectionAndData() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("view 1");
+
+        logic.execute("view 1");
+
+        assertEquals(AMY, model.selectedPersonProperty().get());
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_invalidCommands_preserveSelectionAndDisplay() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("view 1");
+        for (String command : List.of("unknown", "view 0", "exit Alice", "clear 1")) {
+            assertThrows(ParseException.class, () -> logic.execute(command));
+            assertEquals(AMY, model.selectedPersonProperty().get(), command);
+            assertEquals(List.of(AMY), model.getFilteredPersonList(), command);
+        }
+        assertThrows(CommandException.class, () -> logic.execute("delete 2"));
+        assertEquals(AMY, model.selectedPersonProperty().get());
     }
 
     @Test
@@ -115,15 +181,21 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_storageThrowsIoException_throwsCommandException() {
+    public void execute_storageThrowsIoException_throwsCommandException() throws Exception {
         assertCommandFailureForExceptionFromStorage(DUMMY_IO_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_ERROR_FORMAT, DUMMY_IO_EXCEPTION.getMessage()));
     }
 
     @Test
-    public void execute_storageThrowsAdException_throwsCommandException() {
+    public void execute_storageThrowsAdException_throwsCommandException() throws Exception {
         assertCommandFailureForExceptionFromStorage(DUMMY_AD_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, DUMMY_AD_EXCEPTION.getMessage()));
+    }
+
+    @Test
+    public void execute_storageThrowsFileAlreadyExistsException_explainsBlockedFolder() throws Exception {
+        assertCommandFailureForExceptionFromStorage(DUMMY_FAE_EXCEPTION, String.format(
+                LogicManager.FILE_OPS_FOLDER_BLOCKED_ERROR_FORMAT, DUMMY_FAE_EXCEPTION.getMessage()));
     }
 
     @Test
@@ -288,7 +360,8 @@ public class LogicManagerTest {
      * @param e the exception to be thrown by the Storage component
      * @param expectedMessage the message expected inside exception thrown by the Logic component
      */
-    private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage) {
+    private void assertCommandFailureForExceptionFromStorage(IOException e, String expectedMessage)
+            throws Exception {
         Path prefPath = temporaryFolder.resolve("ExceptionUserPrefs.json");
 
         // Inject LogicManager with a JsonAddressBookStorage that throws the IOException e when saving
@@ -308,10 +381,18 @@ public class LogicManagerTest {
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + FAMILY_PHONE_DESC_AMY + PATIENT_EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+
+        // the add is undone, so the shown contacts still match the data file
+        ModelManager expectedModel = new ModelManager();
+        assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+
+        // a retry is not blocked as a duplicate, and is saved once storage works again
+        logic = new LogicManager(model, new StorageManager(new JsonAddressBookStorage(
+                temporaryFolder.resolve("RetryAddressBook.json")), userPrefsStorage));
         Person expectedPerson = new PersonBuilder(AMY).withFamilyNo(VALID_FAMILY_PHONE_AMY)
                 .withPatientEmail(VALID_EMAIL_AMY).withTags().build();
-        ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
-        assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
+        assertCommandSuccess(addCommand, String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expectedPerson)),
+                expectedModel);
     }
 }

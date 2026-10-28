@@ -42,6 +42,7 @@ public class PersonContainsKeywordsPredicate implements Predicate<Person> {
             case EMAIL -> Stream.concat(person.getPatientEmail().stream(), person.getFamilyEmail().stream())
                     .map(email -> email.value);
             case TAG -> person.getTags().stream().map(tag -> tag.tagName);
+            case REMARK -> person.getRemark().getNotes().stream().map(note -> note.trim().replaceAll("\\s+", " "));
         };
     }
 

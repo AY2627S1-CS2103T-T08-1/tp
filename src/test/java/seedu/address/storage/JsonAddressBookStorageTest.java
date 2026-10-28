@@ -41,7 +41,7 @@ public class JsonAddressBookStorageTest {
         Model model = new ModelManager(
                 restored, new UserPrefs());
         assertFalse(model.getFilteredPersonList().contains(ALICE.copyWithArchivedStatus(true)));
-        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ARCHIVED_PERSONS);
+        model.setArchiveScope(true);
         assertEquals(List.of(ALICE.copyWithArchivedStatus(true)), model.getFilteredPersonList());
     }
 
@@ -68,6 +68,11 @@ public class JsonAddressBookStorageTest {
     @Test
     public void read_notJsonFormat_exceptionThrown() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("notJsonFormatAddressBook.json"));
+    }
+
+    @Test
+    public void read_onlyNull_exceptionThrown() {
+        assertThrows(DataLoadingException.class, () -> readAddressBook("nullAddressBook.json"));
     }
 
     @Test

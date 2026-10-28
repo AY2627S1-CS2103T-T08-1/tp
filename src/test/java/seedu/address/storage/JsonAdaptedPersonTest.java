@@ -56,6 +56,34 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_archivedNotTrueOrFalse_throwsIllegalValueException() throws Exception {
+        String expectedMessage = String.format(JsonAdaptedPerson.INVALID_BOOLEAN_MESSAGE_FORMAT, "archived");
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(BENSON));
+        for (String value : List.of("\"true\"", "\"TRUE\"", "1", "\"\"")) {
+            String changedJson = json.replaceAll("\"archived\"\s*:\s*false", "\"archived\" : " + value);
+            JsonAdaptedPerson adapted = JsonUtil.fromJsonString(changedJson, JsonAdaptedPerson.class);
+            assertThrows(IllegalValueException.class, expectedMessage, adapted::toModelType);
+        }
+    }
+
+    @Test
+    public void toModelType_archivedNullOrMissing_isActive() throws Exception {
+        String json = JsonUtil.toJsonString(new JsonAdaptedPerson(BENSON));
+        String nullJson = json.replaceAll("\"archived\"\s*:\s*false", "\"archived\" : null");
+        assertEquals(BENSON, JsonUtil.fromJsonString(nullJson, JsonAdaptedPerson.class).toModelType());
+        String missingJson = json.replaceAll(",\s*\"archived\"\s*:\s*false", "");
+        assertEquals(BENSON, JsonUtil.fromJsonString(missingJson, JsonAdaptedPerson.class).toModelType());
+    }
+
+    @Test
+    public void toModelType_checkupMarkedNotTrueOrFalse_throwsIllegalValueException() {
+        JsonAdaptedPerson adapted = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
+                VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, null, null, false, "yes");
+        assertThrows(IllegalValueException.class,
+                String.format(JsonAdaptedPerson.INVALID_BOOLEAN_MESSAGE_FORMAT, "checkupMarked"), adapted::toModelType);
+    }
+
+    @Test
     public void toModelType_markedWithoutCheckup_rejectsInvalidState() {
         JsonAdaptedPerson adapted = new JsonAdaptedPerson(VALID_NAME, VALID_PATIENT_PHONE, VALID_FAMILY_PHONE,
                 VALID_EMAIL, null, null, VALID_ADDRESS, VALID_TAGS, null, null, false, true);

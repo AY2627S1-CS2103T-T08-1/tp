@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.List;
@@ -31,7 +32,8 @@ public class FindCommandParser implements Parser<FindCommand> {
             PREFIX_PATIENT_EMAIL, FindCriterion.PATIENT_EMAIL,
             PREFIX_FAMILY_EMAIL, FindCriterion.FAMILY_EMAIL,
             PREFIX_LEGACY_EMAIL, FindCriterion.EMAIL,
-            PREFIX_TAG, FindCriterion.TAG);
+            PREFIX_TAG, FindCriterion.TAG,
+            PREFIX_REMARK, FindCriterion.REMARK);
 
     /**
      * Parses the given {@code String} of arguments in the context of the FindCommand
@@ -39,7 +41,7 @@ public class FindCommandParser implements Parser<FindCommand> {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public FindCommand parse(String args) throws ParseException {
-        String trimmedArgs = args.trim();
+        String trimmedArgs = args.trim().replaceAll("\\s+", " ");
         if (trimmedArgs.isEmpty()) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
@@ -47,7 +49,11 @@ public class FindCommandParser implements Parser<FindCommand> {
 
         String[] tokens = trimmedArgs.split("\\s+", 2);
         if (!tokens[0].startsWith("/")) {
-            return new FindCommand(new NameContainsKeywordsPredicate(List.of(trimmedArgs.split("\\s+"))));
+            List<String> keywords = List.of(trimmedArgs.split("\\s+"));
+            if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
+                throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
+            }
+            return new FindCommand(new NameContainsKeywordsPredicate(List.of(trimmedArgs)));
         }
 
         FindCriterion criterion = CRITERIA.entrySet().stream()
@@ -71,7 +77,10 @@ public class FindCommandParser implements Parser<FindCommand> {
         if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
-        return new FindCommand(new PersonContainsKeywordsPredicate(criterion, keywords));
+
+        String normalizedInput = input.trim().replaceAll("\\s+", " ");
+        return new FindCommand(
+                new PersonContainsKeywordsPredicate(criterion, List.of(normalizedInput)));
     }
 
 }
