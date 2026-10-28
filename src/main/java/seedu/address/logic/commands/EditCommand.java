@@ -101,6 +101,20 @@ public class EditCommand extends Command {
             return new CommandResult(String.format(MESSAGE_NO_CHANGE, personToEdit.getName()));
         }
 
+        requireNoClash(model, personToEdit, editedPerson);
+        model.setPersonKeepingDisplayed(personToEdit, editedPerson);
+        logger.info("Edited contact at index " + index.getOneBased());
+        return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
+    }
+
+    /**
+     * Checks that {@code editedPerson}, which replaces {@code personToEdit}, does not clash with another person.
+     *
+     * @throws CommandException if another person has the same patient contact details, or the same name and
+     *     address, or if the new family HP breaks a checkup booking shared with another person.
+     */
+    private static void requireNoClash(Model model, Person personToEdit, Person editedPerson)
+            throws CommandException {
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
                 .filter(person -> !person.equals(personToEdit)).toList();
 
@@ -124,10 +138,6 @@ public class EditCommand extends Command {
             logger.fine("Edit rejected: the new family HP clashes with another contact's checkup booking");
             throw new CommandException(MESSAGE_BOOKING_CLASH);
         }
-
-        model.setPersonKeepingDisplayed(personToEdit, editedPerson);
-        logger.info("Edited contact at index " + index.getOneBased());
-        return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
     }
 
     /**
