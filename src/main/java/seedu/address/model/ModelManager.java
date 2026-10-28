@@ -36,7 +36,7 @@ public class ModelManager implements Model {
     /** Persons kept in the displayed list after a change, although they may not match {@link #displayPredicate}. */
     private final Set<Person> keptDisplayed = new HashSet<>();
     /** The order chosen with {@code sort}, or {@code null} for the order the persons were added in. */
-    private Comparator<Person> sortOrder;
+    private Comparator<? super Person> sortOrder;
     /**
      * Positions in the sorted list of the persons shown when a person was first changed after sorting, or
      * {@code null} if nobody has been changed since. While set, changed persons keep their positions.
@@ -55,7 +55,8 @@ public class ModelManager implements Model {
 
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
-        filteredPersons = new FilteredList<>(this.addressBook.getPersonList(), this::isDisplayed);
+        filteredPersons = new FilteredList<>(this.addressBook.getPersonList(), PREDICATE_SHOW_ALL_PERSONS);
+        filteredPersons.setPredicate(this::isDisplayed);
         sortedPersons = new SortedList<>(filteredPersons);
     }
 
@@ -253,25 +254,28 @@ public class ModelManager implements Model {
     @Override
     public void updateSortedPersonList(Comparator<Person> comparator) {
         requireNonNull(comparator);
-        setSortOrder(comparator);
+        sortedPersons.setComparator(comparator);
+        rememberSortOrder();
     }
 
     @Override
     public void sortPersonsByMostRecent() {
         // the address book keeps persons in the order they were added, so a later index means more recent
         ObservableList<Person> addedOrder = addressBook.getPersonList();
-        setSortOrder(Comparator.<Person>comparingInt(addedOrder::indexOf).reversed());
+        sortedPersons.setComparator(Comparator.comparingInt(addedOrder::indexOf).reversed());
+        rememberSortOrder();
     }
 
     @Override
     public void resetSortedPersonList() {
-        setSortOrder(null);
+        sortedPersons.setComparator(null);
+        rememberSortOrder();
     }
 
-    private void setSortOrder(Comparator<Person> comparator) {
-        sortOrder = comparator;
+    /** Records the comparator just given to the sorted list as the sort order, dropping any kept positions. */
+    private void rememberSortOrder() {
+        sortOrder = sortedPersons.getComparator();
         keptPositions = null;
-        sortedPersons.setComparator(comparator);
     }
 
     @Override
