@@ -324,7 +324,10 @@ status.
    Archived contacts count too.
 1. `Model#setPersonKeepingDisplayed()` replaces the contact. The displayed list (search results, archive list and
    sort order) stays as it is, and the edited contact stays in it even if it no longer matches the search, so the
-   indices on screen do not change. `LogicManager` then saves the data.
+   indices on screen do not change. `ModelManager` keeps a set of such contacts, and the filtered list shows a
+   contact if it is in the set or matches the search. A later `Model#setPerson()` on a kept contact (e.g. by
+   `checkup` or `mark`) keeps the new contact in the set, unless the change moves it out of the current list, as
+   `archive` does. The next `list`, `find` or `filter` empties the set. `LogicManager` then saves the data.
 
 **Keeping, setting and removing an email:** emails are optional, so `edit` has to tell three cases apart. A missing
 `/pEmail` keeps the email, `/pEmail new@example.com` sets it, and an empty `/pEmail` removes it. An empty
@@ -717,6 +720,11 @@ The `sort` command changes the order in which contacts are displayed. It support
 * Commands that take an `INDEX` (`delete`, `edit`, `view`) read the displayed list, so the index shown on screen
   always refers to the contact that is acted on.
 * `list` calls `Model#resetSortedPersonList()`, which restores the order contacts were added.
+* Changing a contact does not move it in a sorted list. Otherwise `edit 1 /name Zed` under `sort name` would move
+  contact 1 to the end, and the next `remark 1` would change someone else. When a contact is first replaced after a
+  sort, `ModelManager` records the position of every displayed contact and switches the `SortedList` to a comparator
+  that orders by those positions; the replacing contact takes the position of the one it replaces. The next `sort`,
+  `list`, `find` or `filter` drops the positions and applies the chosen sort order again.
 
 `PersonComparators` provides the orderings:
 
@@ -1612,6 +1620,9 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `filter /tag HIGH` followed by `sort name`<br>
       Expected: Only `HIGH` persons are shown, from A to Z.
+
+   1. Test case: `sort name`, then `edit 1 /name Zed Example`<br>
+      Expected: The edited person stays first in the list, so index 1 still refers to them. Running `sort name` again moves them to the end.
 
    1. Test case: `list` after any sort<br>
       Expected: All active persons are shown again in the order they were added.
