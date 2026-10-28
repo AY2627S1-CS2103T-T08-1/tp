@@ -169,13 +169,11 @@ public class ModelManager implements Model {
      * Orders persons with a kept position by that position, before any other persons, which follow the sort order.
      */
     private int compareKeepingPositions(Person first, Person second) {
-        Integer firstPosition = keptPositions.get(first);
-        Integer secondPosition = keptPositions.get(second);
-        if (firstPosition != null && secondPosition != null) {
+        // persons without a kept position share the last position, and are ordered among themselves by the sort order
+        int firstPosition = keptPositions.getOrDefault(first, Integer.MAX_VALUE);
+        int secondPosition = keptPositions.getOrDefault(second, Integer.MAX_VALUE);
+        if (firstPosition != secondPosition) {
             return Integer.compare(firstPosition, secondPosition);
-        }
-        if (firstPosition != null || secondPosition != null) {
-            return firstPosition != null ? -1 : 1;
         }
         return sortOrder.compare(first, second);
     }

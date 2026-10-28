@@ -332,6 +332,33 @@ public class ModelManagerTest {
     }
 
     @Test
+    public void setPerson_sortedFilteredList_newlyMatchingPersonsFollowKeptPositions() {
+        // ALICE and DANIEL are HIGH; BENSON is LOW and CARL has no tag
+        modelManager = modelWithPersonsAddedInOrder();
+        modelManager.updateFilteredPersonList(new PersonHasTagPredicate("HIGH"));
+        modelManager.updateSortedPersonList(PersonComparators.byName(true));
+        Person aliceWithNote = new PersonBuilder(ALICE).withRemarks("Diabetic").build();
+        modelManager.setPerson(ALICE, aliceWithNote);
+
+        // persons that start matching the filter have no kept position, so they follow the sort order
+        Person highCarl = new PersonBuilder(CARL).withTags("HIGH").build();
+        Person highBenson = new PersonBuilder(BENSON).withTags("HIGH").build();
+        modelManager.setPerson(CARL, highCarl);
+        modelManager.setPerson(BENSON, highBenson);
+        assertEquals(List.of(aliceWithNote, DANIEL, highBenson, highCarl), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void setPersonKeepingDisplayed_hiddenPerson_staysHidden() {
+        modelManager = modelWithPersonsAddedInOrder();
+        modelManager.updateFilteredPersonList(new PersonHasTagPredicate("HIGH"));
+        Person bensonWithNote = new PersonBuilder(BENSON).withRemarks("Diabetic").build();
+
+        modelManager.setPersonKeepingDisplayed(BENSON, bensonWithNote);
+        assertEquals(List.of(DANIEL, ALICE), modelManager.getFilteredPersonList());
+    }
+
+    @Test
     public void updateSortedPersonList_afterChange_sortsAgain() {
         modelManager = modelWithPersonsAddedInOrder();
         modelManager.updateSortedPersonList(PersonComparators.byName(true));
