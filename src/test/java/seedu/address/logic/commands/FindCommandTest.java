@@ -50,6 +50,9 @@ public class FindCommandTest {
                 "find /name D       Est   ", "find /address D       Est   ")) {
             parser.parseCommand(command).execute(searchModel);
             assertEquals(List.of(match, containingPhrase), searchModel.getFilteredPersonList(), command);
+        }
+    }
+
     public void execute_remarkSearchFromActiveList_excludesArchivedContactsAndMatchesPhrase() throws Exception {
         Model searchModel = new ModelManager();
         Person activeMatch = new PersonBuilder(ALICE).withRemarks("Bring medication", "Needs assistance").build();
@@ -129,6 +132,9 @@ public class FindCommandTest {
             new AddressBookParser().parseCommand(command).execute(searchModel);
             assertEquals(List.of(brandy, new PersonBuilder().withName("Dylan").build()),
                     searchModel.getFilteredPersonList());
+        }
+    }
+
     public void execute_filteredOrSortedArchiveView_searchesArchivedContactsOnly() throws Exception {
         Person archivedDaniel = DANIEL.copyWithArchivedStatus(true);
         model.setPerson(DANIEL, archivedDaniel);
