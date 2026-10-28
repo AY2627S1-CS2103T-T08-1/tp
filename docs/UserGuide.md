@@ -335,7 +335,7 @@ Examples:
 | --- | --- | --- |
 | `edit 1` (no field) | `At least one field to edit must be provided.` | Add at least one field, e.g. `edit 1 /name John Doe`. |
 | `edit 1 /email john@example.com` | `/email is no longer supported. Use /pEmail for the patient's email or /fEmail for the family member's email.` | Use `/pEmail` for the patient's email or `/fEmail` for the family member's email. |
-| `edit 0 /name John Doe` | `Invalid command format!` followed by the correct usage | Use an index of 1 or more. |
+| `edit 0 /name John Doe` | `Index must be a positive integer.` | Use an index of 1 or more. |
 | `edit 99 /name John Doe` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
 | `edit 1 /name John Doe` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
