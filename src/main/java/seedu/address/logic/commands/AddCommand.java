@@ -31,6 +31,8 @@ public class AddCommand extends Command {
             + "[" + PREFIX_FAMILY_EMAIL + " FAMILY_EMAIL] "
             + PREFIX_ADDRESS + " ADDRESS "
             + "[" + PREFIX_TAG + " PRIORITY]\n"
+            + "Note: The '/' character is reserved for valid prefixes and is not allowed in any field value.\n"
+            + "Separate each prefix from its value with a space.\n"
             + "Example: " + COMMAND_WORD + " "
             + PREFIX_NAME + " Aunty Rosalind "
             + PREFIX_PATIENT_PHONE + " 81268767 "

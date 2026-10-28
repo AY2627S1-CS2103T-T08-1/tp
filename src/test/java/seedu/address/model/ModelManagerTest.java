@@ -2,6 +2,7 @@ package seedu.address.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -61,6 +62,56 @@ public class ModelManagerTest {
     @Test
     public void hasPerson_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> modelManager.hasPerson(null));
+    }
+
+    @Test
+    public void setPerson_selectedContactLeavesActiveList_clearsSelectionWithoutDeletingContact() {
+        modelManager.addPerson(ALICE);
+        modelManager.selectPerson(ALICE);
+        var archived = ALICE.copyWithArchivedStatus(true);
+
+        modelManager.setPerson(ALICE, archived);
+
+        assertNull(modelManager.selectedPersonProperty().get());
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(archived), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void setPerson_selectedContactLeavesArchiveList_clearsSelection() {
+        var archived = ALICE.copyWithArchivedStatus(true);
+        modelManager.addPerson(archived);
+        modelManager.updateFilteredPersonList(Model.PREDICATE_SHOW_ARCHIVED_PERSONS);
+        modelManager.selectPerson(archived);
+
+        modelManager.setPerson(archived, ALICE);
+
+        assertNull(modelManager.selectedPersonProperty().get());
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void setPerson_selectedContactStillDisplayed_refreshesSelection() {
+        modelManager.addPerson(ALICE);
+        modelManager.selectPerson(ALICE);
+        var edited = new PersonBuilder(ALICE).withAddress("Updated Road").build();
+
+        modelManager.setPerson(ALICE, edited);
+
+        assertEquals(edited, modelManager.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void setPerson_anotherContactLeavesList_preservesSelectedContact() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.selectPerson(ALICE);
+
+        modelManager.setPerson(BENSON, BENSON.copyWithArchivedStatus(true));
+
+        assertEquals(ALICE, modelManager.selectedPersonProperty().get());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
     }
 
     @Test

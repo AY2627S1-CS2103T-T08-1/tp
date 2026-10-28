@@ -114,7 +114,9 @@ The `filter` command follows the same flow, as shown in the sequence diagram bel
 How the `filter` command works:
 
 1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse(" /tag HIGH")`.
+1. `FilterCommandParser` replaces every run of whitespace (spaces, tabs and newlines) with a single space before tokenizing, so a prefix is recognized after any whitespace and not only after a literal space.
 1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
+1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/` but is not one of these prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
 1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND).
 1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons matching the criteria. It does not modify the address book data.
 1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
@@ -226,6 +228,9 @@ contact leaves selection unchanged. Updating a filter clears selection only if i
 therefore `clear` also hides the details panel. With no selection, the panel and its placeholder are
 invisible and unmanaged, so they reserve no layout space. Selection is never serialized.
 
+`setPerson` clears selection instead of retaining the replacement if it leaves the displayed list.
+This also handles archiving an active selected contact and restoring one from the archive list.
+
 **Cross-feature integration:** `getFilteredPersonList()` exposes the `SortedList` over the filtered
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
 contact rather than selecting whichever contact moves into its former row. `PersonDetailsFormatter`
@@ -297,11 +302,8 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
    It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
    `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
    `Model#setPerson()`.
-1. `view` now selects a contact without narrowing the displayed list. `Model#setPerson()` updates the
-   selected contact reference, so changes to its notes appear immediately in the details panel while
-   the current filter and sort order are preserved. The command retains a fallback for a predicate that
-   no longer contains the replaced person; ordinary name, address and priority filters are unaffected
-   by changes to notes.
+1. `RemarkCommand` does not change the displayed list. No `find` or `filter` criterion looks at notes, so the
+   changed person still matches the current search, and the search results and sort order stay as they are.
 
 **Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
 are never lost because of a missing argument. A missing or invalid index or note number causes a
@@ -936,7 +938,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `remark 1`<br>
       Expected: No note changes. The status message shows the correct usage.
 
-   1. Other incorrect remark commands to try: `remark 0 note`, `remark x note` (where x is larger than the list size), `remark 1 /delete 9` and `remark 1 /edit 1`<br>
+   1. Other incorrect remark commands to try: `remark /clear` (no index), `remark 0 note`, `remark x note` (where x is larger than the list size), `remark 1 /delete 9` and `remark 1 /edit 1`<br>
       Expected: No note changes. The status message shows error details.
 
 1. Keeping notes after other commands
@@ -944,8 +946,9 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `remark 1 Visits after 3pm`, then `edit 1 /address 1 Test Street`<br>
       Expected: The address changes and the note is still shown.
 
-   1. Test case: `view 2`, then `remark 1 Diabetic` and `remark 1 Uses a wheelchair`<br>
-      Expected: The second contact stays on screen and has both notes.
+   1. Test case: `find` with a name that matches some, but not all, persons, then `remark 1 Diabetic` and
+      `remark 1 Uses a wheelchair`<br>
+      Expected: The search results stay on screen, and the first result has both notes.
 
    1. Test case: Add a note, close CareBook and relaunch it.<br>
       Expected: The note is still shown.

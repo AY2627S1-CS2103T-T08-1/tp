@@ -36,6 +36,20 @@ public class UniquePersonListTest {
         uniquePersonList.setPersons(List.of(ALICE, anotherAlice));
         assertEquals(List.of(ALICE, anotherAlice), uniquePersonList.asUnmodifiableObservableList());
     }
+      
+    @Test
+    public void add_sameNameWithExtraSpaces_throwsDuplicatePersonException() {
+       Person kim = new PersonBuilder(ALICE).withName("Kim Lee").build();
+        Person spacedKim = new PersonBuilder(BOB)
+            .withName("Kim    Lee   ")
+            .withAddress(kim.getAddress().value)
+            .build();
+
+        uniquePersonList.add(kim);
+        assertThrows(DuplicatePersonException.class,
+            () -> uniquePersonList.add(spacedKim));
+        assertEquals(List.of(kim), uniquePersonList.asUnmodifiableObservableList());
+    }
 
     @Test
     public void contains_nullPerson_throwsNullPointerException() {

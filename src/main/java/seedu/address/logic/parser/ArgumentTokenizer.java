@@ -1,11 +1,15 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
  * Tokenizes arguments string of the form: {@code preamble <prefix>value <prefix>value ...}<br>
@@ -27,6 +31,26 @@ public class ArgumentTokenizer {
      */
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
+        return extractArguments(argsString, positions);
+    }
+
+    /**
+     * Tokenizes contact fields, rejecting every slash that is not part of a complete recognized prefix.
+     * Prefixes must be separated from their values by whitespace. The supplied usage is shown on failure.
+     */
+    public static ArgumentMultimap tokenizeStrict(String argsString, String usage, Prefix... prefixes)
+            throws ParseException {
+        List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
+        Set<Integer> validSlashPositions = positions.stream().filter(position -> {
+            int end = position.getStartPosition() + position.getPrefix().getPrefix().length();
+            return end == argsString.length() || Character.isWhitespace(argsString.charAt(end));
+        }).map(PrefixPosition::getStartPosition).collect(Collectors.toSet());
+
+        for (int index = argsString.indexOf('/'); index >= 0; index = argsString.indexOf('/', index + 1)) {
+            if (!validSlashPositions.contains(index)) {
+                throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
+            }
+        }
         return extractArguments(argsString, positions);
     }
 
