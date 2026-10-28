@@ -116,6 +116,7 @@ How the `filter` command works:
 1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse(" /tag HIGH")`.
 1. `FilterCommandParser` replaces every run of whitespace (spaces, tabs and newlines) with a single space before tokenizing, so a prefix is recognized after any whitespace and not only after a literal space.
 1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
+1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/` but is not one of these prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
 1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND).
 1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons matching the criteria. It does not modify the address book data.
 1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
@@ -226,6 +227,9 @@ Deleting that contact or replacing the address book clears selection. Editing or
 contact leaves selection unchanged. Updating a filter clears selection only if it hides the contact;
 therefore `clear` also hides the details panel. With no selection, the panel and its placeholder are
 invisible and unmanaged, so they reserve no layout space. Selection is never serialized.
+
+`setPerson` clears selection instead of retaining the replacement if it leaves the displayed list.
+This also handles archiving an active selected contact and restoring one from the archive list.
 
 **Cross-feature integration:** `getFilteredPersonList()` exposes the `SortedList` over the filtered
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected

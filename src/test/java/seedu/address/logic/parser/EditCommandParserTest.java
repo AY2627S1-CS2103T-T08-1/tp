@@ -37,6 +37,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -59,6 +61,17 @@ public class EditCommandParserTest {
             String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
 
     private EditCommandParser parser = new EditCommandParser();
+
+    @Test
+    public void parse_unknownPrefixOrSlashInField_failure() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
+        for (String fields : List.of(" /address 4 St /phone 123", " /addressExtra 4 St",
+                " /address 4/5 Main St", " /address 4 St/name Alice", " /name Kim/Lee",
+                " /patientNo 9123/4567", " /familyNo 9123/4567", " /pEmail kim/lee@example.com",
+                " /fEmail kim/lee@example.com", " /tag HI/GH", " /", " /tagged HIGH")) {
+            assertParseFailure(parser, "1" + fields, expectedMessage);
+        }
+    }
 
     @Test
     public void parse_missingParts_failure() {

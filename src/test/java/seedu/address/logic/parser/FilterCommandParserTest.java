@@ -37,6 +37,15 @@ public class FilterCommandParserTest {
     }
 
     @Test
+    public void parse_unsupportedPrefix_throwsParseException() {
+        assertParseFailure(parser, " /patientNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name ali /patientNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /tag HIGH /familyNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /address clementi /pEmail a@b.com", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name ali /unknown x", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
     public void parse_emptyValue_throwsParseException() {
         assertParseFailure(parser, " /name", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " /name   ", MESSAGE_INVALID_FORMAT);

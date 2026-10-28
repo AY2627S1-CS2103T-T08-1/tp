@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -29,6 +30,72 @@ public class CheckupCommandTest {
     private final CheckupAppointment appointment = appointmentOn(LocalDate.now().plusDays(1));
 
     @Test
+    public void execute_sameBookingDifferentFamilyPhone_rejectsWithoutChangingContactOrSelection() throws Exception {
+        Person bookedAlice = new PersonBuilder(alice).withFamilyNo("91234567")
+                .withCheckupAppointment(appointment.toString()).build();
+        Person bookedBob = new PersonBuilder(bob).withFamilyNo("92345678")
+                .withCheckupAppointment(appointmentOn(LocalDate.now().plusDays(2)).toString())
+                .build().withMarkedCheckup();
+        model.addPerson(bookedAlice);
+        model.addPerson(bookedBob);
+        new ViewCommand(Index.fromOneBased(2)).execute(model);
+
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(2), appointment), model,
+                "A contact with this booking date and time already exists. "
+                        + "Only contacts with the same family HP can be booked at the same time.");
+        assertEquals(bookedBob, model.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void execute_sameBookingSameFamilyPhone_allowsSharedSlot() throws Exception {
+        model.addPerson(new PersonBuilder(alice).withCheckupAppointment(appointment.toString()).build());
+        model.addPerson(bob);
+
+        new CheckupCommand(Index.fromOneBased(2), appointment).execute(model);
+
+        assertEquals(appointment, model.getFilteredPersonList().get(1).getCheckupAppointment().orElseThrow());
+    }
+
+    @Test
+    public void execute_conflictingBookingOutsideDisplayedList_stillRejects() throws Exception {
+        Person bookedAlice = new PersonBuilder(alice).withFamilyNo("91234567")
+                .withCheckupAppointment(appointment.toString()).build();
+        model.addPerson(bookedAlice.copyWithArchivedStatus(true));
+        model.addPerson(bob);
+        new FilterCommand(new PersonMatchesFilterPredicate(List.of("Bob"), List.of(), List.of())).execute(model);
+
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), appointment), model,
+                CheckupCommand.MESSAGE_BOOKING_CONFLICT);
+    }
+
+    @Test
+    public void execute_sharedSlotWithAnotherDifferentFamilyPhone_stillRejects() {
+        model.addPerson(new PersonBuilder(alice).withCheckupAppointment(appointment.toString()).build());
+        model.addPerson(new PersonBuilder(bob).withFamilyNo("91234567")
+                .withCheckupAppointment(appointment.toString()).build());
+        Person charlie = new PersonBuilder(alice).withName("Charlie").build();
+        model.addPerson(charlie);
+
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(3), appointment), model,
+                CheckupCommand.MESSAGE_BOOKING_CONFLICT);
+    }
+
+    @Test
+    public void execute_differentDateOrTimeDifferentFamilyPhone_allowsBooking() throws Exception {
+        String date = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        model.addPerson(new PersonBuilder(alice).withFamilyNo("91234567")
+                .withCheckupAppointment(appointment.toString()).build());
+        model.addPerson(bob);
+        CheckupAppointment differentTime = new CheckupAppointment(date + " 00:01");
+        new CheckupCommand(Index.fromOneBased(2), differentTime).execute(model);
+        assertEquals(differentTime, model.getFilteredPersonList().get(1).getCheckupAppointment().orElseThrow());
+
+        CheckupAppointment differentDate = appointmentOn(LocalDate.now().plusDays(2));
+        new CheckupCommand(Index.fromOneBased(2), differentDate).execute(model);
+        assertEquals(differentDate, model.getFilteredPersonList().get(1).getCheckupAppointment().orElseThrow());
+    }
+
+    @Test
     public void execute_unfilteredList_updatesSelectedContactAndAllowsReplacement() throws Exception {
         model.addPerson(alice);
         model.addPerson(bob);
@@ -40,7 +107,7 @@ public class CheckupCommandTest {
         assertEquals(new PersonBuilder(bob).withCheckupAppointment(appointment.toString()).build(),
                 model.getAddressBook().getPersonList().get(1));
 
-        CheckupAppointment replacement = appointmentOn(LocalDate.now());
+        CheckupAppointment replacement = appointmentOn(LocalDate.now().plusDays(2));
         new CheckupCommand(Index.fromOneBased(2), replacement).execute(model);
         assertEquals(replacement, model.getFilteredPersonList().get(1).getCheckupAppointment().orElseThrow());
     }
@@ -136,7 +203,15 @@ public class CheckupCommandTest {
     public void execute_pastDate_leavesModelUnchanged() {
         model.addPerson(alice);
         assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), appointmentOn(LocalDate.now().minusDays(1))),
-                model, CheckupAppointment.MESSAGE_PAST_DATE);
+                model, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+    }
+
+    @Test
+    public void execute_pastTime_leavesModelUnchanged() {
+        model.addPerson(alice);
+        String pastTime = LocalDateTime.now().minusMinutes(5).format(DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm"));
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), new CheckupAppointment(pastTime)),
+                model, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
     }
 
     @Test
