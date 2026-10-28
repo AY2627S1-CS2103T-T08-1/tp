@@ -87,7 +87,8 @@ public class EditCommandTest {
 
         assertCommandSuccess(command, tagModel,
                 String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
-      
+    }
+
     @Test
     public void execute_duplicatePatientPhoneWithUnchangedName_failure() {
         Person first = model.getFilteredPersonList().get(0);

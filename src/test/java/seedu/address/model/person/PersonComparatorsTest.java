@@ -51,6 +51,9 @@ public class PersonComparatorsTest {
 
         // 2 and 02 are the same number, so the rest of the name decides
         assertEquals(List.of(room2, room02Bob, room10, huge), sorted(persons, PersonComparators.byName(true)));
+    }
+
+    @Test
     public void byCheckup_earliestOrLatestFirstWithoutCheckupLast() {
         Person early = new PersonBuilder().withName("Zed").withCheckupAppointment("01/01/2098 09:00").build();
         Person sameDayLater = new PersonBuilder().withName("Bob").withCheckupAppointment("01/01/2098 15:30").build();
