@@ -36,7 +36,7 @@ public class UniquePersonListTest {
         uniquePersonList.setPersons(List.of(ALICE, anotherAlice));
         assertEquals(List.of(ALICE, anotherAlice), uniquePersonList.asUnmodifiableObservableList());
     }
-      
+
     @Test
     public void add_sameNameWithExtraSpaces_throwsDuplicatePersonException() {
        Person kim = new PersonBuilder(ALICE).withName("Kim Lee").build();
