@@ -219,6 +219,11 @@ It focuses on command parsing and execution; helper calls and UI updates are omi
    `LogicManager` checks `ViewCommand#modifiesData()`, which returns `false`, and skips saving.
    `MainWindow` displays the returned feedback in `ResultDisplay`.
 
+Every successful view result also sets `CommandResult#isViewRequested()` to `true`. `MainWindow`
+uses this request to refresh highlighting and scroll the selected contact into view. Unlike a selection
+change listener, this also runs when the user repeats `view` for the same contact after scrolling away.
+No temporary deselection or stored-data change is needed to trigger the UI action.
+
 **Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
 with the command usage. During execution, `ViewCommand#validateTargetIndex()` distinguishes an empty
 displayed list from an index outside a non-empty list. An empty display produces recovery instructions
@@ -307,8 +312,10 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
    It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
    `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
    `Model#setPerson()`.
-1. `RemarkCommand` does not change the displayed list. No `find` or `filter` criterion looks at notes, so the
-   changed person still matches the current search, and the search results and sort order stay as they are.
+1. `RemarkCommand` replaces the person with `Model#setPersonKeepingDisplayed()` instead of `Model#setPerson()`.
+   `find /remark` searches notes, so a changed note can stop the person from matching the current search.
+   This method keeps the person in the displayed list anyway, so the search results, the indices on screen and
+   the sort order stay the same until the next `list`, `find` or `filter`. `EditCommand` does the same.
 
 **Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
 are never lost because of a missing argument. A missing or invalid index or note number causes a
@@ -973,7 +980,11 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Use `find` with a name that matches some, but not all, persons.
 
    1. Test case: `edit 1 /address 1 Test Street`<br>
-      Expected: The first person in the filtered list is edited, and the full list is shown again.
+      Expected: The first person in the filtered list is edited, and the same search results stay on screen.
+
+   1. Test case: `edit 1 /name Zachary Tan`<br>
+      Expected: The first person is renamed and stays first in the results, even though the new name no longer
+      matches the search. `list` shows the full list again.
 
 ### Keeping care notes
 
@@ -1013,6 +1024,11 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find` with a name that matches some, but not all, persons, then `remark 1 Diabetic` and
       `remark 1 Uses a wheelchair`<br>
       Expected: The search results stay on screen, and the first result has both notes.
+
+   1. Test case: `remark 1 Allergic to penicillin`, `find /remark penicillin`, then
+      `remark 1 /edit 1 Allergic to aspirin`<br>
+      Expected: The person stays first in the results with the new note, even though it no longer matches
+      `penicillin`.
 
    1. Test case: Add a note, close CareBook and relaunch it.<br>
       Expected: The note is still shown.

@@ -102,6 +102,21 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_clearWithDifferentCase_success() throws Exception {
+        for (String input : List.of("CLEAR", "Clear", "cLeAr", "  CLEAR  ", "\tClear\t")) {
+            assertTrue(parser.parseCommand(input) instanceof ClearCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_clearWithDifferentCaseAndArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ClearCommand.MESSAGE_USAGE);
+        for (String input : List.of("CLEAR Alice", "Clear 1", "cLeAr /name Alice")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
+        }
+    }
+
+    @Test
     public void parseCommand_delete() throws Exception {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());

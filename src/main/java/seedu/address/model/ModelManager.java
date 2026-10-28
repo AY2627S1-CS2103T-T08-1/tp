@@ -109,6 +109,16 @@ public class ModelManager implements Model {
         }
     }
 
+    @Override
+    public void setPersonKeepingDisplayed(Person target, Person editedPerson) {
+        requireAllNonNull(target, editedPerson);
+
+        Predicate<? super Person> displayedBefore = filteredPersons.getPredicate();
+        filteredPersons.setPredicate(person -> person.equals(editedPerson)
+                || displayedBefore == null || displayedBefore.test(person));
+        setPerson(target, editedPerson);
+    }
+
     //=========== Filtered Person List Accessors =============================================================
 
     /**

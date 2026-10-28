@@ -105,6 +105,18 @@ The `/` character is reserved for valid prefixes and is **not allowed in any fie
 
 Unknown or mistyped prefixes cause an error and the contact is not added. For example, `/address 4 St /phone 123` is rejected because `/phone` is not a valid prefix; use `/patientNo` or `/familyNo`. Addresses such as `4/5 Main St` are also rejected; write them without `/`. The same rule applies when editing contact fields with `edit`.
 
+**Contact field rules** (these apply to both `add` and `edit`):
+
+| Field | Rules |
+| --- | --- |
+| `NAME` | Must start with a letter or digit. Can contain letters (including accented letters), digits, spaces, hyphens (`-`), apostrophes (`'`), full stops (`.`) and commas (`,`), e.g. `Marie-Ann O'Brien` or `Ravi S. Kumar`. Repeated spaces are stored as one space. `/` is not allowed, so write `s/o` as `s o` or `son of`. |
+| `PATIENT_PHONE`, `FAMILY_PHONE` | Digits only, at least 3 digits, e.g. `91234567`. Spaces, `+` and `-` are not allowed. |
+| `PATIENT_EMAIL`, `FAMILY_EMAIL` | Optional. Must look like `name@example.com`: the part before `@` can contain letters, digits and `+ _ . -` (but cannot start or end with them), and the part after `@` must end with at least 2 letters or digits. |
+| `ADDRESS` | Any text except `/`, and cannot be blank. |
+| `PRIORITY` | `HIGH`, `MEDIUM` or `LOW`, in any letter case (see [Priority tags](#priority-tags)). |
+
+Two contacts count as the same person, and the second is rejected, if they have the **same patient phone number**, the **same patient email** (ignoring letter case), or the **same name and address** (ignoring letter case and spaces). This includes archived contacts. Family phone numbers and emails can be shared, since family members often care for more than one patient.
+
 <box type="tip" seamless>
 
 **Tip:** A person can have no priority tag or one priority tag: `HIGH`, `MEDIUM`, or `LOW`. Repeating the same tag stores it only once.
@@ -251,6 +263,7 @@ Format: `view INDEX`
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
+* Each successful `view INDEX` scrolls to its contact, even if that contact is already selected.
 * The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
   Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
   resize it within its limit; double-click the handle to fit its contents again. New content or a change
@@ -291,7 +304,8 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * Priority values must be `HIGH`, `MEDIUM`, or `LOW`, in any letter case (see [Priority tags](#priority-tags)).
 * Supplying `/tag PRIORITY` replaces the person's existing priority tag. Omitting `/tag` leaves their tags unchanged.
 * To remove a person's priority tag, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
-* Editing an archived person in `list archive` keeps them archived, and the archive list stays on screen.
+* The list on screen stays as it is after an edit, including the results of `find` or `filter`, the archive list and the sort order. The edited person stays in the list even if they no longer match the search, so the indices you see stay the same. Run `list` or a new `find` to refresh the list.
+* Editing an archived person in `list archive` keeps them archived.
 
 Examples:
 *  `edit 1 /patientNo 91234567 /pEmail johndoe@example.com` Edits the patient phone number and patient email of the 1st person to be `91234567` and `johndoe@example.com` respectively.
@@ -309,7 +323,9 @@ Examples:
 | `edit 0 /name John Doe` | `Invalid command format!` followed by the correct usage | Use an index of 1 or more. |
 | `edit 99 /name John Doe` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
-| `edit 1 /name Bernice Yu` (another person already has this name) | `This person already exists in CareBook.` | Use a name that no other person in CareBook has. |
+| `edit 2 /patientNo 87438807` (another person already has this patient phone number or email) | `Someone with this patient HP or email already exists in CareBook.` | Check that you are editing the right person, or use their own number or email. |
+| `edit 2 /name Alex Yeoh` (another person already has this name and the same address) | `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.` | Add something to the name to tell them apart, such as a surname. |
+| `edit 1 /patientNo 9123 4567` | `Phone numbers should only contain digits, and should be at least 3 digits long` | Remove spaces and other characters, e.g. `91234567`. See [Contact field rules](#adding-a-person-add). |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
 
 ### Keeping care notes on a person: `remark`
@@ -328,6 +344,7 @@ Format:
 * `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case.
 * `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
 * A person cannot have the same note twice. Notes that differ only in letter case count as the same note.
+* The list on screen stays as it is. After `find /remark`, the person stays in the results even if the note that matched is changed or deleted.
 * A person's notes can have at most 500 characters in total.
 * `edit` does not change a person's notes.
 
@@ -476,6 +493,7 @@ The result box shows a confirmation instead of the previous command's output.
 
 Format: `clear`
 
+* The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
 * Works even if the displayed list is already empty.
 * Use `list` to show all contacts again, or `find KEYWORD` to search the stored contacts.

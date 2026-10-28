@@ -195,6 +195,20 @@ public class RemarkCommandTest {
     }
 
     @Test
+    public void execute_changedNoteNoLongerMatchesSearch_keepsPersonDisplayed() throws Exception {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_ALLERGY).execute(model);
+        RemarkCommand.add(INDEX_SECOND_PERSON, NOTE_ALLERGY).execute(model);
+        model.updateFilteredPersonList(person -> person.getRemark().getNotes().contains(NOTE_ALLERGY));
+
+        RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_FIRST, NOTE_VISITS).execute(model);
+
+        assertEquals(List.of(new PersonBuilder(firstPerson).withRemarks(NOTE_VISITS).build(),
+                new PersonBuilder(secondPerson).withRemarks(NOTE_ALLERGY).build()), model.getFilteredPersonList());
+    }
+
+    @Test
     public void execute_filteredList_keepsFilter() {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         Person secondPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
