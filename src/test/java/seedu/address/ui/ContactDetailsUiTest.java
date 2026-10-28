@@ -17,9 +17,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.event.ActionEvent;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -44,6 +46,35 @@ public class ContactDetailsUiTest {
             assertFalse(window.node("#personDetailsPlaceholder").isManaged());
             assertEquals("", window.detailsText().getText());
             assertTrue(window.feedback().isWrapText());
+        });
+    }
+
+    @Test
+    public void repeatedView_afterScrollingAway_scrollsBackWithoutChangingSelection() throws Exception {
+        withWindow(window -> {
+            for (int i = 0; i < 8; i++) {
+                window.model.addPerson(new PersonBuilder().withName("Extra Person " + i)
+                        .withPhone(Integer.toString(90000000 + i))
+                        .withEmail("extra" + i + "@example.com").build());
+            }
+            ListView<?> list = (ListView<?>) window.node("#personListView");
+            list.setMinHeight(140);
+            list.setPrefHeight(140);
+            list.setMaxHeight(140);
+            window.enter("view 1");
+            window.layout();
+            Person selected = window.model.selectedPersonProperty().get();
+            VirtualFlow<?> flow = (VirtualFlow<?>) list.lookup(".virtual-flow");
+            list.scrollTo(8);
+            window.layout();
+            assertTrue(flow.getFirstVisibleCell().getIndex() > 0);
+
+            window.enter("view 1");
+            window.layout();
+
+            assertEquals(0, flow.getFirstVisibleCell().getIndex());
+            assertEquals(selected, window.model.selectedPersonProperty().get());
+            assertEquals(10, window.model.getAddressBook().getPersonList().size());
         });
     }
 
@@ -165,12 +196,18 @@ public class ContactDetailsUiTest {
             assertTrue(window.title().getText().contains(BENSON.getName().fullName));
             window.enter("remark 1 Bring medication list");
             window.enter("remark 1 Call family /tag HIGH is literal text");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("1. Bring medication list"));
             assertTrue(window.detailsText().getText().contains("2. Call family /tag HIGH is literal text"));
             assertEquals(2, window.model.getFilteredPersonList().size());
             window.enter("remark 1 /edit 1 Bring updated medication list");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("1. Bring updated medication list"));
             window.enter("remark 1 /clear");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("Remarks: None"));
             assertFalse(window.detailsText().getText().contains("Call family"));
             assertTrue(window.detailsPanel().isVisible());
@@ -188,6 +225,8 @@ public class ContactDetailsUiTest {
             String appointment = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"))
                     + " 09:30";
             window.enter("checkup 1 " + appointment);
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("Checkup appointment: " + appointment));
             assertTrue(window.title().getText().contains(BENSON.getName().fullName));
             assertEquals(BENSON.getName(), window.model.selectedPersonProperty().get().getName());

@@ -99,16 +99,38 @@ Adds a person to CareBook.
 
 Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] `
 
+* `add` is case-insensitive. `Add`, `ADD`, `ADd` and other variants are all accepted.
+* The email fields are optional and can be added later with `edit`.
+* `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
+* Duplicate names are allowed as long as the patients' handphone numbers and emails are not identical.
+* For duplicate names and addresses, add a differentiator (such as an index or identifier)
+  * An example of this would be `Rosalind 1` and `Rosalind 2`
+* No special characters are allowed in the fields!
 Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
 
 The `/` character is reserved for valid prefixes and is **not allowed in any field value**, including names and addresses. Separate each prefix from its value with a space. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
 
 Unknown or mistyped prefixes cause an error and the contact is not added. For example, `/address 4 St /phone 123` is rejected because `/phone` is not a valid prefix; use `/patientNo` or `/familyNo`. Addresses such as `4/5 Main St` are also rejected; write them without `/`. The same rule applies when editing contact fields with `edit`.
 
+**Contact field rules** (these apply to both `add` and `edit`):
+
+| Field | Rules |
+| --- | --- |
+| `NAME` | Must start with a letter or digit. Can contain letters (including accented letters), digits, spaces, hyphens (`-`), apostrophes (`'`), full stops (`.`) and commas (`,`), e.g. `Marie-Ann O'Brien` or `Ravi S. Kumar`. Repeated spaces are stored as one space. `/` is not allowed, so write `s/o` as `s o` or `son of`. |
+| `PATIENT_PHONE`, `FAMILY_PHONE` | Digits only, at least 3 digits, e.g. `91234567`. Spaces, `+` and `-` are not allowed. |
+| `PATIENT_EMAIL`, `FAMILY_EMAIL` | Optional. Must look like `name@example.com`: the part before `@` can contain letters, digits and `+ _ . -` (but cannot start or end with them), and the part after `@` must end with at least 2 letters or digits. |
+| `ADDRESS` | Any text except `/`, and cannot be blank. |
+| `PRIORITY` | `HIGH`, `MEDIUM` or `LOW`, in any letter case (see [Priority tags](#priority-tags)). |
+
+Two contacts count as the same person, and the second is rejected, if they have the **same patient phone number**, the **same patient email** (ignoring letter case), or the **same name and address** (ignoring letter case and spaces). This includes archived contacts. Family phone numbers and emails can be shared, since family members often care for more than one patient.
+
 <box type="tip" seamless>
 
 **Tip:** A person can have no priority tag or one priority tag: `HIGH`, `MEDIUM`, or `LOW`. Repeating the same tag stores it only once.
 </box>
+
+| Incorrect input or situation | Result | How to correct it |
+| `add `,  `add /name CG` | Invalid command format | Ensure parameters are included correctly |
 
 Examples:
 * `add /name Aunty Rosalind /patientNo 81268767 /familyNo 90783658 /address Goonvale Street Block 2 #01-09`
@@ -218,8 +240,7 @@ Format: `sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|d
   * Persons without a checkup appointment are always shown last, in either direction.
   * Persons with the same appointment are ordered by name, A to Z.
 * `sort recent` shows the most recently added person first. It takes no direction.
-* The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
-  lowercase.
+* The command word, criterion and direction are all case-insensitive, so `SORT Name DESC` works.
 * Use `list` to show all persons again in the order they were added.
 
 Examples:
@@ -252,18 +273,20 @@ Format: `view INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 * The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
 * Type the command word in lowercase: `View 1` is not recognised.
+* Each successful `view INDEX` scrolls to its contact, even if that contact is already selected.
 * The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
   Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
   resize it within its limit; double-click the handle to fit its contents again. New content or a change
   in window width restores automatic sizing. With no selection, the details panel is hidden entirely.
 * Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
 * The details panel also shows the checkup appointment (`Not scheduled` if absent) and all numbered
-  remarks (`None` if absent). Updating the selected contact's appointment or remarks refreshes the panel.
+  remarks (`None` if absent). After updating a contact, use `view INDEX` again to see its updated details.
 * After filtering or sorting, use the index in the list currently on screen. For example,
   `filter /tag HIGH`, `sort name desc`, then `view 1` selects the first contact in those sorted results.
-* Editing the selected contact refreshes the details. Deleting it clears the panel.
-* A new search or filter clears selection if it hides the selected contact. `clear` clears both panels
-  without deleting any contacts. `list` restores the contact list, but does not reselect a contact.
+* Any successful command other than `view` closes the details panel and removes the selected border.
+  The contact list follows that command's normal behaviour: sorting keeps its new order, and finding
+  or filtering keeps its results. Use `view INDEX` again to reopen updated details after editing,
+  changing remarks or scheduling a checkup. Invalid commands leave the current selection unchanged.
 
 Example:
 * `view 2` displays the full details of the 2nd person in the displayed list.
@@ -292,7 +315,8 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * Priority values must be `HIGH`, `MEDIUM`, or `LOW`, in any letter case (see [Priority tags](#priority-tags)).
 * Supplying `/tag PRIORITY` replaces the person's existing priority tag. Omitting `/tag` leaves their tags unchanged.
 * To remove a person's priority tag, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
-* Editing an archived person in `list archive` keeps them archived, and the archive list stays on screen.
+* The list on screen stays as it is after an edit, including the results of `find` or `filter`, the archive list and the sort order. The edited person stays in the list even if they no longer match the search, so the indices you see stay the same. Run `list` or a new `find` to refresh the list.
+* Editing an archived person in `list archive` keeps them archived.
 
 Examples:
 *  `edit 1 /patientNo 91234567 /pEmail johndoe@example.com` Edits the patient phone number and patient email of the 1st person to be `91234567` and `johndoe@example.com` respectively.
@@ -310,8 +334,64 @@ Examples:
 | `edit 0 /name John Doe` | `Invalid command format!` followed by the correct usage | Use an index of 1 or more. |
 | `edit 99 /name John Doe` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
-| `edit 1 /name Bernice Yu` (another person already has this name) | `This person already exists in CareBook.` | Use a name that no other person in CareBook has. |
+| `edit 2 /patientNo 87438807` (another person already has this patient phone number or email) | `Someone with this patient HP or email already exists in CareBook.` | Check that you are editing the right person, or use their own number or email. |
+| `edit 2 /name Alex Yeoh` (another person already has this name and the same address) | `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.` | Add something to the name to tell them apart, such as a surname. |
+| `edit 1 /patientNo 9123 4567` | `Phone numbers should only contain digits, and should be at least 3 digits long` | Remove spaces and other characters, e.g. `91234567`. See [Contact field rules](#adding-a-person-add). |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
+
+### Scheduling or removing a checkup: `checkup`
+
+Sets, replaces or removes the checkup appointment for the person at the specified displayed index.
+
+Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX delete`
+
+* `INDEX` must be a positive index shown in the current person list, including a filtered or sorted list.
+* The command word is case-insensitive: `checkup`, `Checkup` and `CHECKUP` are accepted.
+* Use day/month/year and a 24-hour time, for example `25/12/2030 14:30` for 2:30 PM.
+  The format is fixed even if the computer uses a different regional date format or a 12-hour clock.
+* The appointment must not be earlier than the computer's current local date **and time**.
+* Archived contacts cannot be given a new appointment or have an appointment rescheduled. Unarchive the contact first.
+* Two contacts can share the exact same appointment date and time **only if their family HP numbers match**.
+  Booking checks include active contacts outside the displayed list. Archived contacts do not reserve a slot.
+* Scheduling a checkup shows the date and time on the person's card and adds `[ ]` beside their name.
+  Replacing the appointment clears an existing `[X]` mark. Setting the same appointment again preserves its mark.
+* `checkup INDEX delete` removes the appointment and its mark. The appointment row and the `[ ]` or `[X]`
+  indicator disappear entirely from the person card. `delete` is case-insensitive.
+* Other contact details are preserved, and appointment changes are saved automatically.
+
+Examples:
+
+* `checkup 1 25/12/2030 14:30` schedules or replaces the first displayed person's checkup.
+* `CHECKUP 2   26/12/2030  09:00` schedules the second displayed person's checkup with extra spaces.
+* `checkup 1 delete` removes the first displayed person's appointment.
+
+**Common errors:**
+
+| Incorrect input or situation | Error message | How to correct it |
+| --- | --- | --- |
+| `checkup`, a missing date/time, or a non-positive or non-numeric index | Invalid command format followed by usage | Give a displayed index and a date/time, or `delete`. |
+| An index outside the displayed list | `The person index provided is invalid.` | Check the current list and use an index shown there. |
+| An archived contact is selected for scheduling | `Appointments cannot be made with archived contacts. Unarchive the contact to do so.` | Unarchive the contact first. This error takes priority over date/time errors for a valid contact index. |
+| An impossible date or time, such as `31/02/2030 14:30` or `25/12/2030 24:00` | `Checkup must be a valid date and time in dd/mm/yyyy HH:mm format (24-hour clock).` followed by usage | Use a real date and a time from `00:00` to `23:59`. |
+| An appointment earlier than now, including an earlier time today | `Checkup date and time must not be in the past.` | Choose a future date and time. |
+| Another contact has that date and time but a different family HP | `A contact with this booking date and time already exists. Only contacts with the same family HP can be booked at the same time.` | Choose another slot, unless the contacts share the same family HP. |
+| `checkup INDEX delete` when no appointment is scheduled | `This contact has no checkup appointment to delete.` | Select a contact with an appointment. |
+### Removing a checkup appointment: `checkup INDEX /delete`
+
+Removes a contact's checkup appointment without deleting the contact.
+
+Format: `checkup INDEX /delete`
+
+* The index refers to the index number shown in the displayed person list and **must be a positive integer**.
+* The command and `/delete` option accept any letter case. Extra spaces between arguments and at the ends are ignored.
+* Removes the appointment field and its mark indicator from the contact card. Other contact details stay unchanged.
+* Appointments can also be removed from archived contacts after running `list archive`.
+* If the contact has no appointment, CareBook shows `This contact has no checkup appointment to delete.`
+* Use `/delete` with the slash; `checkup INDEX delete` is not accepted.
+
+Example:
+
+* `checkup 1 /delete` removes the appointment of the 1st contact in the displayed list.
 
 ### Keeping care notes on a person: `remark`
 
@@ -328,6 +408,8 @@ Format:
 * Everything after the index is kept exactly as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note.
 * `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case.
 * `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
+* A person cannot have the same note twice. Notes that differ only in letter case count as the same note.
+* The list on screen stays as it is. After `find /remark`, the person stays in the results even if the note that matched is changed or deleted.
 * A person's notes can have at most 500 characters in total.
 * `edit` does not change a person's notes.
 
@@ -346,6 +428,7 @@ Examples:
 | `remark /clear` or `remark Diabetic` (no index) | `Invalid command format!` followed by the correct usage | Put the person's index first, e.g. `remark 1 /clear` or `remark 1 Diabetic`. |
 | `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
 | `remark 99 Diabetic` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
+| `remark 1 Allergic to penicillin` (the person already has this note as note 1) | `Alex Yeoh already has this note (note 1).` | Add a different note, or change the existing note with `remark 1 /edit 1 ...`. |
 | `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
 | `remark 1 /delete abc` | `Note number must be a positive integer.` | Use the number shown before the note, e.g. `remark 1 /delete 2`. |
 | `remark 1 /edit 2` (no new note) | `Invalid command format!` followed by the correct usage | Add the new note, e.g. `remark 1 /edit 2 Visits after 4pm`. |
@@ -357,6 +440,8 @@ Examples:
 Finds persons by the selected contact field using partial matches.
 
 Format: `find /CRITERION INPUT` and `find KEYWORD`
+
+* Both formats are case-insensitive.
 
 For `find /CRITERION INPUT`:
 
@@ -380,22 +465,19 @@ For `find /CRITERION INPUT`:
   The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
 * Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
-* For non-phone searches, whitespace separates keywords. A contact matches if the selected field contains
-  at least one keyword (an `OR` search); keyword order does not matter.
 * Contacts without an optional email or tag do not match searches on that absent field.
 * Searches consider all stored contacts, replacing the current display filter without changing stored data.
   Use `list` to display all contacts again. A search with no matches displays an empty list.
-* Missing input, an unknown criterion, multiple criteria, or invalid phone input produces an error and
-  leaves the displayed list unchanged.
+* To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
+
 
 Examples:
 * `find /patientNo 87` finds patient numbers containing `87` consecutively.
 * `find /email gmail` searches both email fields for `gmail`.
 * `find /address street` searches addresses for `street`.
 * `find John` returns `john` and `John Doe`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
 * `find j` returns `John Doe`<br> ![result for 'find j'](images/findJ.png)
+* `find Alex David` returns `alex david` but not `alex` and `david`
 
 ### Filtering persons by name, tag and address: `filter`
 
@@ -414,6 +496,7 @@ Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases. Extra spaces are ignored, so `/address clementi ave` also finds an address saved as `5 Clementi  Ave 3`.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
+* The command word `filter` and the prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
 * When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
@@ -456,7 +539,7 @@ Examples:
 * `list` followed by `delete 2` shows a warning for the 2nd person in CareBook; `delete 2 /confirm` then deletes them.
 * `find Betsy` followed by `delete 1 /confirm` deletes the 1st person in the results of the `find` command (after reviewing the warning from `delete 1`).
 
-Common errors:
+**Common errors:**
 
 Input | Error message shown | How to fix
 ------|---------------------|-----------
@@ -475,6 +558,7 @@ The result box shows a confirmation instead of the previous command's output.
 
 Format: `clear`
 
+* The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
 * Type the command word in lowercase: `Clear` and `CLEAR` are not recognised.
 * Works even if the displayed list is already empty.
@@ -514,7 +598,7 @@ No contacts have been changed.
 
 CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit`, `archive` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
 
-If CareBook cannot save, for example because `data/contacts.json` is read-only, it shows `Could not save data to file ...` and undoes the command, so your contacts stay as they were saved. Fix the problem, such as making the file writable again, and then enter the command again.
+If CareBook cannot save, for example because `data/contacts.json` is read-only, it shows `Could not save data to file ...` and undoes the command, so your contacts stay as they were saved. Fix the problem, such as making the file writable again, and then enter the command again. If the message says `... is a file, so the data folder cannot be created there`, a file named `data` is next to the JAR file. Move or rename that file.
 
 ### Editing the data file
 
@@ -530,7 +614,9 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `patientEmail` | No    | The patient's email address. Leave it out if the patient has no email. |
 | `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
-| `archived` | No | `true` for archived contacts; defaults to `false` when omitted. |
+| `archived` | No | `true` for archived contacts, `false` (or left out) for active ones. It must be exactly `true` or `false`, without quotes. |
+| `checkupAppointment` | No | The contact's checkup appointment in the format `dd/MM/yyyy HH:mm`, e.g. `"25/12/2030 14:30"`. Leave it out if there is no appointment. |
+| `checkupMarked` | No | `true` if the checkup has been marked as done, `false` (or left out) otherwise. It must be exactly `true` or `false`, and can only be `true` if `checkupAppointment` is given. |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
 | `remarks`   | No       | A list of the contact's notes in order, e.g. `[ "Allergic to penicillin" ]`. Each note must not be blank or start with a space, and the notes can have at most 500 characters in total. Leave it out or use `[]` for no notes. |
 
@@ -584,6 +670,8 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
+**Checkup** | `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX delete`<br> e.g., `checkup 1 25/12/2030 14:30`, `checkup 1 delete`
+**Remove checkup** | `checkup INDEX /delete`<br> e.g., `checkup 1 /delete`
 **Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`

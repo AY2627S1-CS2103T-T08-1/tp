@@ -65,10 +65,14 @@ public class AddressBookParser {
             commandWord = UnarchiveCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(HelpCommand.COMMAND_WORD)) {
             commandWord = HelpCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(ClearCommand.COMMAND_WORD)) {
+            commandWord = ClearCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(MarkCommand.COMMAND_WORD)) {
             commandWord = MarkCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(UnmarkCommand.COMMAND_WORD)) {
             commandWord = UnmarkCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(SortCommand.COMMAND_WORD)) {
+            commandWord = SortCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(CheckupCommand.COMMAND_WORD)) {
             commandWord = CheckupCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(FindCommand.COMMAND_WORD)) {

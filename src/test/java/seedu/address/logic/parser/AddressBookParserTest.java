@@ -10,7 +10,6 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +26,7 @@ import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.MarkCommand;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.logic.commands.SortCommand;
 import seedu.address.logic.commands.UnmarkCommand;
 import seedu.address.logic.commands.ViewCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -102,10 +102,33 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_clearWithDifferentCase_success() throws Exception {
+        for (String input : List.of("CLEAR", "Clear", "cLeAr", "  CLEAR  ", "\tClear\t")) {
+            assertTrue(parser.parseCommand(input) instanceof ClearCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_clearWithDifferentCaseAndArguments_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ClearCommand.MESSAGE_USAGE);
+        for (String input : List.of("CLEAR Alice", "Clear 1", "cLeAr /name Alice")) {
+            assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
+        }
+    }
+
+    @Test
     public void parseCommand_delete() throws Exception {
         DeleteCommand command = (DeleteCommand) parser.parseCommand(
                 DeleteCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
         assertEquals(new DeleteCommand(INDEX_FIRST_PERSON), command);
+    }
+
+    @Test
+    public void parseCommand_sortInDifferentCase_success() throws Exception {
+        SortCommand expected = new SortCommand(SortCommand.Criterion.NAME, false);
+        assertEquals(expected, parser.parseCommand("sort name desc"));
+        assertEquals(expected, parser.parseCommand("Sort name desc"));
+        assertEquals(expected, parser.parseCommand("SORT Name DESC"));
     }
 
     @Test
@@ -149,12 +172,12 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_find() throws Exception {
-        List<String> keywords = List.of("foo", "bar", "baz");
+        String phrase = "foo bar baz";
         for (String word : List.of("find", "finD", "fiNd", "fiND", "fInd", "fInD", "fINd", "fIND",
                 "Find", "FinD", "FiNd", "FiND", "FInd", "FInD", "FINd", "FIND")) {
             FindCommand command = (FindCommand) parser.parseCommand(
-                    word + " " + keywords.stream().collect(Collectors.joining(" ")));
-            assertEquals(new FindCommand(new NameContainsKeywordsPredicate(keywords)), command);
+                    word + " " + phrase);
+            assertEquals(new FindCommand(new NameContainsKeywordsPredicate(List.of(phrase))), command);
         }
     }
 

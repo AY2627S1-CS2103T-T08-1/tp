@@ -3,6 +3,7 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.FxTestUtil.runOnFxThread;
 
 import java.util.List;
 
@@ -10,10 +11,32 @@ import org.junit.jupiter.api.Test;
 
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
+import seedu.address.commons.core.index.Index;
+import seedu.address.logic.commands.CheckupCommand;
+import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonCardTest {
+
+    @Test
+    public void deletedCheckup_hidesAppointmentRowAndRemovesMarkIndicator() throws Exception {
+        Person scheduled = new PersonBuilder().withName("Kim Lee")
+                .withCheckupAppointment("01/01/2030 09:05").build().withMarkedCheckup();
+        ModelManager model = new ModelManager();
+        model.addPerson(scheduled);
+        CheckupCommand.delete(Index.fromOneBased(1)).execute(model);
+        Person cleared = model.getFilteredPersonList().get(0);
+        runOnFxThread(() -> {
+            PersonCard card = new PersonCard(cleared, 1);
+            Label appointment = (Label) card.getRoot().lookup("#checkupAppointment");
+            assertEquals("", appointment.getText());
+            assertFalse(appointment.isVisible());
+            assertFalse(appointment.isManaged());
+            assertEquals("Kim Lee", PersonCard.getNameText(cleared));
+        });
+    }
 
     @Test
     public void getNameText_onlyScheduledCheckupsHaveMarkIndicators() {

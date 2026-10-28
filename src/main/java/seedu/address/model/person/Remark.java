@@ -5,6 +5,7 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import seedu.address.commons.core.index.Index;
@@ -83,6 +84,17 @@ public class Remark {
     public boolean hasNote(Index noteIndex) {
         requireNonNull(noteIndex);
         return noteIndex.getZeroBased() < notes.size();
+    }
+
+    /**
+     * Returns the index of the first note that is the same as {@code note} ignoring letter case, if any.
+     */
+    public Optional<Index> findNoteIgnoringCase(String note) {
+        requireNonNull(note);
+        return IntStream.range(0, notes.size())
+                .filter(i -> notes.get(i).equalsIgnoreCase(note))
+                .mapToObj(Index::fromZeroBased)
+                .findFirst();
     }
 
     /**

@@ -1,0 +1,98 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant "l:ListCommand" as ListCommand LOGIC_COLOR
+participant "r:CommandResult" as CommandResult LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+end box
+
+[-> LogicManager : execute("list")
+activate LogicManager
+
+LogicManager -> AddressBookParser : parseCommand("list")
+activate AddressBookParser
+
+note right of AddressBookParser
+  Parses list arguments directly.
+  Throws ParseException if the arguments are
+  neither empty nor "archive" (case-insensitive).
+end note
+
+create ListCommand
+AddressBookParser -> ListCommand : ListCommand()
+activate ListCommand
+
+note right of ListCommand
+  The default constructor sets showArchive to false.
+  For "list archive", the parser instead calls
+  ListCommand(true).
+end note
+
+ListCommand --> AddressBookParser : l
+deactivate ListCommand
+
+AddressBookParser --> LogicManager : l
+deactivate AddressBookParser
+
+LogicManager -> ListCommand : execute(m)
+activate ListCommand
+
+ListCommand -> Model : updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS)
+activate Model
+
+note right of Model
+  Replaces the current filter and list scope
+  to show all non-archived contacts.
+  For "list archive", uses
+  PREDICATE_SHOW_ARCHIVED_PERSONS instead.
+end note
+
+Model --> ListCommand
+deactivate Model
+
+ListCommand -> Model : resetSortedPersonList()
+activate Model
+
+note right of Model
+  Clears the sort comparator, restoring
+  the order in which contacts were added.
+end note
+
+Model --> ListCommand
+deactivate Model
+
+create CommandResult
+ListCommand -> CommandResult : CommandResult(MESSAGE_SUCCESS)
+activate CommandResult
+
+note right of CommandResult
+  For "list archive", uses
+  MESSAGE_ARCHIVE_SUCCESS instead.
+end note
+
+CommandResult --> ListCommand
+deactivate CommandResult
+
+ListCommand --> LogicManager : r
+deactivate ListCommand
+
+LogicManager -> ListCommand : modifiesData()
+activate ListCommand
+
+ListCommand --> LogicManager : false
+deactivate ListCommand
+
+note right of LogicManager
+  Skips saving because list does not modify data.
+end note
+
+[<-- LogicManager : r
+deactivate LogicManager
+@enduml

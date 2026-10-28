@@ -44,6 +44,36 @@ public class RemarkCommandTest {
         return withNotes;
     }
 
+    @Test
+    public void execute_addExistingNote_throwsCommandException() {
+        Person withNotes = giveFirstPersonTwoNotes(model);
+        String expectedMessage = String.format(RemarkCommand.MESSAGE_DUPLICATE_NOTE, withNotes.getName(), 2);
+
+        assertCommandFailure(RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_VISITS), model, expectedMessage);
+        assertCommandFailure(RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_VISITS.toUpperCase()), model,
+                expectedMessage);
+    }
+
+    @Test
+    public void execute_editNoteToAnotherExistingNote_throwsCommandException() {
+        Person withNotes = giveFirstPersonTwoNotes(model);
+        String expectedMessage = String.format(RemarkCommand.MESSAGE_DUPLICATE_NOTE, withNotes.getName(), 1);
+
+        assertCommandFailure(RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_SECOND, NOTE_ALLERGY), model,
+                expectedMessage);
+    }
+
+    @Test
+    public void execute_editNoteToItselfInOtherCase_success() throws Exception {
+        Person withNotes = giveFirstPersonTwoNotes(model);
+        String upperAllergy = NOTE_ALLERGY.toUpperCase();
+
+        RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_FIRST, upperAllergy).execute(model);
+
+        assertEquals(List.of(upperAllergy, NOTE_VISITS),
+                model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()).getRemark().getNotes());
+    }
+
     private static Model expectedModelWith(Model model, Person original, Person changed) {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(original, changed);
@@ -162,6 +192,20 @@ public class RemarkCommandTest {
 
         assertCommandFailure(RemarkCommand.add(INDEX_SECOND_PERSON, NOTE_ALLERGY), model,
                 Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+    }
+
+    @Test
+    public void execute_changedNoteNoLongerMatchesSearch_keepsPersonDisplayed() throws Exception {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person secondPerson = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_ALLERGY).execute(model);
+        RemarkCommand.add(INDEX_SECOND_PERSON, NOTE_ALLERGY).execute(model);
+        model.updateFilteredPersonList(person -> person.getRemark().getNotes().contains(NOTE_ALLERGY));
+
+        RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_FIRST, NOTE_VISITS).execute(model);
+
+        assertEquals(List.of(new PersonBuilder(firstPerson).withRemarks(NOTE_VISITS).build(),
+                new PersonBuilder(secondPerson).withRemarks(NOTE_ALLERGY).build()), model.getFilteredPersonList());
     }
 
     @Test

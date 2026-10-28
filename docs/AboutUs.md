@@ -49,7 +49,7 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Developer
 * Responsibilities: Dev Ops + Threading
 
-### James Doe
+### Carlyn Goh
 
 <img src="images/carlyngohing.png" width="200px">
 
@@ -58,3 +58,4 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Developer
 * Responsibilities: UI
+* Tee hee
