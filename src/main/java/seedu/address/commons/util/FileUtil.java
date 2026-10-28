@@ -10,6 +10,7 @@ import java.nio.file.Path;
 public class FileUtil {
 
     private static final String CHARSET = "UTF-8";
+    private static final String BYTE_ORDER_MARK = "﻿";
 
     /**
      * Creates a file if it does not exist along with its missing parent directories.
@@ -40,7 +41,9 @@ public class FileUtil {
      * Assumes file exists
      */
     public static String readFromFile(Path file) throws IOException {
-        return new String(Files.readAllBytes(file), CHARSET);
+        String content = new String(Files.readAllBytes(file), CHARSET);
+        // some editors, such as Notepad, start a UTF-8 file with an invisible byte order mark
+        return content.startsWith(BYTE_ORDER_MARK) ? content.substring(BYTE_ORDER_MARK.length()) : content;
     }
 
     /**
