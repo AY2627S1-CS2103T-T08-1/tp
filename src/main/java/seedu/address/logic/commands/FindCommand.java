@@ -42,7 +42,7 @@ public class FindCommand extends Command {
     private final Predicate<Person> predicate;
 
     /**
-     * Creates a command that filters persons using {@code predicate}.
+     * Creates a command that filters people using {@code predicate}.
      */
     public FindCommand(Predicate<Person> predicate) {
         this.predicate = requireNonNull(predicate);
