@@ -98,6 +98,19 @@ public class PersonMatchesFilterPredicateTest {
     }
 
     @Test
+    public void test_addressCriterion_ignoresExtraSpaces() {
+        PersonMatchesFilterPredicate predicate = predicate(List.of(), List.of(), List.of("clementi ave"));
+
+        // extra whitespace in the stored address
+        assertTrue(predicate.test(new PersonBuilder().withAddress("5 Clementi  Ave 3").build()));
+        assertTrue(predicate.test(new PersonBuilder().withAddress("5 Clementi \t Ave 3").build()));
+
+        // extra whitespace in the phrase
+        assertTrue(predicate(List.of(), List.of(), List.of("clementi    ave"))
+                .test(new PersonBuilder().withAddress("5 Clementi Ave 3").build()));
+    }
+
+    @Test
     public void test_multipleCriteria_allMustMatch() {
         PersonMatchesFilterPredicate predicate =
                 predicate(List.of("meier"), List.of("HIGH"), List.of("street"));
