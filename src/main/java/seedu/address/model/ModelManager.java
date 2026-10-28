@@ -105,7 +105,7 @@ public class ModelManager implements Model {
 
         addressBook.setPerson(target, editedPerson);
         if (target.equals(selectedPerson.get())) {
-            selectedPerson.set(editedPerson);
+            selectedPerson.set(filteredPersons.contains(editedPerson) ? editedPerson : null);
         }
     }
 
