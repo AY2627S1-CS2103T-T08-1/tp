@@ -240,8 +240,7 @@ Format: `sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|d
   * Persons without a checkup appointment are always shown last, in either direction.
   * Persons with the same appointment are ordered by name, A to Z.
 * `sort recent` shows the most recently added person first. It takes no direction.
-* The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
-  lowercase.
+* The command word, criterion and direction are all case-insensitive, so `SORT Name DESC` works.
 * Use `list` to show all persons again in the order they were added.
 
 Examples:
