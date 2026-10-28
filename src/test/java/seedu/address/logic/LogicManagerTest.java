@@ -18,6 +18,7 @@ import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -48,6 +49,7 @@ import seedu.address.testutil.PersonUtil;
 public class LogicManagerTest {
     private static final IOException DUMMY_IO_EXCEPTION = new IOException("dummy IO exception");
     private static final IOException DUMMY_AD_EXCEPTION = new AccessDeniedException("dummy access denied exception");
+    private static final IOException DUMMY_FAE_EXCEPTION = new FileAlreadyExistsException("data");
 
     @TempDir
     public Path temporaryFolder;
@@ -124,6 +126,12 @@ public class LogicManagerTest {
     public void execute_storageThrowsAdException_throwsCommandException() throws Exception {
         assertCommandFailureForExceptionFromStorage(DUMMY_AD_EXCEPTION, String.format(
                 LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, DUMMY_AD_EXCEPTION.getMessage()));
+    }
+
+    @Test
+    public void execute_storageThrowsFileAlreadyExistsException_explainsBlockedFolder() throws Exception {
+        assertCommandFailureForExceptionFromStorage(DUMMY_FAE_EXCEPTION, String.format(
+                LogicManager.FILE_OPS_FOLDER_BLOCKED_ERROR_FORMAT, DUMMY_FAE_EXCEPTION.getMessage()));
     }
 
     @Test

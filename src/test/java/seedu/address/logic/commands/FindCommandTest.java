@@ -36,6 +36,28 @@ public class FindCommandTest {
     private Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void execute_extraSpacesWithinSearchText_returnsSameMatches() throws Exception {
+        Model searchModel = new ModelManager();
+        Person match = new PersonBuilder().withName("D Est").withAddress("D Est").build();
+        Person containingPhrase = new PersonBuilder().withName("Dr D Est Tan").withAddress("Dr D Est Tan")
+                .withPhone("90000001").withoutEmail().build();
+        searchModel.addPerson(match);
+        searchModel.addPerson(containingPhrase);
+        List<String> nonMatchingNames = List.of("Kim Lee", "D Tan", "Est Lee", "D Middle Est", "Est D", "Brandy");
+        for (int i = 0; i < nonMatchingNames.size(); i++) {
+            String name = nonMatchingNames.get(i);
+            searchModel.addPerson(new PersonBuilder().withName(name).withAddress(name)
+                    .withPhone(Integer.toString(90000002 + i)).withoutEmail().build());
+        }
+        AddressBookParser parser = new AddressBookParser();
+        for (String command : List.of("find D Est", "find D       Est   ",
+                "find /name D       Est   ", "find /address D       Est   ")) {
+            parser.parseCommand(command).execute(searchModel);
+            assertEquals(List.of(match, containingPhrase), searchModel.getFilteredPersonList(), command);
+        }
+    }
+
+    @Test
     public void execute_remarkSearchFromActiveList_excludesArchivedContactsAndMatchesPhrase() throws Exception {
         Model searchModel = new ModelManager();
         Person activeMatch = new PersonBuilder(ALICE).withRemarks("Bring medication", "Needs assistance").build();
@@ -101,6 +123,21 @@ public class FindCommandTest {
             parser.parseCommand(command).execute(model);
             parser.parseCommand("find Meier").execute(model);
             assertEquals(List.of(BENSON), model.getFilteredPersonList(), command);
+        }
+    }
+
+    @Test
+    public void execute_singleSubstring_stillMatchesWithinName() throws Exception {
+        Model searchModel = new ModelManager();
+        Person brandy = new PersonBuilder().withName("Brandy").build();
+        Person dylan = new PersonBuilder().withName("Dylan").withPhone("90000001").withoutEmail().build();
+        Person spaced = new PersonBuilder().withName("D Y").withPhone("90000002").withoutEmail().build();
+        searchModel.addPerson(brandy);
+        searchModel.addPerson(dylan);
+        searchModel.addPerson(spaced);
+        for (String command : List.of("find dy", "find /name dy")) {
+            new AddressBookParser().parseCommand(command).execute(searchModel);
+            assertEquals(List.of(brandy, dylan), searchModel.getFilteredPersonList());
         }
     }
 
@@ -211,7 +248,7 @@ public class FindCommandTest {
     }
 
     /**
-     * Checks that persons matching any supplied keyword are displayed.
+     * Checks that persons matching any input keyword are displayed.
      */
     @Test
     public void execute_multipleKeywords_multiplePersonsFound() {

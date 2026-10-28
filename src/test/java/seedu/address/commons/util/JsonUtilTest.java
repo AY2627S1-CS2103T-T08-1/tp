@@ -39,6 +39,16 @@ public class JsonUtilTest {
         assertEquals(serializableTestClass.getMapOfIntegerToString(), SerializableTestClass.getHashMapTestValues());
     }
 
+    @Test
+    public void readJsonFile_startsWithByteOrderMark_readsFile() throws Exception {
+        FileUtil.writeToFile(SERIALIZATION_FILE, "﻿" + SerializableTestClass.JSON_STRING_REPRESENTATION);
+
+        SerializableTestClass serializableTestClass = JsonUtil
+                .readJsonFile(SERIALIZATION_FILE, SerializableTestClass.class).orElseThrow();
+
+        assertEquals(serializableTestClass.getName(), SerializableTestClass.getNameTestValue());
+    }
+
     //TODO: @Test jsonUtil_readJsonStringToObjectInstance_correctObject()
 
     //TODO: @Test jsonUtil_writeThenReadObjectToJson_correctObject()

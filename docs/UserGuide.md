@@ -329,6 +329,23 @@ Examples:
 | `edit 1 /patientNo 9123 4567` | `Phone numbers should only contain digits, and should be at least 3 digits long` | Remove spaces and other characters, e.g. `91234567`. See [Contact field rules](#adding-a-person-add). |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
 
+### Removing a checkup appointment: `checkup INDEX /delete`
+
+Removes a contact's checkup appointment without deleting the contact.
+
+Format: `checkup INDEX /delete`
+
+* The index refers to the index number shown in the displayed person list and **must be a positive integer**.
+* The command and `/delete` option accept any letter case. Extra spaces between arguments and at the ends are ignored.
+* Removes the appointment field and its mark indicator from the contact card. Other contact details stay unchanged.
+* Appointments can also be removed from archived contacts after running `list archive`.
+* If the contact has no appointment, CareBook shows `This contact has no checkup appointment to delete.`
+* Use `/delete` with the slash; `checkup INDEX delete` is not accepted.
+
+Example:
+
+* `checkup 1 /delete` removes the appointment of the 1st contact in the displayed list.
+
 ### Keeping care notes on a person: `remark`
 
 Keeps numbered notes on a person, such as allergies, medication times or visiting rules.
@@ -529,7 +546,7 @@ No contacts have been changed.
 
 CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit`, `archive` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
 
-If CareBook cannot save, for example because `data/contacts.json` is read-only, it shows `Could not save data to file ...` and undoes the command, so your contacts stay as they were saved. Fix the problem, such as making the file writable again, and then enter the command again.
+If CareBook cannot save, for example because `data/contacts.json` is read-only, it shows `Could not save data to file ...` and undoes the command, so your contacts stay as they were saved. Fix the problem, such as making the file writable again, and then enter the command again. If the message says `... is a file, so the data folder cannot be created there`, a file named `data` is next to the JAR file. Move or rename that file.
 
 ### Editing the data file
 
@@ -545,7 +562,9 @@ The file is a JSON object with a `contacts` list. Each contact has these fields:
 | `patientEmail` | No    | The patient's email address. Leave it out if the patient has no email. |
 | `familyEmail` | No     | The family member's email address. Leave it out if the family member has no email. |
 | `address`   | Yes      | The contact's address.                       |
-| `archived` | No | `true` for archived contacts; defaults to `false` when omitted. |
+| `archived` | No | `true` for archived contacts, `false` (or left out) for active ones. It must be exactly `true` or `false`, without quotes. |
+| `checkupAppointment` | No | The contact's checkup appointment in the format `dd/MM/yyyy HH:mm`, e.g. `"25/12/2030 14:30"`. Leave it out if there is no appointment. |
+| `checkupMarked` | No | `true` if the checkup has been marked as done, `false` (or left out) otherwise. It must be exactly `true` or `false`, and can only be `true` if `checkupAppointment` is given. |
 | `tags`      | No       | A list containing at most one priority: `HIGH`, `MEDIUM`, or `LOW`. Use `[]` for no tags.       |
 | `remarks`   | No       | A list of the contact's notes in order, e.g. `[ "Allergic to penicillin" ]`. Each note must not be blank or start with a space, and the notes can have at most 500 characters in total. Leave it out or use `[]` for no notes. |
 
@@ -599,6 +618,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
+**Remove checkup** | `checkup INDEX /delete`<br> e.g., `checkup 1 /delete`
 **Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
