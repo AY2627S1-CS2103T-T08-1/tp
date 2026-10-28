@@ -45,9 +45,13 @@ public class EditPersonDescriptorTest {
         // different phone -> returns false
         editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withPhone(VALID_PHONE_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
+    }
 
+    @Test
+    public void equals_differentOtherField_returnsFalse() {
         // different family phone -> returns false
-        editedAmy = new EditPersonDescriptorBuilder(DESC_AMY).withFamilyNo(VALID_FAMILY_PHONE_BOB).build();
+        EditPersonDescriptor editedAmy = new EditPersonDescriptorBuilder(DESC_AMY)
+                .withFamilyNo(VALID_FAMILY_PHONE_BOB).build();
         assertFalse(DESC_AMY.equals(editedAmy));
 
         // different patient email -> returns false
