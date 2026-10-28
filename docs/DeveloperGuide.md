@@ -200,6 +200,11 @@ range. Both cases throw a `CommandException` and never select from the full stor
 These errors leave stored contacts, selection and the display filter unchanged.
 
 **Selection lifecycle:** `ModelManager` stores a transient contact reference, not its displayed index.
+After a command and its required save succeed, `LogicManager` clears selection unless
+`Command#preservesPersonSelection()` returns `true`; `ViewCommand` overrides that method to preserve it.
+This closes the details panel after other successful commands without resetting their filter or sort.
+Parse errors and command-validation failures never reach this cleanup, so they preserve selection.
+The following model-level rules also protect callers that update contacts directly:
 `setPerson` replaces that reference when the selected contact is edited, including a name change.
 Deleting that contact or replacing the address book clears selection. Editing or deleting a different
 contact leaves selection unchanged. Updating a filter clears selection only if it hides the contact;
@@ -211,7 +216,8 @@ This also handles archiving an active selected contact and restoring one from th
 
 **Cross-feature integration:** `getFilteredPersonList()` exposes the `SortedList` over the filtered
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
-contact rather than selecting whichever contact moves into its former row. `PersonDetailsFormatter`
+contact at model level rather than selecting whichever contact moves into its former row; the command
+processing policy then clears selection after a successful sort. `PersonDetailsFormatter`
 includes the optional checkup appointment and every numbered remark. Replacing the selected immutable
 `Person` through `setPerson()` refreshes these details without changing the current filter or sort.
 

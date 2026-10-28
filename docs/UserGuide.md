@@ -270,12 +270,13 @@ Format: `view INDEX`
   in window width restores automatic sizing. With no selection, the details panel is hidden entirely.
 * Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
 * The details panel also shows the checkup appointment (`Not scheduled` if absent) and all numbered
-  remarks (`None` if absent). Updating the selected contact's appointment or remarks refreshes the panel.
+  remarks (`None` if absent). After updating a contact, use `view INDEX` again to see its updated details.
 * After filtering or sorting, use the index in the list currently on screen. For example,
   `filter /tag HIGH`, `sort name desc`, then `view 1` selects the first contact in those sorted results.
-* Editing the selected contact refreshes the details. Deleting it clears the panel.
-* A new search or filter clears selection if it hides the selected contact. `clear` clears both panels
-  without deleting any contacts. `list` restores the contact list, but does not reselect a contact.
+* Any successful command other than `view` closes the details panel and removes the selected border.
+  The contact list follows that command's normal behaviour: sorting keeps its new order, and finding
+  or filtering keeps its results. Use `view INDEX` again to reopen updated details after editing,
+  changing remarks or scheduling a checkup. Invalid commands leave the current selection unchanged.
 
 Example:
 * `view 2` displays the full details of the 2nd person in the displayed list.
