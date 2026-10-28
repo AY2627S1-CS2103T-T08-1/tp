@@ -545,7 +545,7 @@ No contacts have been changed.
 
 CareBook automatically saves data after every command that changes your contacts (such as `add`, `edit`, `archive` and `delete`). Commands that only show information, such as `list` and `find`, do not trigger a save. You do not need to save manually.
 
-If CareBook cannot save, for example because `data/contacts.json` is read-only, it shows `Could not save data to file ...` and undoes the command, so your contacts stay as they were saved. Fix the problem, such as making the file writable again, and then enter the command again.
+If CareBook cannot save, for example because `data/contacts.json` is read-only, it shows `Could not save data to file ...` and undoes the command, so your contacts stay as they were saved. Fix the problem, such as making the file writable again, and then enter the command again. If the message says `... is a file, so the data folder cannot be created there`, a file named `data` is next to the JAR file. Move or rename that file.
 
 ### Editing the data file
 
