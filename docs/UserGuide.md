@@ -74,7 +74,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 Opens a resizable, scrollable Help window listing the available commands, their usage, and examples.
 The command list includes `add`, `edit`, `delete`, `find`, `filter`, `list`, `sort`, `view`,
 `checkup`, `remark`, `clear`, `help`, and `exit`. It covers search criteria, sorting by name,
-priority or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
+priority, checkup date or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
 
 The window also provides the user guide URL and a **Copy URL** button.
 
@@ -204,7 +204,7 @@ shown in the order they were added.
 Changes the order in which persons are displayed. Sorting only changes what you see; it does not
 reorder the saved data, and it works on top of any `find` or `filter` result.
 
-Format: `sort priority [asc|desc]`, `sort name [asc|desc]` or `sort recent`
+Format: `sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|desc]` or `sort recent`
 
 * `sort priority` orders by priority tag.
   * `desc` (the default) shows `HIGH`, then `MEDIUM`, then `LOW`.
@@ -213,6 +213,10 @@ Format: `sort priority [asc|desc]`, `sort name [asc|desc]` or `sort recent`
   * Persons with the same priority are ordered by name, A to Z.
 * `sort name` orders alphabetically by name, ignoring case.
   * `asc` (the default) shows A to Z; `desc` shows Z to A.
+* `sort checkup` orders by checkup appointment date and time.
+  * `asc` (the default) shows the earliest appointment first; `desc` shows the latest first.
+  * Persons without a checkup appointment are always shown last, in either direction.
+  * Persons with the same appointment are ordered by name, A to Z.
 * `sort recent` shows the most recently added person first. It takes no direction.
 * The criterion and direction are case-insensitive, so `sort Name DESC` works. The command word `sort` must be
   lowercase.
@@ -223,6 +227,8 @@ Examples:
 * `sort priority asc` lists `LOW` persons first.
 * `sort name desc` lists persons from Z to A.
 * `filter /tag HIGH` followed by `sort name` lists only `HIGH` persons, from A to Z.
+* `sort checkup` lists the person with the nearest checkup appointment first.
+* `filter /tag HIGH` followed by `sort checkup` lists only `HIGH` persons, ordered by checkup date.
 * `sort recent` lists the most recently added person at the top.
 
 **Common errors:**
@@ -230,7 +236,7 @@ Examples:
 | Incorrect input | Error message | How to correct it |
 | --- | --- | --- |
 | `sort` (no criterion) | `Invalid command format!` followed by the correct usage | Give a criterion, e.g. `sort priority`. |
-| `sort address` (unknown criterion) | `Invalid command format!` followed by the correct usage | Use `priority`, `name` or `recent`. |
+| `sort address` (unknown criterion) | `Invalid command format!` followed by the correct usage | Use `priority`, `name`, `checkup` or `recent`. |
 | `sort priority up` (unknown direction) | `Invalid command format!` followed by the correct usage | Use `asc` or `desc`. |
 | `sort recent desc` (direction with `recent`) | `Invalid command format!` followed by the correct usage | Use `sort recent` on its own. |
 
@@ -575,7 +581,7 @@ Action     | Format, Examples
 **List**   | `list` or `list archive`
 **Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
-**Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
+**Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]`, `sort checkup [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
 **Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`

@@ -26,6 +26,33 @@ public class PersonComparatorsTest {
     }
 
     @Test
+    public void byCheckup_earliestOrLatestFirstWithoutCheckupLast() {
+        Person early = new PersonBuilder().withName("Zed").withCheckupAppointment("01/01/2098 09:00").build();
+        Person sameDayLater = new PersonBuilder().withName("Bob").withCheckupAppointment("01/01/2098 15:30").build();
+        Person late = new PersonBuilder().withName("Carl").withCheckupAppointment("05/06/2099 08:00").build();
+        List<Person> persons = List.of(UNTAGGED_ANNA, late, early, sameDayLater);
+
+        assertEquals(List.of(early, sameDayLater, late, UNTAGGED_ANNA),
+                sorted(persons, PersonComparators.byCheckup(true)));
+
+        // persons without a checkup are still last when descending
+        assertEquals(List.of(late, sameDayLater, early, UNTAGGED_ANNA),
+                sorted(persons, PersonComparators.byCheckup(false)));
+    }
+
+    @Test
+    public void byCheckup_sameAppointmentOrderedByNameInBothDirections() {
+        Person bob = new PersonBuilder().withName("Bob").withCheckupAppointment("01/01/2098 09:00").build();
+        Person alice = new PersonBuilder().withName("alice").withCheckupAppointment("01/01/2098 09:00").build();
+        List<Person> persons = List.of(UNTAGGED_ZOE, bob, UNTAGGED_ANNA, alice);
+
+        assertEquals(List.of(alice, bob, UNTAGGED_ANNA, UNTAGGED_ZOE),
+                sorted(persons, PersonComparators.byCheckup(true)));
+        assertEquals(List.of(alice, bob, UNTAGGED_ANNA, UNTAGGED_ZOE),
+                sorted(persons, PersonComparators.byCheckup(false)));
+    }
+
+    @Test
     public void byName_ignoresCase() {
         List<Person> persons = List.of(LOW_DAN, HIGH_BOB, HIGH_ALICE, MEDIUM_CARL);
 
