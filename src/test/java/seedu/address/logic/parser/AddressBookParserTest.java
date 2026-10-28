@@ -10,7 +10,6 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
@@ -164,12 +163,12 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_find() throws Exception {
-        List<String> keywords = List.of("foo", "bar", "baz");
+        String phrase = "foo bar baz";
         for (String word : List.of("find", "finD", "fiNd", "fiND", "fInd", "fInD", "fINd", "fIND",
                 "Find", "FinD", "FiNd", "FiND", "FInd", "FInD", "FINd", "FIND")) {
             FindCommand command = (FindCommand) parser.parseCommand(
-                    word + " " + keywords.stream().collect(Collectors.joining(" ")));
-            assertEquals(new FindCommand(new NameContainsKeywordsPredicate(keywords)), command);
+                    word + " " + phrase);
+            assertEquals(new FindCommand(new NameContainsKeywordsPredicate(List.of(phrase))), command);
         }
     }
 
