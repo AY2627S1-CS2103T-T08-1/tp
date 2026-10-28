@@ -44,6 +44,8 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSucces
 import static seedu.address.testutil.TypicalPersons.AMY;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
@@ -58,6 +60,29 @@ import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandParserTest {
     private AddCommandParser parser = new AddCommandParser();
+
+    @Test
+    public void parse_unknownOrMalformedPrefixes_failure() {
+        String fields = NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB + ADDRESS_DESC_BOB;
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+        for (String suffix : List.of(" /phone 123", " /adress 4 St", " /addressExtra 4 St",
+                " /tagged HIGH", " /pemail bob@example.com", " /patientNo123", " / phone 123",
+                " /", " //", " 4/5", "/name Alice")) {
+            assertParseFailure(parser, fields + suffix, expectedMessage);
+        }
+        assertParseFailure(parser, " /unknown value" + fields, expectedMessage);
+    }
+
+    @Test
+    public void parse_slashInAnyField_failure() {
+        String fields = NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HIGH;
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+        for (String prefix : List.of("/name", "/patientNo", "/familyNo", "/pEmail", "/fEmail",
+                "/address", "/tag")) {
+            assertParseFailure(parser, fields.replace(prefix + " ", prefix + " /"), expectedMessage);
+        }
+    }
 
     @Test
     public void parse_allFieldsPresent_success() {

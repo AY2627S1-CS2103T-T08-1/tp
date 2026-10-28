@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -38,6 +39,10 @@ public class CheckupCommandParserTest {
     public void parse_todayOrFuture_returnsCommand() {
         for (LocalDate date : List.of(LocalDate.now(), LocalDate.now().plusDays(1))) {
             String value = date.format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 00:00";
+    public void parse_futureDateTime_returnsCommand() {
+        for (LocalDateTime dateTime : List.of(LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusDays(1))) {
+            String value = dateTime.format(DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm"));
             assertParseSuccess(parser, " 2 " + value + " ",
                     new CheckupCommand(Index.fromOneBased(2), new CheckupAppointment(value)));
         }
@@ -66,17 +71,22 @@ public class CheckupCommandParserTest {
     }
 
     @Test
-    public void parse_invalidDateTime_throwsParseException() {
+    public void parse_invalidDateTime_defersValidationUntilExecution() {
         for (String value : List.of("31/02/2030 12:00", "01/01/2030 24:00", "01/01/2030",
                 "2030-01-01 12:00", "01/01/2030 12:00 extra")) {
-            assertParseFailure(parser, "1 " + value,
-                    CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE);
+            assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
         }
     }
 
     @Test
-    public void parse_yesterday_throwsParseException() {
+    public void parse_yesterday_defersValidationUntilExecution() {
         String value = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 23:59";
-        assertParseFailure(parser, "1 " + value, CheckupAppointment.MESSAGE_PAST_DATE);
+        assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
+    }
+
+    @Test
+    public void parse_pastTime_defersValidationUntilExecution() {
+        String value = LocalDateTime.now().minusMinutes(5).format(DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm"));
+        assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
     }
 }

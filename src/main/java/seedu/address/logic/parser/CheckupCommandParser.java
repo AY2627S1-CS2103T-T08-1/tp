@@ -5,7 +5,6 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.CheckupCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.person.CheckupAppointment;
 
 /**
  * Parses a displayed index followed by a checkup date and time or the delete keyword.
@@ -23,19 +22,12 @@ public class CheckupCommandParser implements Parser<CheckupCommand> {
         } catch (ParseException e) {
             throw invalidFormat();
         }
+
         if (parts[1].equalsIgnoreCase("delete")) {
             return CheckupCommand.delete(index);
         }
-        final CheckupAppointment appointment;
-        try {
-            appointment = new CheckupAppointment(parts[1]);
-        } catch (IllegalArgumentException e) {
-            throw new ParseException(CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE, e);
-        }
-        if (appointment.isBeforeToday()) {
-            throw new ParseException(CheckupAppointment.MESSAGE_PAST_DATE);
-        }
-        return new CheckupCommand(index, appointment);
+        return new CheckupCommand(index, parts[1]);
+
     }
 
     private ParseException invalidFormat() {

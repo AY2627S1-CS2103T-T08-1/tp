@@ -25,16 +25,28 @@ public class CheckupCommand extends Command {
     public static final String MESSAGE_SUCCESS = "Checkup appointment for %1$s: %2$s";
     public static final String MESSAGE_DELETE_SUCCESS = "Deleted checkup appointment for %1$s.";
     public static final String MESSAGE_NO_APPOINTMENT = "This contact has no checkup appointment to delete.";
+    public static final String MESSAGE_ARCHIVED_CONTACT =
+            "Appointments cannot be made with archived contacts. Unarchive the contact to do so.";
+    public static final String MESSAGE_BOOKING_CONFLICT =
+            "A contact with this booking date and time already exists. "
+            + "Only contacts with the same family HP can be booked at the same time.";
 
     private final Index targetIndex;
-    private final CheckupAppointment appointment;
+    private final String appointmentValue;
 
     /**
      * Creates a command to set or replace the selected contact's checkup appointment.
      */
     public CheckupCommand(Index targetIndex, CheckupAppointment appointment) {
+        this(targetIndex, requireNonNull(appointment).toString());
+    }
+
+    /**
+     * Creates a command whose date and time are validated after checking the selected contact.
+     */
+    public CheckupCommand(Index targetIndex, String appointmentValue) {
         this.targetIndex = requireNonNull(targetIndex);
-        this.appointment = requireNonNull(appointment);
+        this.appointmentValue = requireNonNull(appointmentValue);
     }
 
     private CheckupCommand(Index targetIndex) {
@@ -54,15 +66,40 @@ public class CheckupCommand extends Command {
         if (targetIndex.getZeroBased() >= displayedPersons.size()) {
             throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
-        if (appointment != null && appointment.isBeforeToday()) {
-            throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE);
-        }
         Person person = displayedPersons.get(targetIndex.getZeroBased());
-        if (appointment == null && person.getCheckupAppointment().isEmpty()) {
-            throw new CommandException(MESSAGE_NO_APPOINTMENT);
+        final CheckupAppointment appointment;
+
+        if (appointmentValue == null) {
+          if (person.getCheckupAppointment().isEmpty()) {
+          throw new CommandException(MESSAGE_NO_APPOINTMENT);
+          }
+          appointment = null;
+        } else {
+            if (person.isArchived()) {
+                throw new CommandException(MESSAGE_ARCHIVED_CONTACT);
+            }
+            try {
+                appointment = new CheckupAppointment(appointmentValue);
+            } catch (IllegalArgumentException e) {
+                throw new CommandException(CheckupAppointment.MESSAGE_CONSTRAINTS
+                        + "\n" + MESSAGE_USAGE, e);
+            }
+            if (appointment.isBeforeNow()) {
+                throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+            }
+
+            boolean hasConflict = model.getAddressBook().getPersonList().stream()
+                    .anyMatch(existing -> !existing.isArchived() && !existing.equals(person)
+                            && existing.getCheckupAppointment().filter(appointment::equals).isPresent()
+                            && !existing.getFamilyNo().equals(person.getFamilyNo()));
+            if (hasConflict) {
+                throw new CommandException(MESSAGE_BOOKING_CONFLICT);
+            }
         }
+
         boolean keepMarked = appointment != null && person.isCheckupMarked()
                 && person.getCheckupAppointment().filter(appointment::equals).isPresent();
+
         Person updatedPerson = new Person(person.getName(), person.getPatientNo(), person.getFamilyNo(),
                 person.getPatientEmail().orElse(null), person.getFamilyEmail().orElse(null),
                 person.getAddress(), person.getTags(), appointment, person.getRemark(),
@@ -81,11 +118,12 @@ public class CheckupCommand extends Command {
     public boolean equals(Object other) {
         return other == this || other instanceof CheckupCommand otherCommand
                 && targetIndex.equals(otherCommand.targetIndex)
-                && Objects.equals(appointment, otherCommand.appointment);
+                && Objects.equals(appointmentValue, otherCommand.appointmentValue);
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this).add("targetIndex", targetIndex).add("appointment", appointment).toString();
+        return new ToStringBuilder(this).add("targetIndex", targetIndex)
+                .add("appointment", appointmentValue).toString();
     }
 }

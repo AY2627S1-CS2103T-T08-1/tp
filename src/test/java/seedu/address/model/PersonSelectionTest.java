@@ -39,7 +39,7 @@ public class PersonSelectionTest {
 
     @Test
     public void setPerson_selectedContact_updatesAllDetailsIncludingName() {
-        Person edited = new PersonBuilder(ALICE).withName("Updated Alice").withPhone("98765432").build();
+        Person edited = new PersonBuilder(ALICE).withName("Updated Alice").withPhone("91234567").build();
         model.setPerson(ALICE, edited);
         assertEquals(edited, model.selectedPersonProperty().get());
     }

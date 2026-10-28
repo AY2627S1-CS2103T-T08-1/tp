@@ -2,6 +2,7 @@ package seedu.address.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonComparators;
 import seedu.address.model.person.PersonHasTagPredicate;
 import seedu.address.testutil.AddressBookBuilder;
@@ -25,6 +27,67 @@ import seedu.address.testutil.PersonBuilder;
 public class ModelManagerTest {
 
     private ModelManager modelManager = new ModelManager();
+
+    @Test
+    public void setArchiveScope_switchesListsClearsFiltersAndPreservesSort() {
+        Person archivedBenson = BENSON.copyWithArchivedStatus(true);
+        Person archivedCarl = CARL.copyWithArchivedStatus(true);
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(archivedBenson);
+        modelManager.addPerson(archivedCarl);
+        assertFalse(modelManager.isShowingArchiveList());
+
+        modelManager.setArchiveScope(true);
+        modelManager.updateSortedPersonList(PersonComparators.byName(false));
+        modelManager.filterPersonsInCurrentList(archivedBenson::equals);
+        assertEquals(List.of(archivedBenson), modelManager.getFilteredPersonList());
+
+        modelManager.setArchiveScope(true);
+        assertTrue(modelManager.isShowingArchiveList());
+        assertEquals(List.of(archivedCarl, archivedBenson), modelManager.getFilteredPersonList());
+        modelManager.selectPerson(archivedBenson);
+        modelManager.setArchiveScope(false);
+        assertFalse(modelManager.isShowingArchiveList());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+        assertNull(modelManager.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void updateFilteredPersonList_neverChangesExplicitScope() {
+        Person archived = BENSON.copyWithArchivedStatus(true);
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(archived);
+        modelManager.setArchiveScope(true);
+
+        // Even a list predicate is only a display filter; switching scope requires the explicit setter.
+        modelManager.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        assertTrue(modelManager.isShowingArchiveList());
+        modelManager.updateFilteredPersonList(person -> false);
+        modelManager.sortPersonsByMostRecent();
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+        modelManager.filterPersonsInCurrentList(person -> true);
+        assertEquals(List.of(archived), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void addPerson_fromArchiveScope_restoresActiveScope() {
+        Person archived = BENSON.copyWithArchivedStatus(true);
+        modelManager.addPerson(archived);
+        modelManager.setArchiveScope(true);
+        modelManager.addPerson(ALICE);
+
+        assertFalse(modelManager.isShowingArchiveList());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
+    }
+
+    @Test
+    public void equals_differentScopesWithEmptyResults_areNotEqual() {
+        ModelManager archiveModel = new ModelManager();
+        archiveModel.setArchiveScope(true);
+        assertFalse(modelManager.equals(archiveModel));
+        modelManager.setArchiveScope(true);
+        assertEquals(modelManager, archiveModel);
+    }
 
     @Test
     public void constructor() {
@@ -61,6 +124,56 @@ public class ModelManagerTest {
     @Test
     public void hasPerson_nullPerson_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> modelManager.hasPerson(null));
+    }
+
+    @Test
+    public void setPerson_selectedContactLeavesActiveList_clearsSelectionWithoutDeletingContact() {
+        modelManager.addPerson(ALICE);
+        modelManager.selectPerson(ALICE);
+        var archived = ALICE.copyWithArchivedStatus(true);
+
+        modelManager.setPerson(ALICE, archived);
+
+        assertNull(modelManager.selectedPersonProperty().get());
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(archived), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void setPerson_selectedContactLeavesArchiveList_clearsSelection() {
+        var archived = ALICE.copyWithArchivedStatus(true);
+        modelManager.addPerson(archived);
+        modelManager.updateFilteredPersonList(Model.PREDICATE_SHOW_ARCHIVED_PERSONS);
+        modelManager.selectPerson(archived);
+
+        modelManager.setPerson(archived, ALICE);
+
+        assertNull(modelManager.selectedPersonProperty().get());
+        assertTrue(modelManager.getFilteredPersonList().isEmpty());
+        assertEquals(List.of(ALICE), modelManager.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void setPerson_selectedContactStillDisplayed_refreshesSelection() {
+        modelManager.addPerson(ALICE);
+        modelManager.selectPerson(ALICE);
+        var edited = new PersonBuilder(ALICE).withAddress("Updated Road").build();
+
+        modelManager.setPerson(ALICE, edited);
+
+        assertEquals(edited, modelManager.selectedPersonProperty().get());
+    }
+
+    @Test
+    public void setPerson_anotherContactLeavesList_preservesSelectedContact() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.selectPerson(ALICE);
+
+        modelManager.setPerson(BENSON, BENSON.copyWithArchivedStatus(true));
+
+        assertEquals(ALICE, modelManager.selectedPersonProperty().get());
+        assertEquals(List.of(ALICE), modelManager.getFilteredPersonList());
     }
 
     @Test
