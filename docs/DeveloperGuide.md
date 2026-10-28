@@ -261,6 +261,11 @@ range. Both cases throw a `CommandException` and never select from the full stor
 These errors leave stored contacts, selection and the display filter unchanged.
 
 **Selection lifecycle:** `ModelManager` stores a transient contact reference, not its displayed index.
+After a command and its required save succeed, `LogicManager` clears selection unless
+`Command#preservesPersonSelection()` returns `true`; `ViewCommand` overrides that method to preserve it.
+This closes the details panel after other successful commands without resetting their filter or sort.
+Parse errors and command-validation failures never reach this cleanup, so they preserve selection.
+The following model-level rules also protect callers that update contacts directly:
 `setPerson` replaces that reference when the selected contact is edited, including a name change.
 Deleting that contact or replacing the address book clears selection. Editing or deleting a different
 contact leaves selection unchanged. Updating a filter clears selection only if it hides the contact;
@@ -272,7 +277,8 @@ This also handles archiving an active selected contact and restoring one from th
 
 **Cross-feature integration:** `getFilteredPersonList()` exposes the `SortedList` over the filtered
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
-contact rather than selecting whichever contact moves into its former row. `PersonDetailsFormatter`
+contact at model level rather than selecting whichever contact moves into its former row; the command
+processing policy then clears selection after a successful sort. `PersonDetailsFormatter`
 includes the optional checkup appointment and every numbered remark. Replacing the selected immutable
 `Person` through `setPerson()` refreshes these details without changing the current filter or sort.
 
@@ -302,6 +308,63 @@ Priority tags use the existing `/tag` prefix and `Tag` model, with names restric
 
 For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edit 1 /tag HIGH /tag LOW` is rejected, and `edit 1 /tag` clears them.
 
+### Checkup appointments
+
+The `checkup INDEX dd/mm/yyyy HH:mm` command sets or replaces an appointment for a displayed contact.
+`checkup INDEX delete` removes it. The command word and `delete` keyword are case-insensitive.
+
+#### Parsing and validation
+
+`AddressBookParser` delegates to `CheckupCommandParser`, which trims surrounding whitespace, collapses
+repeated whitespace and parses the displayed `Index`. A delete request creates a deletion command;
+otherwise the command retains the date/time input until the target contact can be checked during execution.
+Missing arguments and invalid index syntax cause a `ParseException` with the command usage.
+
+`CheckupCommand#execute()` validates the displayed index before retrieving the contact. For scheduling,
+the archived-contact check runs before date/time validation, so an archived contact produces
+`Appointments cannot be made with archived contacts. Unarchive the contact to do so.` even if the supplied
+date or time is invalid. This ordering requires date/time validation to be deferred until execution.
+
+`CheckupAppointment` uses the fixed `dd/MM/uuuu HH:mm` formatter with `Locale.ROOT` and
+`ResolverStyle.STRICT`. Impossible dates and times are rejected without rounding. The appointment is a
+`LocalDateTime`; comparison with the current local date and time rejects earlier times today as well as
+past dates. The error is `Checkup date and time must not be in the past.` Regional date-display and
+12/24-hour settings do not affect parsing or comparison, but the system clock and timezone determine now.
+
+Before changing the model, the command checks all active contacts for an equal `CheckupAppointment`,
+excluding the target contact. A shared slot is allowed only when every contact already booked at that slot
+has the same `familyNo` as the target. Hidden active contacts participate; archived contacts are excluded. A conflict
+throws a `CommandException` with `A contact with this booking date and time already exists. Only contacts
+with the same family HP can be booked at the same time.` No appointment, mark, selection or stored contact
+is changed by a rejected booking.
+
+The sequence diagram below shows scheduling or deleting a checkup using the displayed contact index.
+Validation failures stop before the model is changed or saved. Field-construction helpers and individual
+UI observer calls are omitted for clarity.
+
+<puml src="diagrams/CheckupSequenceDiagram.puml" alt="Sequence of parsing, validating, updating and saving a checkup appointment" />
+
+#### Model, UI and storage
+
+The command creates an immutable replacement `Person` and calls `Model#setPerson()`, preserving the
+other contact fields. Replacing an appointment clears `checkupMarked`; assigning the same appointment
+preserves its mark. A deletion clears both the optional appointment and its mark, and fails with
+`This contact has no checkup appointment to delete.` if no appointment exists.
+
+`PersonCard` shows the appointment row and a `[ ]` or `[X]` indicator only while an appointment is present.
+After deletion, the row is invisible and unmanaged, so it reserves no layout space, and the indicator is
+omitted. Updating a selected immutable contact refreshes the details panel. The command uses the displayed
+list index and preserves sorting and filtering; if a view predicate excludes the replacement because its
+fields changed, the display is refreshed to keep the updated contact visible.
+
+`CheckupCommand` modifies data, so `LogicManager` saves successful changes through `Storage`.
+`JsonAdaptedPerson` stores `checkupAppointment` and `checkupMarked`; absent appointments are represented
+by `null` and cannot be marked. Stored past appointments remain loadable because the constructor validates
+the date/time format, while the command enforces the not-in-the-past rule for new bookings.
+
+**Design consideration:** Checking archive status and booking conflicts during execution uses the current
+model state and ensures the displayed index refers to the selected contact. Keeping parsing and storage
+formatting independent of regional settings makes saved appointments portable between computers.
 ### Removing a checkup appointment
 
 `checkup INDEX /delete` removes the selected contact's appointment and checkup mark. `CheckupCommandParser`
@@ -741,6 +804,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
 | `* * *`  | caregiver                                  | keep care notes on a contact | remember allergies, medication times and visiting rules |
 | `* *`    | caregiver                                  | edit or delete one care note | keep notes up to date without retyping the others |
+| `* *`    | caregiver                                  | add checkup appointment dates |  kepe track of future appointments                                                 |
 
 
 *{More to be added}*
@@ -753,38 +817,47 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS:**
 
-1. User requests to add a person with the person's name, patient phone number, family phone number, and address
-2. CareBook validates the command format and input fields 
-3. CareBook adds the person to the address book 
-4. CareBook displays a confirmation with the person's details 
+1. User requests to add a person with a name, patient phone number, family phone number and address,
+   optionally providing patient email, family email and a priority tag.
+2. CareBook recognises the command word ignoring case, validates the format, normalizes name spacing
+   and checks the input fields and contact uniqueness.
+3. CareBook adds the person to the active list and saves the contact list.
+4. CareBook displays a confirmation with the person's details.
 
-    Use case ends. 
+    Use case ends.
 
-**Extensions** 
+**Extensions**
 
-*1a. The command format is invalid 
+* 2a. A required field is missing, a prefix is unknown or mistyped, a non-tag prefix is repeated, or a field value contains `/`.
 
-    *1a1. CareBook shows an error message with the correct command format.
+    * 2a1. CareBook shows an error message with the correct format and leaves the contact list unchanged.
 
-        Use case ends.
+      Use case resumes at step 1.
 
-*2a. The name contains invalid characters.
+* 2b. A field value is invalid, such as a name with invalid characters, a non-numeric phone number, an invalid email or priority tag.
 
-    *2a1. CareBook shows an error message.
+    * 2b1. CareBook shows the field's validation error and leaves the contact list unchanged.
 
-        Use case resumes at step 1
+      Use case resumes at step 1.
 
-*2b. A phone number contains non-numeric characters.
+* 2c. An active or archived contact has the same patient phone number or non-empty patient email, ignoring email case.
 
-    *2b1. CareBook shows an error message.
+    * 2c1. CareBook shows `This person already exists in CareBook.` and does not add the person.
 
-        Use case resumes at step 1.
+      Use case resumes at step 1.
 
-*2c. A required field is missing.
+* 2d. Another contact has the same normalized name and address, but distinct patient contact details.
 
-    *2c1. CareBook shows an error message.
+    * 2d1. CareBook compares the address ignoring case and whitespace, then shows
+      `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
 
-        Use case resumes at step 1.
+      Use case resumes at step 1.
+
+* 2e. Another contact has the same name, but the patient phone, patient email (if provided) and address do not conflict.
+
+    * 2e1. CareBook allows the shared name. Shared family contact details are also allowed.
+
+      Use case resumes at step 3.
 
 *2d. A prefix is unknown or mistyped, or a field value contains `/`.
 
@@ -1071,33 +1144,118 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 **MSS:**
 
-1. User requests to find contacts by name or one supported criterion.
-2. CareBook validates the command format and normalizes whitespace in the input.
-3. CareBook searches for the whole case-insensitive input phrase within the selected field, using the
-   current active or archive scope.
-4. CareBook displays the matching contact cards and the number of matches.
+1. User requests to display the active or archived contact list.
+2. CareBook displays the requested list.
+3. User requests to find contacts by a keyword or one criterion: name, patient phone,
+   family phone, address, patient email, family email, either email, priority tag or remark.
+4. CareBook validates the command format and criterion ignoring case, trims surrounding
+   whitespace and truncates trailing spaces in text input.
+5. CareBook searches the selected list scope for a case-insensitive substring matching the whole input phrase.
+   A remark search matches within an individual care note; phone input matches consecutive digits.
+6. CareBook displays matching contact cards and the match count without changing stored contacts.
 
-   Use case ends.
+    Use case ends.
 
 **Extensions**
 
-*2a. User input is empty, mixes plain keywords with a criterion, contains multiple criteria or has invalid phone input.
+* 4a. Input is empty, a criterion has no input, plain keywords are mixed with a criterion, or multiple criteria are supplied.
 
-    *2a1. CareBook displays an invalid-format error with the command usage and supported criteria.
+    * 4a1. CareBook shows the same invalid-format error and usage, including the supported criteria, and leaves the display unchanged.
 
-        Use case resumes at step 1.
+      Use case resumes at step 3.
 
-*2b. The criterion is unknown.
+* 4b. The criterion is unknown.
 
-    *2b1. CareBook reports the unknown criterion and leaves the displayed contacts unchanged.
+    * 4b1. CareBook reports the unknown criterion and leaves the display unchanged.
 
-        Use case resumes at step 1.
+      Use case resumes at step 3.
 
-*3a. No contacts match within the current scope.
+* 4c. Phone input is not one sequence of at least two digits.
 
-    *3a1. CareBook displays an empty list and reports `0 person(s) listed!`, retaining the active or archive scope.
+    * 4c1. CareBook shows an invalid-format error and leaves the display unchanged.
 
-        Use case ends.
+      Use case resumes at step 3.
+
+* 5a. No contacts match the search phrase in the selected scope.
+
+    * 5a1. CareBook displays an empty list and reports `0 person(s) listed!`.
+
+      Use case ends.
+
+* 5b. The current scope is the archive list, including after a search, filter, sort or zero-match result.
+
+    * 5b1. CareBook searches only archived contacts. In the active scope, it searches only active contacts.
+      Each new search replaces the previous search criteria; it does not narrow the previous results.
+
+      Use case resumes at step 6.
+
+**Use case: Manage a checkup appointment**
+
+**MSS:**
+
+1. User requests to display contacts.
+2. CareBook displays the requested contact list.
+3. User requests to schedule, replace or delete the checkup appointment of a contact.
+4. CareBook accepts any command-word or delete-keyword case and ignores extra spaces between arguments. For scheduling, it checks archive status before
+   date/time validity, then checks for a booking conflict among active contacts.
+5. CareBook updates or removes the appointment and its mark as appropriate, refreshes the contact card
+   and selected details, and saves the updated contact list.
+6. CareBook displays a confirmation.
+
+    Use case ends.
+
+**Extensions**
+
+* 3a. The command is missing required arguments or contains an invalid index format.
+
+    * 3a1. CareBook shows an invalid-format error with the correct usage and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
+* 4a. The index is outside the displayed list, including when the list is empty.
+
+    * 4a1. CareBook shows an invalid-index error and leaves the contacts unchanged.
+
+      Use case resumes at step 2.
+
+* 4b. The selected contact is archived and the user requests to schedule or replace an appointment.
+
+    * 4b1. CareBook shows `Appointments cannot be made with archived contacts. Unarchive the contact to do so.`
+      This error takes priority over an invalid date or time once the contact index is valid.
+
+      Use case resumes at step 3.
+
+* 4c. The date/time is impossible, has the wrong format or is earlier than the current local date and time.
+
+    * 4c1. CareBook shows the date/time validation error and preserves the existing appointment and mark.
+
+      Use case resumes at step 3.
+
+* 4d. Another active contact has the requested date and time but a different family HP.
+
+    * 4d1. CareBook shows `A contact with this booking date and time already exists. Only contacts with the same family HP can be booked at the same time.`
+      Hidden active contacts are checked; archived contacts do not block the slot. No contact is changed.
+
+      Use case resumes at step 3.
+
+* 4e. The user requests deletion, but the contact has no appointment.
+
+    * 4e1. CareBook shows `This contact has no checkup appointment to delete.` and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
+* 5a. The user assigns the same appointment again.
+
+    * 5a1. CareBook preserves the existing checkup mark. Assigning a different appointment clears the mark.
+
+      Use case resumes at step 6.
+
+* 5b. The user deletes the appointment.
+
+    * 5b1. CareBook removes the appointment row and its `[ ]` or `[X]` indicator entirely from the contact card.
+      The other contact details are preserved.
+
+      Use case resumes at step 6.
 
 ### Non-Functional Requirements
 
@@ -1116,6 +1274,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Recovery**: Patient is deemed to have reached their normal level of physical and physiological function
 * **Relevant contacts**: A patient's emergency contact, or other family contacts
+* **Active contacts**: Contacts that are not archived
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -1265,6 +1424,45 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `edit 1 /name Zachary Tan`<br>
       Expected: The first person is renamed and stays first in the results, even though the new name no longer
       matches the search. `list` shows the full list again.
+
+### Checkup appointments
+
+1. Scheduling, replacing and deleting an appointment
+
+   1. Prerequisites: Use `list` to show at least three active contacts. Contacts 1 and 3 share a family HP;
+      contact 2 has a different family HP. Choose an unused future date and replace `DATE` below with it
+      in `dd/mm/yyyy` format.
+
+   1. Test case: `CHECKUP 1   DATE  14:30   `<br>
+      Expected: The first displayed contact has an appointment at `14:30`, with `[ ]` beside the name.
+      Extra spaces and command capitalization do not affect parsing.
+
+   1. Test case: `checkup 2 DATE 14:30`, then `checkup 3 DATE 14:30`.<br>
+      Expected: Contact 2 is rejected with the booking-conflict error; contact 3 is booked because the
+      family HP matches contact 1. The check includes active contacts hidden by a filter, but excludes archived contacts.
+
+   1. Test case: Mark contact 1, then assign the same appointment again; next run `checkup 1 DATE 15:30`.<br>
+      Expected: The identical appointment preserves `[X]`. The changed appointment resets it to `[ ]`.
+
+   1. Test case: `checkup 1 delete`, then repeat the command.<br>
+      Expected: The first command removes the appointment row and mark indicator entirely. The second
+      reports `This contact has no checkup appointment to delete.` without changing the contact.
+
+   1. Test case: Schedule an appointment, close CareBook and relaunch it; then delete the appointment and relaunch again.<br>
+      Expected: Each successful change survives reloading. Other contact details are unchanged.
+
+1. Rejecting invalid bookings
+
+   1. Test case: Schedule an appointment for an earlier time today.<br>
+      Expected: `Checkup date and time must not be in the past.` The existing appointment and mark are unchanged.
+
+   1. Test case: Archive a contact, run `list archive`, then try `checkup 1 31/02/2030 14:30`.<br>
+      Expected: The archive error takes priority over the invalid-date error. Unarchiving the contact
+      allows scheduling again, subject to date/time and booking-conflict validation.
+
+   1. Other incorrect inputs to try: `checkup`, `checkup 0 DATE 14:30`, `checkup x DATE 14:30`,
+      an out-of-range displayed index, `31/02/2030 14:30` and `DATE 24:00`.<br>
+      Expected: Appropriate format, index or date/time errors. No contact data is changed.
 
 ### Keeping care notes
 
