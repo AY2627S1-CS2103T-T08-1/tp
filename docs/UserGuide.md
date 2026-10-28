@@ -475,6 +475,7 @@ The result box shows a confirmation instead of the previous command's output.
 
 Format: `clear`
 
+* The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
 * Works even if the displayed list is already empty.
 * Use `list` to show all contacts again, or `find KEYWORD` to search the stored contacts.
