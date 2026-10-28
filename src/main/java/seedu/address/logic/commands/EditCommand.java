@@ -125,18 +125,24 @@ public class EditCommand extends Command {
         Name updatedName = editPersonDescriptor.getName().orElse(personToEdit.getName());
         Phone updatedPatientNo = editPersonDescriptor.getPatientNo().orElse(personToEdit.getPatientNo());
         Phone updatedFamilyNo = editPersonDescriptor.getFamilyNo().orElse(personToEdit.getFamilyNo());
-        Email updatedPatientEmail = editPersonDescriptor.isPatientEmailEdited()
-                ? editPersonDescriptor.getPatientEmail().orElse(null)
-                : personToEdit.getPatientEmail().orElse(null);
-        Email updatedFamilyEmail = editPersonDescriptor.isFamilyEmailEdited()
-                ? editPersonDescriptor.getFamilyEmail().orElse(null)
-                : personToEdit.getFamilyEmail().orElse(null);
+        Email updatedPatientEmail = chooseEmail(editPersonDescriptor.isPatientEmailEdited(),
+                editPersonDescriptor.getPatientEmail(), personToEdit.getPatientEmail());
+        Email updatedFamilyEmail = chooseEmail(editPersonDescriptor.isFamilyEmailEdited(),
+                editPersonDescriptor.getFamilyEmail(), personToEdit.getFamilyEmail());
         Address updatedAddress = editPersonDescriptor.getAddress().orElse(personToEdit.getAddress());
         Set<Tag> updatedTags = editPersonDescriptor.getTags().orElse(personToEdit.getTags());
 
         return new Person(updatedName, updatedPatientNo, updatedFamilyNo, updatedPatientEmail,
                 updatedFamilyEmail, updatedAddress, updatedTags, personToEdit.getCheckupAppointment().orElse(null),
                 personToEdit.getRemark(), personToEdit.isArchived(), personToEdit.isCheckupMarked());
+    }
+
+    /**
+     * Returns the email to keep after an edit: {@code newEmail} if the email was edited (empty means it was
+     * removed), otherwise {@code oldEmail}. Either result may be {@code null}, meaning no email.
+     */
+    private static Email chooseEmail(boolean isEdited, Optional<Email> newEmail, Optional<Email> oldEmail) {
+        return (isEdited ? newEmail : oldEmail).orElse(null);
     }
 
     @Override
@@ -187,6 +193,7 @@ public class EditCommand extends Command {
             setName(toCopy.name);
             setPatientNo(toCopy.patientNo);
             setFamilyNo(toCopy.familyNo);
+            // the email setters would mark the emails as edited, so the fields and flags are copied directly
             patientEmail = toCopy.patientEmail;
             familyEmail = toCopy.familyEmail;
             isPatientEmailEdited = toCopy.isPatientEmailEdited;

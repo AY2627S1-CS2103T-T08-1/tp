@@ -264,6 +264,7 @@ public class Person {
                 .add("tags", tags)
                 .add("checkupAppointment", checkupAppointment)
                 .add("remark", remark)
+                .add("archived", archived)
                 .add("checkupMarked", checkupMarked)
                 .toString();
     }

@@ -202,7 +202,7 @@ public class ContactDetailsUiTest {
             window.enter("remark 1 /edit 1 Bring updated medication list");
             assertTrue(window.detailsText().getText().contains("1. Bring updated medication list"));
             window.enter("remark 1 /clear");
-            assertTrue(window.detailsText().getText().contains("Remarks: None"));
+            assertTrue(window.detailsText().getText().contains("Remark: None"));
             assertFalse(window.detailsText().getText().contains("Call family"));
             assertTrue(window.detailsPanel().isVisible());
         });
