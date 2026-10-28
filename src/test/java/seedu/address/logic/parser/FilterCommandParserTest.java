@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
@@ -8,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.model.person.PersonMatchesFilterPredicate;
 
@@ -34,6 +36,15 @@ public class FilterCommandParserTest {
 
         // text before the first prefix
         assertParseFailure(parser, "ali /tag HIGH", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_unsupportedPrefix_throwsParseException() {
+        assertParseFailure(parser, " /patientNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name ali /patientNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /tag HIGH /familyNo 91234567", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /address clementi /pEmail a@b.com", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name ali /unknown x", MESSAGE_INVALID_FORMAT);
     }
 
     @Test
@@ -78,15 +89,29 @@ public class FilterCommandParserTest {
     }
 
     @Test
+    public void parse_extraWhitespaceBeforePrefix_prefixStillRecognized() {
+        FilterCommand expected = new FilterCommand(new PersonMatchesFilterPredicate(
+                List.of("Alice"), List.of("HIGH"), List.of()));
+        assertParseSuccess(parser, " /name Alice     /tag HIGH", expected);
+        assertParseSuccess(parser, " /name Alice\t/tag HIGH", expected);
+        assertParseSuccess(parser, " /name Alice \n /tag HIGH", expected);
+    }
+
+    @Test
     public void parse_repeatedPrefixes_accumulatesValues() {
         assertParseSuccess(parser, " /tag HIGH /tag MEDIUM",
                 command(List.of(), List.of("HIGH", "MEDIUM"), List.of()));
 
         assertParseSuccess(parser, " /address clementi /address jurong west",
                 command(List.of(), List.of(), List.of("clementi", "jurong west")));
+    }
 
-        assertParseSuccess(parser, " /name ali /name bob",
-                command(List.of("ali", "bob"), List.of(), List.of()));
+    @Test
+    public void parse_repeatedName_throwsParseException() {
+        String expectedMessage = Messages.MESSAGE_DUPLICATE_FIELDS + PREFIX_NAME;
+
+        assertParseFailure(parser, " /name ali /name bob", expectedMessage);
+        assertParseFailure(parser, " /name ali /tag HIGH /name bob", expectedMessage);
     }
 
     @Test

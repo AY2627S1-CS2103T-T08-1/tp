@@ -12,6 +12,18 @@ import seedu.address.testutil.PersonBuilder;
 
 public class PersonContainsKeywordsPredicateTest {
     @Test
+    public void test_remark_matchesWithinOneNoteIgnoringCaseAndSpacing() {
+        Person person = new PersonBuilder().withRemarks("Bring medication", "Needs    Assistance   ").build();
+        assertTrue(predicate(FindCriterion.REMARK, "needs assistance").test(person));
+        assertTrue(predicate(FindCriterion.REMARK, "ASSIST").test(person));
+        assertFalse(predicate(FindCriterion.REMARK, "medication Needs").test(person));
+        assertFalse(predicate(FindCriterion.REMARK, "1.").test(person));
+        assertFalse(predicate(FindCriterion.REMARK, "assistance").test(new PersonBuilder().build()));
+        assertFalse(predicate(FindCriterion.REMARK, "assistance")
+                .test(new PersonBuilder().withName("Needs assistance").build()));
+    }
+
+    @Test
     public void test_phoneDigitsMustBeConsecutive() {
         PersonContainsKeywordsPredicate patientPredicate = predicate(FindCriterion.PATIENT_PHONE, "87");
         assertTrue(patientPredicate.test(new PersonBuilder().withPatientNo("900087000").build()));

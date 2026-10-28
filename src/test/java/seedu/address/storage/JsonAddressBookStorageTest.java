@@ -41,7 +41,7 @@ public class JsonAddressBookStorageTest {
         Model model = new ModelManager(
                 restored, new UserPrefs());
         assertFalse(model.getFilteredPersonList().contains(ALICE.copyWithArchivedStatus(true)));
-        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ARCHIVED_PERSONS);
+        model.setArchiveScope(true);
         assertEquals(List.of(ALICE.copyWithArchivedStatus(true)), model.getFilteredPersonList());
     }
 

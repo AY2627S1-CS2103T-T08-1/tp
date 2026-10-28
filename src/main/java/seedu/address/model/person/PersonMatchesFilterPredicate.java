@@ -54,8 +54,13 @@ public class PersonMatchesFilterPredicate implements Predicate<Person> {
         if (addressPhrases.isEmpty()) {
             return true;
         }
-        String address = person.getAddress().value.toLowerCase(Locale.ROOT);
-        return addressPhrases.stream().anyMatch(phrase -> address.contains(phrase.toLowerCase(Locale.ROOT)));
+        String address = normalizeSpaces(person.getAddress().value);
+        return addressPhrases.stream().anyMatch(phrase -> address.contains(normalizeSpaces(phrase)));
+    }
+
+    /** Lower-cases {@code value} and collapses each run of whitespace into a single space. */
+    private static String normalizeSpaces(String value) {
+        return value.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 
     @Override

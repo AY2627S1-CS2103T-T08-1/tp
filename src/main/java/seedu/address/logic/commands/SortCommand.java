@@ -15,10 +15,12 @@ public class SortCommand extends Command {
     public static final String COMMAND_WORD = "sort";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Sorts the displayed persons.\n"
-            + "Parameters: priority [asc|desc] | name [asc|desc] | recent\n"
+            + "Parameters: priority [asc|desc] | name [asc|desc] | checkup [asc|desc] | recent\n"
             + "priority: desc (default) shows HIGH, MEDIUM, LOW; asc shows LOW, MEDIUM, HIGH. "
             + "Persons without a priority tag are always last.\n"
             + "name: asc (default) shows A to Z; desc shows Z to A.\n"
+            + "checkup: asc (default) shows the earliest checkup appointment first; desc shows the latest first. "
+            + "Persons without a checkup appointment are always last.\n"
             + "recent: shows the most recently added person first.\n"
             + "Use `list` to restore the original order.\n"
             + "Examples: " + COMMAND_WORD + " priority, " + COMMAND_WORD + " name desc, " + COMMAND_WORD + " recent";
@@ -27,12 +29,15 @@ public class SortCommand extends Command {
     public static final String MESSAGE_SORTED_PRIORITY_ASC = "Sorted by priority: LOW to HIGH.";
     public static final String MESSAGE_SORTED_NAME_ASC = "Sorted by name: A to Z.";
     public static final String MESSAGE_SORTED_NAME_DESC = "Sorted by name: Z to A.";
+    public static final String MESSAGE_SORTED_CHECKUP_ASC = "Sorted by checkup date: earliest to latest.";
+    public static final String MESSAGE_SORTED_CHECKUP_DESC = "Sorted by checkup date: latest to earliest.";
     public static final String MESSAGE_SORTED_RECENT = "Sorted by most recently added.";
 
     /** What the displayed persons are ordered by. */
     public enum Criterion {
         PRIORITY,
         NAME,
+        CHECKUP,
         RECENT
     }
 
@@ -66,6 +71,10 @@ public class SortCommand extends Command {
             case NAME -> {
                 model.updateSortedPersonList(PersonComparators.byName(ascending));
                 yield new CommandResult(ascending ? MESSAGE_SORTED_NAME_ASC : MESSAGE_SORTED_NAME_DESC);
+            }
+            case CHECKUP -> {
+                model.updateSortedPersonList(PersonComparators.byCheckup(ascending));
+                yield new CommandResult(ascending ? MESSAGE_SORTED_CHECKUP_ASC : MESSAGE_SORTED_CHECKUP_DESC);
             }
             case RECENT -> {
                 model.sortPersonsByMostRecent();
