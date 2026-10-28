@@ -248,7 +248,7 @@ public class FindCommandTest {
     }
 
     /**
-     * Checks that persons matching any supplied keyword are displayed.
+     * Checks that persons matching any input keyword are displayed.
      */
     @Test
     public void execute_multipleKeywords_multiplePersonsFound() {
