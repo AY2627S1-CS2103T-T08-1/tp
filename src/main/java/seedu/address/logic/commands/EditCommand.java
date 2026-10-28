@@ -57,7 +57,8 @@ public class EditCommand extends Command {
             + PREFIX_TAG + " HIGH";
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
-    public static final String MESSAGE_NO_TAG_CHANGE = "No change to tag";
+    public static final String MESSAGE_NO_CHANGE = "No changes made: the values given are the same as %1$s's "
+            + "current details.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
@@ -92,10 +93,9 @@ public class EditCommand extends Command {
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
-        if (editPersonDescriptor.getTags().isPresent()
-                && personToEdit.getTags().equals(editedPerson.getTags())
-                && personToEdit.equals(editedPerson)) {
-            return new CommandResult(MESSAGE_NO_TAG_CHANGE);
+        if (personToEdit.equals(editedPerson)) {
+            logger.fine("Edit made no change to the contact at index " + index.getOneBased());
+            return new CommandResult(String.format(MESSAGE_NO_CHANGE, personToEdit.getName()));
         }
 
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()

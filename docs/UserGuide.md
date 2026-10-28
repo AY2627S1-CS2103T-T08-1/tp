@@ -321,6 +321,7 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * To remove a person's priority tag, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
 * The list on screen stays as it is after an edit, including the results of `find` or `filter`, the archive list and the sort order. The edited person stays in the list even if they no longer match the search, and keeps their place in a sorted list even if the new name or tag would sort elsewhere, so the indices you see stay the same. Run `list` or a new `find` to refresh the list.
 * Editing an archived person in `list archive` keeps them archived.
+* If every value you give is the same as the person's current details, e.g. `edit 1 /tag HIGH` for a person who is already `HIGH`, CareBook shows `No changes made: the values given are the same as Alex Yeoh's current details.` and nothing changes.
 
 Examples:
 * `edit 1 /patientNo 91234567 /pEmail johndoe@example.com` Edits the patient phone number and patient email of the 1st person to be `91234567` and `johndoe@example.com` respectively.
