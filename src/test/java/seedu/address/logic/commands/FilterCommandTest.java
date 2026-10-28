@@ -34,6 +34,14 @@ public class FilterCommandTest {
     }
 
     @Test
+    public void messageUsage_prefixesSeparatedFromValues() {
+        assertTrue(FilterCommand.MESSAGE_USAGE.contains(
+                "[/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]..."));
+        assertTrue(FilterCommand.MESSAGE_USAGE.contains(
+                "filter /name ali bob /tag HIGH /tag MEDIUM /address clementi"));
+    }
+
+    @Test
     public void execute_activeList_excludesArchivedMatches() throws Exception {
         model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
         AddressBook original = new AddressBook(model.getAddressBook());
