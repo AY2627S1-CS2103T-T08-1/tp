@@ -24,7 +24,7 @@ public class PersonDetailsFormatterTest {
         assertEquals("Patient phone: 91234567\nFamily phone: 81234567"
                 + "\nPatient email: patient@example.com\nFamily email: family@example.com"
                 + "\nAddress: 123 Long Road\nPriority: HIGH"
-                + "\nCheckup appointment: Not scheduled\nRemarks: None", details);
+                + "\nCheckup appointment: Not scheduled\nRemark: None", details);
     }
 
     @Test
@@ -34,7 +34,7 @@ public class PersonDetailsFormatterTest {
         assertTrue(details.contains("Family email: Not provided"));
         assertTrue(details.contains("Priority: Not assigned"));
         assertTrue(details.contains("Checkup appointment: Not scheduled"));
-        assertTrue(details.contains("Remarks: None"));
+        assertTrue(details.contains("Remark: None"));
     }
 
     @Test
@@ -43,7 +43,7 @@ public class PersonDetailsFormatterTest {
                 .withRemarks("Allergic to penicillin", "Literal /tag HIGH belongs to this note").build();
         String details = PersonDetailsFormatter.format(person);
         assertTrue(details.contains("Checkup appointment: 25/12/2030 14:30"));
-        assertTrue(details.contains("Remarks: \n1. Allergic to penicillin\n2. Literal /tag HIGH belongs to this note"));
+        assertTrue(details.contains("Remark: \n1. Allergic to penicillin\n2. Literal /tag HIGH belongs to this note"));
     }
 
     @Test

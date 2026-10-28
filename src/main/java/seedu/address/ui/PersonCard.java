@@ -58,18 +58,15 @@ public class PersonCard extends UiPart<Region> {
         id.setText(displayedIndex + ". ");
         name.setText(getNameText(person));
         checkupAppointment.setText(getCheckupAppointmentText(person));
-        checkupAppointment.setVisible(person.getCheckupAppointment().isPresent());
-        checkupAppointment.setManaged(person.getCheckupAppointment().isPresent());
+        setShown(checkupAppointment, person.getCheckupAppointment().isPresent());
         patientNo.setText(getPatientNoText(person));
         familyNo.setText(getFamilyNoText(person));
         email.setText(getEmailText(person));
-        updateEmailVisibility(email, email.getText());
+        setShown(email, !email.getText().isEmpty());
         address.setText(person.getAddress().value);
         getTagTexts(person).forEach(tagName -> tags.getChildren().add(new Label(tagName)));
         remark.setText(getRemarkText(person));
-        // an empty remark takes up no space on the card
-        remark.setManaged(!person.getRemark().isEmpty());
-        remark.setVisible(!person.getRemark().isEmpty());
+        setShown(remark, !person.getRemark().isEmpty());
     }
 
     static String getNameText(Person person) {
@@ -80,16 +77,15 @@ public class PersonCard extends UiPart<Region> {
     }
 
     static String getCheckupAppointmentText(Person person) {
-        return person.getCheckupAppointment().map(appointment -> "Check up Appointment: " + appointment).orElse("");
+        return person.getCheckupAppointment().map(appointment -> "Checkup appointment: " + appointment).orElse("");
     }
 
     /**
-     * Removes an empty email row from the layout and restores it when email text is present.
+     * Shows {@code row}, or hides it so that it takes up no space on the card.
      */
-    static void updateEmailVisibility(Node emailRow, String emailText) {
-        boolean hasEmail = !emailText.isEmpty();
-        emailRow.setVisible(hasEmail);
-        emailRow.setManaged(hasEmail);
+    static void setShown(Node row, boolean isShown) {
+        row.setVisible(isShown);
+        row.setManaged(isShown);
     }
 
     static String getPatientNoText(Person person) {

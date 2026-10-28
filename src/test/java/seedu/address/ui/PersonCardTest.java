@@ -49,18 +49,18 @@ public class PersonCardTest {
     }
 
     @Test
-    public void updateEmailVisibility_noEmail_hidesRowAndRemovesLayoutSpace() {
+    public void setShown_noEmail_hidesRowAndRemovesLayoutSpace() {
         Node emailRow = new Group();
         Person person = new PersonBuilder().withoutEmail().build();
 
-        PersonCard.updateEmailVisibility(emailRow, PersonCard.getEmailText(person));
+        PersonCard.setShown(emailRow, !PersonCard.getEmailText(person).isEmpty());
 
         assertFalse(emailRow.isVisible());
         assertFalse(emailRow.isManaged());
     }
 
     @Test
-    public void updateEmailVisibility_eitherEmailPresent_restoresRowAndLayoutSpace() {
+    public void setShown_eitherEmailPresent_restoresRowAndLayoutSpace() {
         Node emailRow = new Group();
         List<Person> persons = List.of(
                 new PersonBuilder().withPatientEmail("patient@example.com").build(),
@@ -68,8 +68,8 @@ public class PersonCardTest {
                 new PersonBuilder().withPatientEmail("patient@example.com")
                         .withFamilyEmail("family@example.com").build());
         for (Person person : persons) {
-            PersonCard.updateEmailVisibility(emailRow, "");
-            PersonCard.updateEmailVisibility(emailRow, PersonCard.getEmailText(person));
+            PersonCard.setShown(emailRow, false);
+            PersonCard.setShown(emailRow, !PersonCard.getEmailText(person).isEmpty());
 
             assertTrue(emailRow.isVisible());
             assertTrue(emailRow.isManaged());
@@ -79,7 +79,7 @@ public class PersonCardTest {
     @Test
     public void getCheckupAppointmentText_formatsAppointmentAndOmitsAbsentAppointment() {
         assertEquals("", PersonCard.getCheckupAppointmentText(new PersonBuilder().build()));
-        assertEquals("Check up Appointment: 01/01/2030 09:05", PersonCard.getCheckupAppointmentText(
+        assertEquals("Checkup appointment: 01/01/2030 09:05", PersonCard.getCheckupAppointmentText(
                 new PersonBuilder().withCheckupAppointment("01/01/2030 09:05").build()));
     }
 
