@@ -398,7 +398,7 @@ Each `filter` replaces the previous filter criteria while keeping the same list,
 
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
-* At least one of `/name`, `/tag` or `/address` must be given.
+* At least one of `/name`, `/tag` or `/address` must be given. Any other prefix, such as `/patientNo` or `/email`, is not a filter criterion and is rejected.
 * **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`.
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases.
@@ -421,6 +421,7 @@ Examples:
 | `filter /name` (empty value) | `Invalid command format!` followed by the correct usage | Put a value after each prefix, e.g. `filter /name ali`. |
 | `filter /tag URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
 | `filter /tag HIGH LOW` (several tags in one prefix) | `Invalid command format!` followed by the correct usage | Repeat the prefix: `filter /tag HIGH /tag LOW`. |
+| `filter /name ali /patientNo 91234567` (unsupported prefix) | `Invalid command format!` followed by the correct usage | Use only `/name`, `/tag` and `/address`. |
 
 After a `filter` command, use `list` to display all persons again.
 
