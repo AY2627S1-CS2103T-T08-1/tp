@@ -11,7 +11,7 @@
         "jane-doe": "Jane Doe",
         "yong-see": "Yong See",
         "qian-grace-pan": "Qian Grace Pan",
-        "james-doe": "James Doe"
+        "carlyn-goh": "Carlyn Goh"
       },
       "headingKeywords": {}
     },
@@ -54,6 +54,7 @@
         "saving-data": "Saving data",
         "viewing-a-contact-s-full-details": "Viewing a contact's full details",
         "priority-tags": "Priority tags",
+        "removing-a-checkup-appointment": "Removing a checkup appointment",
         "remarks": "Remarks",
         "find-command": "Find command",
         "delete-command": "Delete command",
@@ -130,6 +131,7 @@
         "sorting-persons-sort": "Sorting persons: sort",
         "viewing-a-person-s-full-details-view": "Viewing a person's full details: view",
         "editing-a-person-edit": "Editing a person: edit",
+        "removing-a-checkup-appointment-checkup-index-delete": "Removing a checkup appointment: checkup INDEX /delete",
         "keeping-care-notes-on-a-person-remark": "Keeping care notes on a person: remark",
         "locating-persons-find": "Locating persons: find",
         "filtering-persons-by-name-tag-and-address-filter": "Filtering persons by name, tag and address: filter",
