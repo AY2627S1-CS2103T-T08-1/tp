@@ -77,7 +77,7 @@ public class FindCommandParser implements Parser<FindCommand> {
         if (keywords.stream().anyMatch(keyword -> keyword.startsWith("/"))) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
-      
+
         String normalizedInput = input.trim().replaceAll("\\s+", " ");
         return new FindCommand(
             new PersonContainsKeywordsPredicate(criterion, List.of(normalizedInput)));
