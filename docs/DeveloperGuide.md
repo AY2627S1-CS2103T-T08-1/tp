@@ -352,7 +352,9 @@ return zero matches. It focuses on parsing and execution; helper calls and UI up
 2. `FindCommandParser#parse()` extracts the slash-prefixed criterion and validates the input. It creates a
    `PersonContainsKeywordsPredicate` containing the criterion and keywords, then a `FindCommand` using that
    predicate. Legacy name searches continue to use `NameContainsKeywordsPredicate`.
-3. `FindCommand#execute()` calls `Model#updateFilteredPersonList(predicate)` to replace the display filter.
+3. `FindCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)` to replace the search criteria
+   within the selected active or archive scope. `ModelManager` stores this scope as a boolean; list switches
+   call `Model#setArchiveScope(boolean)` explicitly, so filtering never infers scope from predicate identity.
    `PersonContainsKeywordsPredicate#test()` selects the requested field and checks for matching substrings.
    Absent optional emails or tags do not match. The UI observes the filtered list and updates the contact cards.
 4. The command obtains `Model#getFilteredPersonList()` and uses its size to format

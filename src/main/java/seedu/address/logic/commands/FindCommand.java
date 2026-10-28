@@ -61,8 +61,6 @@ public class FindCommand extends Command {
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.updateFilteredPersonList(model.isShowingArchiveList()
-                ? Model.PREDICATE_SHOW_ARCHIVED_PERSONS : Model.PREDICATE_SHOW_ALL_PERSONS);
         model.filterPersonsInCurrentList(predicate);
         int matchCount = model.getFilteredPersonList().size();
         String feedback = String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, matchCount);

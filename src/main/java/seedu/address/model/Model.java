@@ -74,6 +74,12 @@ public interface Model {
     /** Returns whether the displayed list is scoped to archived contacts, including search and sort results. */
     boolean isShowingArchiveList();
 
+    /**
+     * Selects the active or archive scope and shows all contacts in it, preserving the current sort order.
+     * Subsequent search filters do not change this scope.
+     */
+    void setArchiveScope(boolean archiveScope);
+
     /** Returns the selected contact, or null when no contact is selected, as a read-only property. */
     ReadOnlyObjectProperty<Person> selectedPersonProperty();
 
@@ -81,7 +87,9 @@ public interface Model {
     void selectPerson(Person person);
 
     /**
-     * Updates the filter of the filtered person list to filter by the given {@code predicate}.
+     * Updates the displayed filter without changing the active or archive scope.
+     * Use {@link #setArchiveScope(boolean)} to switch lists, or {@link #filterPersonsInCurrentList(Predicate)}
+     * to apply search criteria within the selected scope.
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
