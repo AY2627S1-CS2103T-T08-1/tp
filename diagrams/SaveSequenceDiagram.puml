@@ -25,6 +25,14 @@ activate AddressBookParser
 AddressBookParser --> LogicManager : c
 deactivate AddressBookParser
 
+LogicManager -> Model : getAddressBook()
+activate Model
+
+Model --> LogicManager : addressBook
+deactivate Model
+
+LogicManager -> LogicManager : keep a copy of addressBook
+
 LogicManager -> Command : execute(m)
 activate Command
 
@@ -49,6 +57,16 @@ alt isModifying
 
     Storage --> LogicManager
     deactivate Storage
+
+    opt the save failed
+        LogicManager -> Model : setAddressBook(copy)
+        activate Model
+
+        Model --> LogicManager
+        deactivate Model
+
+        [<-- LogicManager : CommandException
+    end
 else else
     LogicManager -> LogicManager : log that the save is skipped
 end
