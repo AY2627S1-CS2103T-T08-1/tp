@@ -44,6 +44,46 @@ public class EditCommandTest {
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void execute_familyNoBreaksSharedBooking_failure() throws Exception {
+        Model bookingModel = modelWithSharedBooking();
+
+        assertCommandFailure(new EditCommandParser().parse("1 /familyNo 89999999"), bookingModel,
+                EditCommand.MESSAGE_BOOKING_CLASH);
+    }
+
+    @Test
+    public void execute_familyNoWithBookingSharedOnlyByArchivedPerson_success() throws Exception {
+        Model bookingModel = modelWithSharedBooking();
+        Person second = bookingModel.getFilteredPersonList().get(1);
+        bookingModel.setPerson(second, second.copyWithArchivedStatus(true));
+
+        new EditCommandParser().parse("1 /familyNo 89999999").execute(bookingModel);
+        assertEquals("89999999", bookingModel.getFilteredPersonList().get(0).getFamilyNo().value);
+    }
+
+    @Test
+    public void execute_otherFieldOfPersonWithSharedBooking_success() throws Exception {
+        Model bookingModel = modelWithSharedBooking();
+
+        new EditCommandParser().parse("1 /address 3 New Road").execute(bookingModel);
+        assertEquals("3 New Road", bookingModel.getFilteredPersonList().get(0).getAddress().value);
+    }
+
+    /** Returns a model with two persons who share a family HP and a checkup appointment. */
+    private static Model modelWithSharedBooking() {
+        Person first = new PersonBuilder().withName("Amy Bee").withPatientNo("91111111")
+                .withPatientEmail("amy@example.com").withAddress("1 First Road").withFamilyNo("81111111")
+                .withCheckupAppointment("25/12/2030 14:30").build();
+        Person second = new PersonBuilder().withName("Bob Choo").withPatientNo("92222222")
+                .withPatientEmail("bob@example.com").withAddress("2 Second Road").withFamilyNo("81111111")
+                .withCheckupAppointment("25/12/2030 14:30").build();
+        Model bookingModel = new ModelManager();
+        bookingModel.addPerson(first);
+        bookingModel.addPerson(second);
+        return bookingModel;
+    }
+
+    @Test
     public void execute_unchangedTag_reportsNoChange() throws Exception {
         for (String priority : new String[] {"", "HIGH", "MEDIUM", "LOW"}) {
             Person person = priority.isEmpty() ? new PersonBuilder().withTags().build()

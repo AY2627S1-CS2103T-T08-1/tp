@@ -60,6 +60,9 @@ public class EditCommand extends Command {
     public static final String MESSAGE_NO_CHANGE = "No changes made: the values given are the same as %1$s's "
             + "current details.";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
+    public static final String MESSAGE_BOOKING_CLASH = "This family HP cannot be used: another active contact has "
+            + "a checkup at the same date and time, and contacts can share a booking only if their family HP numbers "
+            + "match. Change one of the checkups first.";
     public static final String MESSAGE_DUPLICATE_PERSON = Messages.MESSAGE_DUPLICATE_PERSON;
 
     private static final Logger logger = LogsCenter.getLogger(EditCommand.class);
@@ -116,9 +119,28 @@ public class EditCommand extends Command {
                     Messages.withArchivedHint(Person.MESSAGE_NAME_ADDRESS_CONFLICT, sameNameAndAddress.get()));
         }
 
+        if (!editedPerson.getFamilyNo().equals(personToEdit.getFamilyNo())
+                && hasBookingClash(editedPerson, otherPersons)) {
+            logger.fine("Edit rejected: the new family HP clashes with another contact's checkup booking");
+            throw new CommandException(MESSAGE_BOOKING_CLASH);
+        }
+
         model.setPersonKeepingDisplayed(personToEdit, editedPerson);
         logger.info("Edited contact at index " + index.getOneBased());
         return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
+    }
+
+    /**
+     * Returns true if {@code editedPerson} has a checkup appointment that an active person in {@code otherPersons}
+     * also has, with a different family HP. {@code checkup} does not allow such a booking, so neither does edit.
+     */
+    private static boolean hasBookingClash(Person editedPerson, List<Person> otherPersons) {
+        if (editedPerson.isArchived() || editedPerson.getCheckupAppointment().isEmpty()) {
+            return false;
+        }
+        return otherPersons.stream().anyMatch(other -> !other.isArchived()
+                && other.getCheckupAppointment().equals(editedPerson.getCheckupAppointment())
+                && !other.getFamilyNo().equals(editedPerson.getFamilyNo()));
     }
 
     /**
