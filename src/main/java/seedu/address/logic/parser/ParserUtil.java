@@ -24,6 +24,9 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
+    private static final String DIGITS_REGEX = "[0-9]+";
+    private static final String ZEROS_REGEX = "0+";
+
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
@@ -35,6 +38,23 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses {@code oneBasedIndex} like {@link #parseIndex(String)}, except that a positive number too large for an
+     * {@code int} is capped at {@code Integer.MAX_VALUE}. It cannot refer to any displayed person, so the command
+     * reports it as out of range instead of as an invalid index.
+     *
+     * @throws ParseException if the specified index is invalid (not a positive integer).
+     */
+    public static Index parseDisplayedIndex(String oneBasedIndex) throws ParseException {
+        String trimmedIndex = oneBasedIndex.trim();
+        boolean isTooLarge = trimmedIndex.matches(DIGITS_REGEX) && !trimmedIndex.matches(ZEROS_REGEX)
+                && !StringUtil.isNonZeroUnsignedInteger(trimmedIndex);
+        if (isTooLarge) {
+            return Index.fromOneBased(Integer.MAX_VALUE);
+        }
+        return parseIndex(trimmedIndex);
     }
 
     /**

@@ -39,7 +39,7 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
         if (!firstWord.matches(INTEGER_REGEX)) {
             throw invalidFormat();
         }
-        Index personIndex = ParserUtil.parseIndex(firstWord);
+        Index personIndex = ParserUtil.parseDisplayedIndex(firstWord);
         String details = indexAndDetails.group("rest");
 
         // a missing note is an error rather than a way to clear, so notes are never lost by accident
