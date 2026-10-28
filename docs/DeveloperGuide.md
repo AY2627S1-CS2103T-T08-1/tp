@@ -163,6 +163,67 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
 
+### Add command
+
+The `add` command creates an active contact with a name, patient phone number, family phone number and
+address. Patient email, family email and a priority tag are optional. The command word is case-insensitive:
+`add`, `Add` and `ADD` follow the same parsing and execution path.
+
+#### Parsing and validation
+
+`AddressBookParser#parseCommand()` recognises the command word and delegates to `AddCommandParser#parse()`.
+The parser tokenizes the supported prefixes, checks required fields and rejects repeated non-tag prefixes
+before constructing the field objects and a `Person`. Supported prefixes are `/name`, `/patientNo`,
+`/familyNo`, `/pEmail`, `/fEmail`, `/address` and `/tag`. Only the `/tag` prefix is case-insensitive.
+The legacy `/email` prefix is rejected with instructions to use `/pEmail` or `/fEmail`.
+
+Every `/` must start a complete recognised prefix, separated from its value by whitespace. A literal `/`
+cannot be stored in any field value. Strict tokenization therefore rejects `/address 4 St /phone 123`,
+`/addressExtra 4 St` and `/address 4/5 Main St` instead of silently storing the extra text as an address.
+The invalid-format response includes `AddCommand.MESSAGE_USAGE`, which also supplies the Add entry in
+the Help window and explains the slash restriction.
+
+`ParserUtil` validates individual fields and trims surrounding whitespace. `Name` also collapses repeated
+spaces, so `Kim    Lee   ` is stored as `Kim Lee` and cannot bypass duplicate detection through spacing.
+Priority normalization and validation follow the rules in [Priority tags](#priority-tags).
+
+#### Duplicate detection and execution
+
+`AddCommand#execute()` checks the candidate against the full address book, including archived contacts;
+the current display filter and sort order do not limit duplicate checks. `Person#isSamePerson()` and
+`UniquePersonList` enforce the contact identity rules:
+
+* A matching patient phone number or a matching non-empty patient email is a duplicate, even if the names
+  differ. Patient email comparison ignores case; two omitted patient emails are not a match.
+* A shared name alone is allowed when the patient contact details and address distinguish the contacts.
+* The same name and address require a name differentiator. Names are compared ignoring case after
+  normalization; addresses are compared ignoring case and all whitespace. This comparison does not remove
+  internal spaces from the stored address. Different names may share an address.
+
+The sequence diagram below shows a successful add after input and duplicate validation. Error branches
+stop before the model is changed; their messages are described below.
+
+<puml src="diagrams/AddSequenceDiagram.puml" alt="Sequence of validating, adding and saving a new contact" />
+
+1. `AddCommandParser` creates the validated `Person` and an `AddCommand` containing it.
+1. `AddCommand` calls `Model#hasPerson()` to check for a duplicate. A duplicate patient phone or email
+   produces `AddCommand.MESSAGE_DUPLICATE_PERSON`: `This person already exists in CareBook.`
+1. A same-name, same-address conflict without a duplicate patient phone or email instead produces
+   `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+1. Otherwise, `Model#addPerson()` adds the contact and restores the active list. The command returns the
+   new contact's details in a `CommandResult`.
+1. `AddCommand#modifiesData()` returns `true`, so `LogicManager` saves the updated address book through
+   `Storage#saveAddressBook()`.
+
+**Error handling:** Invalid prefixes, missing required fields, duplicate prefixes and invalid values cause a
+`ParseException`. Duplicate contacts cause a `CommandException`. Neither path adds a contact or saves a
+partial entry. Shared family phone numbers and family emails are allowed; patient contact details provide
+the uniqueness checks.
+
+**Design consideration:** Normalizing names when constructing `Name` gives parsing, storage loading and
+duplicate checks the same representation. Checking the full address book prevents a hidden or archived
+contact from being added again, while allowing different patients to share a name or family contact.
+
 ### Viewing a contact's full details
 
 The `view INDEX` command displays one contact from the currently displayed list and returns their full details
@@ -390,6 +451,66 @@ would be too long cause a `CommandException`. In each case the person is unchang
 
 ### Find command
 
+The `find` command searches names using `find INPUT`, or one selected field using `find /CRITERION INPUT`.
+The command word and criterion are case-insensitive. Supported criteria are `/name`, `/patientNo`,
+`/familyNo`, `/address`, `/pEmail`, `/fEmail`, `/email` (either email) and `/tag`.
+It changes the displayed contacts and returns the match count without modifying stored contacts.
+
+#### Parsing and phrase matching
+
+`FindCommandParser#parse()` trims surrounding whitespace and collapses repeated whitespace within the
+input. Plain input creates a `NameContainsKeywordsPredicate`; criterion input creates a
+`PersonContainsKeywordsPredicate`. In both cases, the normalized input is passed as one search phrase,
+not as separate alternative keywords. Text matching uses case-insensitive substrings.
+
+* `find D       Est` searches for the continuous phrase `D Est`. It matches `D Est` and `Dr D Est Tan`,
+  but not `D Tan`, `Est Lee` or `D Middle Est`.
+* `find alex david` does not return `Alex Yeoh` and `David Li` separately; the name must contain
+  `alex david` together in that order.
+* Single substrings still work: `find dy` matches `Brandy`. `/name` uses the same phrase semantics.
+* Phone searches require one sequence of at least two digits and match consecutive digits:
+  `87` matches `900087000`, but not `89700000`. Spaces within a phone number are rejected.
+
+`PersonContainsKeywordsPredicate#test()` selects the requested field before matching. Missing optional
+emails or tags do not match. Leading and trailing whitespace never creates an additional search term.
+
+#### Search scope and execution
+
+Search scope is determined by the active or archive list selected by the user, not by which contacts happen
+to be visible. The model retains this scope separately from the search predicate and sort comparator.
+
+* In the active scope, `find` searches all active contacts, replacing any previous search or filter criteria.
+* After `list archive`, `find` searches archived contacts only. Repeated searches, filters, sorting and
+  zero-match results retain the archive scope and cannot expose active contacts.
+* `list` restores the active scope; `list archive` restores the archive scope. A search does not accumulate
+  the previous search terms, and it preserves the current sort order.
+
+The sequence diagram below shows parsing and executing `find /name D       Est`, including the choice
+between active and archive scope. Helper calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of a normalized phrase search within active or archived contacts" />
+
+1. `AddressBookParser#parseCommand()` recognises `find` and delegates to `FindCommandParser`.
+1. The parser validates one syntax, normalizes the search phrase and creates the corresponding predicate
+   and `FindCommand`.
+1. `FindCommand#execute()` checks the model's list scope, selects the corresponding active or archived
+   base predicate, then calls `Model#filterPersonsInCurrentList()` with the search predicate.
+1. The model combines the scope and search predicates, updates the observable list and clears selection
+   if the selected contact no longer appears. The UI updates the contact cards.
+1. The command uses `Model#getFilteredPersonList().size()` to format
+   `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` in a `CommandResult`.
+1. `FindCommand#modifiesData()` returns `false`, so `LogicManager` skips saving.
+
+**Error handling:** Empty input, missing criterion input, multiple criteria, invalid phone input and mixed
+syntax such as `find Alice /address A` cause a `ParseException`. Mixed syntax uses the same invalid-format
+response as bare `find`, including `Use either find KEYWORD or find /CRITERION INPUT.` and the supported
+criteria. An unknown criterion reports `Unknown criterion: /...`. Parsing errors leave stored contacts,
+selection and the current display unchanged. A valid search with no matches instead succeeds, displays
+an empty list and reports `0 person(s) listed!` without losing its active or archive scope.
+
+**Design consideration:** Passing one normalized phrase to the existing predicate classes preserves partial
+matching while preventing multiword input from matching unrelated contacts one word at a time. Retaining
+scope in the model keeps archive searches reliable even when the current results are empty.
 
 The `find /CRITERION INPUT` command searches one selected contact field and returns the number of
 matches in the result box. Supported criteria are `/name`, `/patientNo`, `/familyNo`, `/address`,
@@ -737,6 +858,24 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 2e1. CareBook allows the shared name. Shared family contact details are also allowed.
 
       Use case resumes at step 3.
+
+*2d. A prefix is unknown or mistyped, or a field value contains `/`.
+
+    *2d1. CareBook rejects the command and shows the correct format and slash restriction.
+
+        Use case resumes at step 1.
+
+*2e. Another active or archived contact has the same patient phone number or non-empty patient email.
+
+    *2e1. CareBook shows `This person already exists in CareBook.` and does not add the contact.
+
+        Use case resumes at step 1.
+
+*2f. Another contact has the same normalized name and address, with distinct patient contact details.
+
+    *2f1. CareBook shows `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+
+        Use case resumes at step 1.
 
 **Use case: Delete a person**
 
@@ -1167,6 +1306,69 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Adding a person
+
+1. Adding contacts with similar details
+
+   1. Prerequisites: Use a test address book with no contact named `Kim Lee` and no patient phone numbers
+      `91001001` or `91001002`.
+
+   1. Test case: `ADD /name Kim    Lee /patientNo 91001001 /familyNo 92002001 /address 1 Test Street`<br>
+      Expected: A contact named `Kim Lee` is added. Command capitalization and repeated name spaces are accepted.
+
+   1. Test case: `add /name Kim Lee /patientNo 91001002 /familyNo 92002001 /address 2 Test Street`<br>
+      Expected: A second contact is added despite sharing a name and family phone number. Both patient emails are absent.
+
+   1. Test case: Add another contact with patient phone `91001001`, or reuse a non-empty patient email already in the test address book.<br>
+      Expected: No contact is added. Duplicate detection includes hidden and archived contacts.
+
+   1. Test case: `add /name Kim Lee /patientNo 91001003 /familyNo 92002001 /address 1TESTstreet`<br>
+      Expected: No contact is added. The same-address warning asks for a name differentiator.
+
+   1. Test case: Repeat the previous command with `/name Kim Lee 2`.<br>
+      Expected: The contact is added because the name now distinguishes it.
+
+1. Rejecting invalid prefixes and literal slashes
+
+   1. Test case: `add /name Test Patient /patientNo 91001004 /familyNo 92002001 /address 4 St /phone 123`<br>
+      Expected: Invalid command format. `/phone 123` is not saved into the address.
+
+   1. Other incorrect address arguments to try: `/addressExtra 4 St` and `/address 4/5 Main St`.<br>
+      Expected: No contact is added; the usage explains that `/` is reserved for valid prefixes.
+
+### Finding contacts
+
+1. Phrase matching and whitespace
+
+   1. Prerequisites: Active contacts named `D Est`, `Dr D Est Tan`, `D Tan`, `Est Lee`, `D Middle Est`,
+      `Alex Yeoh`, `David Li` and `Brandy`.
+
+   1. Test case: `find D       Est   `<br>
+      Expected: `D Est` and `Dr D Est Tan` match. `D Tan`, `Est Lee` and `D Middle Est` do not match.
+      `find /name D Est` and mixed-case `FiNd /NAME d est` give the same results.
+
+   1. Test case: `find alex david`<br>
+      Expected: Neither `Alex Yeoh` nor `David Li` matches separately. A name containing `Alex David` would match.
+
+   1. Test case: `find dy`<br>
+      Expected: `Brandy` matches the contiguous substring. Surrounding spaces do not affect the search.
+
+   1. Test cases: `find`, `find Alice /address A` and `find /name Alice /address A`.<br>
+      Expected: The same invalid-format response with usage and supported criteria; the current display is unchanged.
+
+1. Retaining archive scope
+
+   1. Prerequisites: At least one active and one archived contact with `Kim` in their names.
+
+   1. Test case: Run `list archive`, then `find Kim`.<br>
+      Expected: Only archived matches appear.
+
+   1. Test case: Run `find NobodyMatchesThis`, then `sort name`, then `find Kim`.<br>
+      Expected: The first search shows zero matches; the final search still returns only archived matches.
+
+   1. Test case: Run `filter /name Kim`, then `find Kim`, then `list`, then `find Kim`.<br>
+      Expected: The search after the filter stays within archived contacts. After `list`, only active matches appear.
 
 ### Deleting a person
 
