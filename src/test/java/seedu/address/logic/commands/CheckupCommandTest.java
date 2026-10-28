@@ -95,6 +95,9 @@ public class CheckupCommandTest {
         assertEquals(CheckupCommand.delete(Index.fromOneBased(1)), CheckupCommand.delete(Index.fromOneBased(1)));
         assertFalse(CheckupCommand.delete(Index.fromOneBased(1)).equals(
                 new CheckupCommand(Index.fromOneBased(1), appointment)));
+    }
+
+    @Test
     public void execute_archivedContactWithInvalidDate_prioritizesArchiveError() throws Exception {
         model.addPerson(alice.copyWithArchivedStatus(true));
         new ListCommand(true).execute(model);

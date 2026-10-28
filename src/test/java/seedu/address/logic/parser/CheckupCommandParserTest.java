@@ -31,14 +31,11 @@ public class CheckupCommandParserTest {
             assertParseFailure(parser, args,
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, CheckupCommand.MESSAGE_USAGE));
         }
-        assertParseFailure(parser, "1 delete extra",
-                CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE);
+        assertParseSuccess(parser, "1 delete extra",
+                new CheckupCommand(Index.fromOneBased(1), "delete extra"));
     }
 
     @Test
-    public void parse_todayOrFuture_returnsCommand() {
-        for (LocalDate date : List.of(LocalDate.now(), LocalDate.now().plusDays(1))) {
-            String value = date.format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 00:00";
     public void parse_futureDateTime_returnsCommand() {
         for (LocalDateTime dateTime : List.of(LocalDateTime.now().plusMinutes(5),
                 LocalDateTime.now().plusDays(1))) {

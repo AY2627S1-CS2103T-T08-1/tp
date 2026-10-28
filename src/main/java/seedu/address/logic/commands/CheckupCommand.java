@@ -51,7 +51,7 @@ public class CheckupCommand extends Command {
 
     private CheckupCommand(Index targetIndex) {
         this.targetIndex = requireNonNull(targetIndex);
-        appointment = null;
+        appointmentValue = null;
     }
 
     /** Creates a command to delete the selected contact's appointment and clear its mark. */
@@ -70,10 +70,10 @@ public class CheckupCommand extends Command {
         final CheckupAppointment appointment;
 
         if (appointmentValue == null) {
-          if (person.getCheckupAppointment().isEmpty()) {
-          throw new CommandException(MESSAGE_NO_APPOINTMENT);
-          }
-          appointment = null;
+            if (person.getCheckupAppointment().isEmpty()) {
+                throw new CommandException(MESSAGE_NO_APPOINTMENT);
+            }
+            appointment = null;
         } else {
             if (person.isArchived()) {
                 throw new CommandException(MESSAGE_ARCHIVED_CONTACT);
