@@ -83,7 +83,8 @@ public class EditPersonDescriptorTest {
                 + editPersonDescriptor.getPatientNo().orElse(null) + ", familyNo="
                 + editPersonDescriptor.getFamilyNo().orElse(null) + ", patientEmail="
                 + editPersonDescriptor.getPatientEmail().orElse(null) + ", familyEmail="
-                + editPersonDescriptor.getFamilyEmail().orElse(null) + ", address="
+                + editPersonDescriptor.getFamilyEmail().orElse(null) + ", isPatientEmailEdited=false"
+                + ", isFamilyEmailEdited=false, address="
                 + editPersonDescriptor.getAddress().orElse(null) + ", tags="
                 + editPersonDescriptor.getTags().orElse(null) + "}";
         assertEquals(expected, editPersonDescriptor.toString());

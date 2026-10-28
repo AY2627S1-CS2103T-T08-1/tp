@@ -10,7 +10,7 @@ import java.nio.file.Path;
 public class FileUtil {
 
     private static final String CHARSET = "UTF-8";
-    private static final String BYTE_ORDER_MARK = "﻿";
+    private static final String BYTE_ORDER_MARK = "\uFEFF";
 
     /**
      * Creates a file if it does not exist along with its missing parent directories.

@@ -55,10 +55,10 @@ alt isModifying
     LogicManager -> Storage : saveAddressBook(addressBook)
     activate Storage
 
-    Storage --> LogicManager
+    Storage --> LogicManager : IOException if the write fails
     deactivate Storage
 
-    opt the save failed
+    break the save failed
         LogicManager -> Model : setAddressBook(copy)
         activate Model
 

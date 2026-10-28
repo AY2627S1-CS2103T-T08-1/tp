@@ -1047,9 +1047,11 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 2.
 
-* 3d. The new name belongs to another person in CareBook.
+* 3d. The edited person would have the same patient phone number or patient email as another person, or the
+  same name and address. Archived persons count too.
 
-    * 3d1. CareBook shows an error message and leaves the person unchanged.
+    * 3d1. CareBook shows an error message, saying if the matching person is archived, and leaves the person
+      unchanged.
 
       Use case resumes at step 2.
 
@@ -1238,9 +1240,9 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
     
         Use case resumes at step 4.
 
-*4a. CareBook cannot write the data file.
+* 4a. CareBook cannot write the data file.
 
-    *4a1. CareBook undoes the change and displays an error message saying the data could not be saved.
+    * 4a1. CareBook undoes the change and displays an error message saying the data could not be saved.
 
         Use case ends.
 

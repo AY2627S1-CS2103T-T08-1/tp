@@ -176,7 +176,8 @@ public class EditCommand extends Command {
 
     /**
      * Stores the details to edit the person with. Each non-empty field value will replace the
-     * corresponding field value of the person.
+     * corresponding field value of the person. The optional emails have a third state: an email that is
+     * marked as edited but has no value removes the person's email, while an email that is not edited is kept.
      */
     public static class EditPersonDescriptor {
         private Name name;
@@ -333,6 +334,8 @@ public class EditCommand extends Command {
                     .add("familyNo", familyNo)
                     .add("patientEmail", patientEmail)
                     .add("familyEmail", familyEmail)
+                    .add("isPatientEmailEdited", isPatientEmailEdited)
+                    .add("isFamilyEmailEdited", isFamilyEmailEdited)
                     .add("address", address)
                     .add("tags", tags)
                     .toString();
