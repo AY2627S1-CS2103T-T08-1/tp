@@ -58,9 +58,12 @@ public class StringUtil {
     public static boolean isNonZeroUnsignedInteger(String s) {
         requireNonNull(s);
 
+        // Integer#parseInt(String) also accepts "+1" and digits from other scripts, such as Arabic-Indic digits
+        if (!s.matches("[0-9]+")) {
+            return false;
+        }
         try {
-            int value = Integer.parseInt(s);
-            return value > 0 && !s.startsWith("+"); // "+1" is successfully parsed by Integer#parseInt(String)
+            return Integer.parseInt(s) > 0;
         } catch (NumberFormatException nfe) {
             return false;
         }

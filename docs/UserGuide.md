@@ -331,7 +331,8 @@ Examples:
 | `edit 1` (no field) | `At least one field to edit must be provided.` | Add at least one field, e.g. `edit 1 /name John Doe`. |
 | `edit 1 /email john@example.com` | `/email is no longer supported. Use /pEmail for the patient's email or /fEmail for the family member's email.` | Use `/pEmail` for the patient's email or `/fEmail` for the family member's email. |
 | `edit 0 /name John Doe` | `Invalid command format!` followed by the correct usage | Use an index of 1 or more. |
-| `edit 99 /name John Doe` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
+| `edit 99 /name John Doe` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
+| `edit 1 /name John Doe` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
 | `edit 2 /patientNo 87438807` (another person already has this patient phone number or email) | `Someone with this patient HP or email already exists in CareBook.` | Check that you are editing the right person, or use their own number or email. |
 | `edit 2 /name Alex Yeoh` (another person already has this name and the same address) | `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.` | Add something to the name to tell them apart, such as a surname. |
@@ -426,7 +427,8 @@ Examples:
 | `remark 1` (no note) | `Invalid command format!` followed by the correct usage | Add a note, e.g. `remark 1 Allergic to penicillin`, or use `remark 1 /clear` to delete all notes. |
 | `remark /clear` or `remark Diabetic` (no index) | `Invalid command format!` followed by the correct usage | Put the person's index first, e.g. `remark 1 /clear` or `remark 1 Diabetic`. |
 | `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
-| `remark 99 Diabetic` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
+| `remark 99 Diabetic` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
+| `remark 1 Diabetic` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `remark 1 Allergic to penicillin` (the person already has this note as note 1) | `Alex Yeoh already has this note (note 1).` | Add a different note, or change the existing note with `remark 1 /edit 1 ...`. |
 | `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
 | `remark 1 /delete abc` | `Note number must be a positive integer.` | Use the number shown before the note, e.g. `remark 1 /delete 2`. |
