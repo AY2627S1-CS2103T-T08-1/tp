@@ -194,13 +194,17 @@ public class ArchiveCommandTest {
 
     @Test
     public void execute_updateArchivedDetails_preservesArchivedStatus() throws Exception {
+        CheckupAppointment appointment = new CheckupAppointment(
+                LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 09:00");
+        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
         parser.parseCommand("archive 1").execute(model);
         parser.parseCommand("list archive").execute(model);
         Remark remark = new Remark(List.of("Needs assistance"));
         RemarkCommand.add(Index.fromOneBased(1), "Needs assistance").execute(model);
-        CheckupAppointment appointment = new CheckupAppointment(
-                LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 09:00");
-        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+        CheckupAppointment replacement = new CheckupAppointment(
+                LocalDate.now().plusDays(2).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 10:00");
+        assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), replacement), model,
+                CheckupCommand.MESSAGE_ARCHIVED_CONTACT);
         parser.parseCommand("list archive").execute(model);
         assertEquals(1, model.getFilteredPersonList().size());
         Person archived = model.getFilteredPersonList().get(0);

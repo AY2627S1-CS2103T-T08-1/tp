@@ -38,23 +38,22 @@ public class CheckupCommandParserTest {
     }
 
     @Test
-    public void parse_invalidDateTime_throwsParseException() {
+    public void parse_invalidDateTime_defersValidationUntilExecution() {
         for (String value : List.of("31/02/2030 12:00", "01/01/2030 24:00", "01/01/2030",
                 "2030-01-01 12:00", "01/01/2030 12:00 extra")) {
-            assertParseFailure(parser, "1 " + value,
-                    CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE);
+            assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
         }
     }
 
     @Test
-    public void parse_yesterday_throwsParseException() {
+    public void parse_yesterday_defersValidationUntilExecution() {
         String value = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 23:59";
-        assertParseFailure(parser, "1 " + value, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+        assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
     }
 
     @Test
-    public void parse_pastTime_throwsParseException() {
+    public void parse_pastTime_defersValidationUntilExecution() {
         String value = LocalDateTime.now().minusMinutes(5).format(DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm"));
-        assertParseFailure(parser, "1 " + value, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+        assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
     }
 }
