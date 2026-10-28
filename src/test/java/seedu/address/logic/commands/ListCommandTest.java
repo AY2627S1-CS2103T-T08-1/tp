@@ -71,7 +71,7 @@ public class ListCommandTest {
 
     @Test
     public void execute_noArchivedContacts_reportsNoContacts() {
-        expectedModel.updateFilteredPersonList(PREDICATE_SHOW_ARCHIVED_PERSONS);
+        expectedModel.setArchiveScope(true);
 
         assertCommandSuccess(new ListCommand(true), model, ListCommand.MESSAGE_NO_CONTACTS, expectedModel);
     }
