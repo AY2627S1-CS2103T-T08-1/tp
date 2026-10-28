@@ -69,6 +69,40 @@ public class EditCommandTest {
         assertEquals("3 New Road", bookingModel.getFilteredPersonList().get(0).getAddress().value);
     }
 
+    @Test
+    public void execute_familyNoOfArchivedPersonWithSharedBooking_success() throws Exception {
+        Model bookingModel = modelWithSharedBooking();
+        Person first = bookingModel.getFilteredPersonList().get(0);
+        bookingModel.setPerson(first, first.copyWithArchivedStatus(true));
+        bookingModel.setArchiveScope(true);
+
+        // an archived person does not hold a booking, so its family HP can change
+        new EditCommandParser().parse("1 /familyNo 89999999").execute(bookingModel);
+        assertEquals("89999999", bookingModel.getFilteredPersonList().get(0).getFamilyNo().value);
+    }
+
+    @Test
+    public void execute_familyNoWithBookingAtAnotherTime_success() throws Exception {
+        Model bookingModel = modelWithSharedBooking();
+        Person second = bookingModel.getFilteredPersonList().get(1);
+        bookingModel.setPerson(second, new PersonBuilder(second).withCheckupAppointment("26/12/2030 09:00").build());
+
+        new EditCommandParser().parse("1 /familyNo 89999999").execute(bookingModel);
+        assertEquals("89999999", bookingModel.getFilteredPersonList().get(0).getFamilyNo().value);
+    }
+
+    @Test
+    public void execute_familyNoMatchingTheOtherBooking_success() throws Exception {
+        // e.g. after unarchiving, two bookings at the same time can have different family HPs;
+        // changing one family HP to match the other is allowed, since it removes the clash
+        Model bookingModel = modelWithSharedBooking();
+        Person second = bookingModel.getFilteredPersonList().get(1);
+        bookingModel.setPerson(second, new PersonBuilder(second).withFamilyNo("82222222").build());
+
+        new EditCommandParser().parse("1 /familyNo 82222222").execute(bookingModel);
+        assertEquals("82222222", bookingModel.getFilteredPersonList().get(0).getFamilyNo().value);
+    }
+
     /** Returns a model with two persons who share a family HP and a checkup appointment. */
     private static Model modelWithSharedBooking() {
         Person first = new PersonBuilder().withName("Amy Bee").withPatientNo("91111111")
