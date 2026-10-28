@@ -592,6 +592,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
 | `* * *`  | caregiver                                  | keep care notes on a contact | remember allergies, medication times and visiting rules |
 | `* *`    | caregiver                                  | edit or delete one care note | keep notes up to date without retyping the others |
+| `* *`    | caregiver                                  | add checkup appointment dates |  kepe track of future appointments                                                 |
 
 
 *{More to be added}*
@@ -604,38 +605,47 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **MSS:**
 
-1. User requests to add a person with the person's name, patient phone number, family phone number, and address
-2. CareBook validates the command format and input fields 
-3. CareBook adds the person to the address book 
-4. CareBook displays a confirmation with the person's details 
+1. User requests to add a person with a name, patient phone number, family phone number and address,
+   optionally providing patient email, family email and a priority tag.
+2. CareBook recognises the command word ignoring case, validates the format, normalizes name spacing
+   and checks the input fields and contact uniqueness.
+3. CareBook adds the person to the active list and saves the contact list.
+4. CareBook displays a confirmation with the person's details.
 
-    Use case ends. 
+    Use case ends.
 
-**Extensions** 
+**Extensions**
 
-*1a. The command format is invalid 
+* 2a. A required field is missing, a prefix is unknown or mistyped, a non-tag prefix is repeated, or a field value contains `/`.
 
-    *1a1. CareBook shows an error message with the correct command format.
+    * 2a1. CareBook shows an error message with the correct format and leaves the contact list unchanged.
 
-        Use case ends.
+      Use case resumes at step 1.
 
-*2a. The name contains invalid characters.
+* 2b. A field value is invalid, such as a name with invalid characters, a non-numeric phone number, an invalid email or priority tag.
 
-    *2a1. CareBook shows an error message.
+    * 2b1. CareBook shows the field's validation error and leaves the contact list unchanged.
 
-        Use case resumes at step 1
+      Use case resumes at step 1.
 
-*2b. A phone number contains non-numeric characters.
+* 2c. An active or archived contact has the same patient phone number or non-empty patient email, ignoring email case.
 
-    *2b1. CareBook shows an error message.
+    * 2c1. CareBook shows `This person already exists in CareBook.` and does not add the person.
 
-        Use case resumes at step 1.
+      Use case resumes at step 1.
 
-*2c. A required field is missing.
+* 2d. Another contact has the same normalized name and address, but distinct patient contact details.
 
-    *2c1. CareBook shows an error message.
+    * 2d1. CareBook compares the address ignoring case and whitespace, then shows
+      `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
 
-        Use case resumes at step 1.
+      Use case resumes at step 1.
+
+* 2e. Another contact has the same name, but the patient phone, patient email (if provided) and address do not conflict.
+
+    * 2e1. CareBook allows the shared name. Shared family contact details are also allowed.
+
+      Use case resumes at step 3.
 
 **Use case: Delete a person**
 
@@ -859,20 +869,119 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 **MSS:**
 
-1. User requests to find contacts with names matching the input
-2. CareBook validates the command format
-3. CareBook searches for contacts whose names contain the matching substring
-4. CareBook displays the matching contact cards 
+1. User requests to display the active or archived contact list.
+2. CareBook displays the requested list.
+3. User requests to find contacts by a keyword or one criterion: name, patient phone,
+   family phone, address, patient email, family email, either email, priority tag or remark.
+4. CareBook validates the command format and criterion ignoring case, trims surrounding
+   whitespace and truncates trailing spaces in text input.
+5. CareBook searches the selected list scope for a case-insensitive substring matching the whole input phrase.
+   A remark search matches within an individual care note; phone input matches consecutive digits.
+6. CareBook displays matching contact cards and the match count without changing stored contacts.
 
-   Use case ends.
+    Use case ends.
 
 **Extensions**
 
-*2a. User input is empty 
+* 4a. Input is empty, a criterion has no input, plain keywords are mixed with a criterion, or multiple criteria are supplied.
 
-    *2a1. Carebook displays an error message and the displayed contacts do not change.
+    * 4a1. CareBook shows the same invalid-format error and usage, including the supported criteria, and leaves the display unchanged.
 
-      
+      Use case resumes at step 3.
+
+* 4b. The criterion is unknown.
+
+    * 4b1. CareBook reports the unknown criterion and leaves the display unchanged.
+
+      Use case resumes at step 3.
+
+* 4c. Phone input is not one sequence of at least two digits.
+
+    * 4c1. CareBook shows an invalid-format error and leaves the display unchanged.
+
+      Use case resumes at step 3.
+
+* 5a. No contacts match the search phrase in the selected scope.
+
+    * 5a1. CareBook displays an empty list and reports `0 person(s) listed!`.
+
+      Use case ends.
+
+* 5b. The current scope is the archive list, including after a search, filter, sort or zero-match result.
+
+    * 5b1. CareBook searches only archived contacts. In the active scope, it searches only active contacts.
+      Each new search replaces the previous search criteria; it does not narrow the previous results.
+
+      Use case resumes at step 6.
+
+**Use case: Manage a checkup appointment**
+
+**MSS:**
+
+1. User requests to display contacts.
+2. CareBook displays the requested contact list.
+3. User requests to schedule, replace or delete the checkup appointment of a contact.
+4. CareBook accepts any command-word or delete-keyword case and ignores extra spaces between arguments. For scheduling, it checks archive status before
+   date/time validity, then checks for a booking conflict among active contacts.
+5. CareBook updates or removes the appointment and its mark as appropriate, refreshes the contact card
+   and selected details, and saves the updated contact list.
+6. CareBook displays a confirmation.
+
+    Use case ends.
+
+**Extensions**
+
+* 3a. The command is missing required arguments or contains an invalid index format.
+
+    * 3a1. CareBook shows an invalid-format error with the correct usage and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
+* 4a. The index is outside the displayed list, including when the list is empty.
+
+    * 4a1. CareBook shows an invalid-index error and leaves the contacts unchanged.
+
+      Use case resumes at step 2.
+
+* 4b. The selected contact is archived and the user requests to schedule or replace an appointment.
+
+    * 4b1. CareBook shows `Appointments cannot be made with archived contacts. Unarchive the contact to do so.`
+      This error takes priority over an invalid date or time once the contact index is valid.
+
+      Use case resumes at step 3.
+
+* 4c. The date/time is impossible, has the wrong format or is earlier than the current local date and time.
+
+    * 4c1. CareBook shows the date/time validation error and preserves the existing appointment and mark.
+
+      Use case resumes at step 3.
+
+* 4d. Another active contact has the requested date and time but a different family HP.
+
+    * 4d1. CareBook shows `A contact with this booking date and time already exists. Only contacts with the same family HP can be booked at the same time.`
+      Hidden active contacts are checked; archived contacts do not block the slot. No contact is changed.
+
+      Use case resumes at step 3.
+
+* 4e. The user requests deletion, but the contact has no appointment.
+
+    * 4e1. CareBook shows `This contact has no checkup appointment to delete.` and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
+* 5a. The user assigns the same appointment again.
+
+    * 5a1. CareBook preserves the existing checkup mark. Assigning a different appointment clears the mark.
+
+      Use case resumes at step 6.
+
+* 5b. The user deletes the appointment.
+
+    * 5b1. CareBook removes the appointment row and its `[ ]` or `[X]` indicator entirely from the contact card.
+      The other contact details are preserved.
+
+      Use case resumes at step 6.
+
 ### Non-Functional Requirements
 
 1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed
@@ -890,6 +999,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Recovery**: Patient is deemed to have reached their normal level of physical and physiological function
 * **Relevant contacts**: A patient's emergency contact, or other family contacts
+* **Active contacts**: Contacts that are not archived
 
 
 --------------------------------------------------------------------------------------------------------------------
