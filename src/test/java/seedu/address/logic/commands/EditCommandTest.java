@@ -174,6 +174,17 @@ public class EditCommandTest {
     }
 
     @Test
+    public void execute_samePatientPhoneAsArchivedContact_mentionsArchive() {
+        Person archived = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        model.setPerson(archived, archived.copyWithArchivedStatus(true));
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
+                new EditPersonDescriptorBuilder().withPhone(archived.getPatientNo().value).build());
+
+        assertCommandFailure(editCommand, model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON + " " + Messages.MESSAGE_CLASHING_PERSON_ARCHIVED);
+    }
+
+    @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
         Person editedPerson = new PersonBuilder().build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
