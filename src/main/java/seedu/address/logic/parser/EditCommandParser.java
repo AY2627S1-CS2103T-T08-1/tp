@@ -29,6 +29,8 @@ import seedu.address.model.tag.Tag;
  */
 public class EditCommandParser implements Parser<EditCommand> {
 
+    private static final String INTEGER_REGEX = "-?\\d+";
+
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
      * and returns an EditCommand object for execution.
@@ -47,6 +49,10 @@ public class EditCommandParser implements Parser<EditCommand> {
         try {
             index = ParserUtil.parseDisplayedIndex(argMultimap.getPreamble());
         } catch (ParseException pe) {
+            // a number that is not a valid index, e.g. 0, is reported as such, as in remark, delete and archive
+            if (argMultimap.getPreamble().trim().matches(INTEGER_REGEX)) {
+                throw pe;
+            }
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE), pe);
         }
 
