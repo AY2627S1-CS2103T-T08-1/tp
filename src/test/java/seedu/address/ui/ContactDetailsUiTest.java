@@ -53,7 +53,9 @@ public class ContactDetailsUiTest {
     public void repeatedView_afterScrollingAway_scrollsBackWithoutChangingSelection() throws Exception {
         withWindow(window -> {
             for (int i = 0; i < 8; i++) {
-                window.model.addPerson(new PersonBuilder().withName("Extra Person " + i).build());
+                window.model.addPerson(new PersonBuilder().withName("Extra Person " + i)
+                        .withPhone(Integer.toString(90000000 + i))
+                        .withEmail("extra" + i + "@example.com").build());
             }
             ListView<?> list = (ListView<?>) window.node("#personListView");
             list.setMinHeight(140);

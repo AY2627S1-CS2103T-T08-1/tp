@@ -328,6 +328,23 @@ Examples:
 | `edit 1 /patientNo 9123 4567` | `Phone numbers should only contain digits, and should be at least 3 digits long` | Remove spaces and other characters, e.g. `91234567`. See [Contact field rules](#adding-a-person-add). |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
 
+### Removing a checkup appointment: `checkup INDEX /delete`
+
+Removes a contact's checkup appointment without deleting the contact.
+
+Format: `checkup INDEX /delete`
+
+* The index refers to the index number shown in the displayed person list and **must be a positive integer**.
+* The command and `/delete` option accept any letter case. Extra spaces between arguments and at the ends are ignored.
+* Removes the appointment field and its mark indicator from the contact card. Other contact details stay unchanged.
+* Appointments can also be removed from archived contacts after running `list archive`.
+* If the contact has no appointment, CareBook shows `This contact has no checkup appointment to delete.`
+* Use `/delete` with the slash; `checkup INDEX delete` is not accepted.
+
+Example:
+
+* `checkup 1 /delete` removes the appointment of the 1st contact in the displayed list.
+
 ### Keeping care notes on a person: `remark`
 
 Keeps numbered notes on a person, such as allergies, medication times or visiting rules.
@@ -598,6 +615,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
+**Remove checkup** | `checkup INDEX /delete`<br> e.g., `checkup 1 /delete`
 **Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
