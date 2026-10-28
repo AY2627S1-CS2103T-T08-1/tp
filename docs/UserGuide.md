@@ -327,6 +327,7 @@ Format:
 * Everything after the index is kept exactly as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note.
 * `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case.
 * `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
+* A person cannot have the same note twice. Notes that differ only in letter case count as the same note.
 * A person's notes can have at most 500 characters in total.
 * `edit` does not change a person's notes.
 
@@ -345,6 +346,7 @@ Examples:
 | `remark /clear` or `remark Diabetic` (no index) | `Invalid command format!` followed by the correct usage | Put the person's index first, e.g. `remark 1 /clear` or `remark 1 Diabetic`. |
 | `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
 | `remark 99 Diabetic` (index not in the list) | `The person index provided is invalid.` | Use an index shown in the displayed list. |
+| `remark 1 Allergic to penicillin` (the person already has this note as note 1) | `Alex Yeoh already has this note (note 1).` | Add a different note, or change the existing note with `remark 1 /edit 1 ...`. |
 | `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
 | `remark 1 /delete abc` | `Note number must be a positive integer.` | Use the number shown before the note, e.g. `remark 1 /delete 2`. |
 | `remark 1 /edit 2` (no new note) | `Invalid command format!` followed by the correct usage | Add the new note, e.g. `remark 1 /edit 2 Visits after 4pm`. |
