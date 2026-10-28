@@ -4,6 +4,10 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -27,6 +31,17 @@ public class ModelManager implements Model {
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
     private boolean archiveScope;
+    /** The predicate of the current list, search or filter. */
+    private Predicate<? super Person> displayPredicate = PREDICATE_SHOW_ALL_PERSONS;
+    /** Persons kept in the displayed list after a change, although they may not match {@link #displayPredicate}. */
+    private final Set<Person> keptDisplayed = new HashSet<>();
+    /** The order chosen with {@code sort}, or {@code null} for the order the persons were added in. */
+    private Comparator<? super Person> sortOrder;
+    /**
+     * Positions in the sorted list of the persons shown when a person was first changed after sorting, or
+     * {@code null} if nobody has been changed since. While set, changed persons keep their positions.
+     */
+    private Map<Person, Integer> keptPositions;
     /** Transient display selection; never written to the address book file. */
     private final ReadOnlyObjectWrapper<Person> selectedPerson = new ReadOnlyObjectWrapper<>();
 
@@ -41,6 +56,7 @@ public class ModelManager implements Model {
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList(), PREDICATE_SHOW_ALL_PERSONS);
+        filteredPersons.setPredicate(this::isDisplayed);
         sortedPersons = new SortedList<>(filteredPersons);
     }
 
@@ -70,6 +86,8 @@ public class ModelManager implements Model {
 
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
+        applySortOrder();
+        keptDisplayed.clear();
         this.addressBook.resetData(addressBook);
         selectedPerson.set(null);
     }
@@ -87,6 +105,7 @@ public class ModelManager implements Model {
 
     @Override
     public void deletePerson(Person target) {
+        keptDisplayed.remove(target);
         addressBook.removePerson(target);
         if (target.equals(selectedPerson.get())) {
             selectedPerson.set(null);
@@ -103,6 +122,11 @@ public class ModelManager implements Model {
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
 
+        // a kept person stays shown after another change, unless the change moves it out of the list's scope
+        if (keptDisplayed.remove(target) && getScopePredicate().test(editedPerson)) {
+            keptDisplayed.add(editedPerson);
+        }
+        keepPositionInSortedList(target, editedPerson);
         addressBook.setPerson(target, editedPerson);
         if (target.equals(selectedPerson.get())) {
             selectedPerson.set(filteredPersons.contains(editedPerson) ? editedPerson : null);
@@ -113,10 +137,58 @@ public class ModelManager implements Model {
     public void setPersonKeepingDisplayed(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
 
-        Predicate<? super Person> displayedBefore = filteredPersons.getPredicate();
-        filteredPersons.setPredicate(person -> person.equals(editedPerson)
-                || displayedBefore == null || displayedBefore.test(person));
+        if (filteredPersons.contains(target)) {
+            keptDisplayed.add(target);
+        }
         setPerson(target, editedPerson);
+    }
+
+    /**
+     * Makes {@code editedPerson} take the place of {@code target} in a sorted list, so that changing a person does
+     * not change the indices shown. The list is sorted again by the next {@code sort}, {@code list}, {@code find}
+     * or {@code filter}.
+     */
+    private void keepPositionInSortedList(Person target, Person editedPerson) {
+        if (sortOrder == null) {
+            // without a sort order, the list follows the address book, where a replaced person keeps its place
+            return;
+        }
+        if (keptPositions == null) {
+            keptPositions = new HashMap<>();
+            for (int i = 0; i < sortedPersons.size(); i++) {
+                keptPositions.put(sortedPersons.get(i), i);
+            }
+            sortedPersons.setComparator(this::compareKeepingPositions);
+        }
+        Integer position = keptPositions.remove(target);
+        if (position != null) {
+            keptPositions.put(editedPerson, position);
+        }
+    }
+
+    /**
+     * Orders persons with a kept position by that position, before any other persons, which follow the sort order.
+     */
+    private int compareKeepingPositions(Person first, Person second) {
+        // persons without a kept position share the last position, and are ordered among themselves by the sort order
+        int firstPosition = keptPositions.getOrDefault(first, Integer.MAX_VALUE);
+        int secondPosition = keptPositions.getOrDefault(second, Integer.MAX_VALUE);
+        if (firstPosition != secondPosition) {
+            return Integer.compare(firstPosition, secondPosition);
+        }
+        return sortOrder.compare(first, second);
+    }
+
+    /** Sorts the list by {@link #sortOrder} again, dropping any positions kept for changed persons. */
+    private void applySortOrder() {
+        if (keptPositions != null) {
+            keptPositions = null;
+            sortedPersons.setComparator(sortOrder);
+        }
+    }
+
+    private boolean isDisplayed(Person person) {
+        return keptDisplayed.contains(person) || displayPredicate.test(person);
     }
 
     //=========== Filtered Person List Accessors =============================================================
@@ -161,7 +233,11 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
-        filteredPersons.setPredicate(predicate);
+        applySortOrder();
+        keptDisplayed.clear();
+        displayPredicate = predicate;
+        // a new predicate object, so that the list is filtered again
+        filteredPersons.setPredicate(this::isDisplayed);
         if (!filteredPersons.contains(selectedPerson.get())) {
             selectedPerson.set(null);
         }
@@ -179,6 +255,7 @@ public class ModelManager implements Model {
     public void updateSortedPersonList(Comparator<Person> comparator) {
         requireNonNull(comparator);
         sortedPersons.setComparator(comparator);
+        rememberSortOrder();
     }
 
     @Override
@@ -186,11 +263,19 @@ public class ModelManager implements Model {
         // the address book keeps persons in the order they were added, so a later index means more recent
         ObservableList<Person> addedOrder = addressBook.getPersonList();
         sortedPersons.setComparator(Comparator.comparingInt(addedOrder::indexOf).reversed());
+        rememberSortOrder();
     }
 
     @Override
     public void resetSortedPersonList() {
         sortedPersons.setComparator(null);
+        rememberSortOrder();
+    }
+
+    /** Records the comparator just given to the sorted list as the sort order, dropping any kept positions. */
+    private void rememberSortOrder() {
+        sortOrder = sortedPersons.getComparator();
+        keptPositions = null;
     }
 
     @Override

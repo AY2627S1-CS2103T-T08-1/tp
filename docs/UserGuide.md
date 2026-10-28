@@ -243,6 +243,7 @@ Format: `sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|d
 * `sort recent` shows the most recently added person first. It takes no direction.
 * The command word, criterion and direction are all case-insensitive, so `SORT Name DESC` works.
 * Use `list` to show all persons again in the order they were added.
+* Changing a person in a sorted list (e.g. with `edit`, `remark`, `checkup` or `mark`) does not move them, so the indices you see stay the same. The list is sorted again by the next `sort`, `list`, `find` or `filter`.
 
 Examples:
 * `sort priority` lists `HIGH` persons first.
@@ -318,7 +319,7 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * Priority values must be `HIGH`, `MEDIUM`, or `LOW`, in any letter case (see [Priority tags](#priority-tags)).
 * Supplying `/tag PRIORITY` replaces the person's existing priority tag. Omitting `/tag` leaves their tags unchanged.
 * To remove a person's priority tag, supply a single `/tag` without a value. Combining an empty `/tag` with other tags is invalid.
-* The list on screen stays as it is after an edit, including the results of `find` or `filter`, the archive list and the sort order. The edited person stays in the list even if they no longer match the search, so the indices you see stay the same. Run `list` or a new `find` to refresh the list.
+* The list on screen stays as it is after an edit, including the results of `find` or `filter`, the archive list and the sort order. The edited person stays in the list even if they no longer match the search, and keeps their place in a sorted list even if the new name or tag would sort elsewhere, so the indices you see stay the same. Run `list` or a new `find` to refresh the list.
 * Editing an archived person in `list archive` keeps them archived.
 
 Examples:
