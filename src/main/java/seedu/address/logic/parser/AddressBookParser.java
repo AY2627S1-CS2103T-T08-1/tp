@@ -77,6 +77,10 @@ public class AddressBookParser {
             commandWord = CheckupCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(FindCommand.COMMAND_WORD)) {
             commandWord = FindCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(EditCommand.COMMAND_WORD)) {
+            commandWord = EditCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(RemarkCommand.COMMAND_WORD)) {
+            commandWord = RemarkCommand.COMMAND_WORD;
         }
         final String arguments = matcher.group("arguments");
 

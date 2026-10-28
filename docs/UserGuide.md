@@ -312,7 +312,8 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Each field follows the [contact field rules](#adding-a-person-add), which also say when two contacts count as the same person.
-* Prefixes must be typed exactly as shown, except `/tag`, which works in any letter case. For example, `/NAME` is not recognised.
+* The command word is case-insensitive: `edit`, `Edit` and `EDIT` are accepted. Prefixes must be typed exactly as shown, except `/tag`, which works in any letter case. For example, `/NAME` is not recognised.
+* You cannot change the family HP of a person with a checkup appointment if another active contact has a checkup at the same date and time, since only contacts with the same family HP can share a booking (see [Scheduling a checkup](#scheduling-or-removing-a-checkup-checkup)).
 * Existing values will be updated to the input values. Fields you leave out, including both emails, stay as they are.
 * To remove an email, supply `/pEmail` or `/fEmail` without a value.
 * The old `/email` prefix is not accepted. Use `/pEmail` for the patient's email and `/fEmail` for the family member's email.
@@ -345,6 +346,7 @@ Examples:
 | `edit 2 /name Alex Yeoh` (another person already has this name and the same address) | `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.` | Add something to the name to tell them apart, such as a surname. |
 | `edit 1 /patientNo 9123 4567` | `Phone numbers should only contain digits, and should be at least 3 digits long` | Remove spaces and other characters, e.g. `91234567`. See [Contact field rules](#adding-a-person-add). |
 | `edit 1 /pEmail a@example.com /pEmail b@example.com` | `Multiple values specified for the following single-valued field(s): /pEmail` | Give each field only once. |
+| `edit 1 /familyNo 99988877` when the person shares a checkup date and time with another active contact | `This family HP cannot be used: another active contact has a checkup at the same date and time, ...` | Change one of the checkups with `checkup`, then edit the family HP. |
 
 ### Scheduling or removing a checkup: `checkup`
 
@@ -415,7 +417,7 @@ Notes:
 * The index refers to the index number shown in the displayed person list. The index and note number **must be positive integers** 1, 2, 3, ...
 * The notes appear on the person's card under `Remark:`, numbered 1., 2., 3., ... A person with no notes shows no `Remark:` line.
 * Apart from spaces at the start and end, the note is saved as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note. A note cannot start with `/edit`, `/delete` or `/clear`, because those words straight after the index choose the action.
-* `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case.
+* `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case. The command word `remark` is also case-insensitive.
 * `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
 * A person cannot have the same note twice. Notes that differ only in letter case count as the same note.
 * The list on screen stays as it is. After `find /remark`, the person stays in the results even if the note that matched is changed or deleted.

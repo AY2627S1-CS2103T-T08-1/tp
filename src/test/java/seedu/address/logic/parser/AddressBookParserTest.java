@@ -215,6 +215,16 @@ public class AddressBookParserTest {
     }
 
     @Test
+    public void parseCommand_editAndRemarkInAnyCase_success() throws Exception {
+        for (String word : List.of("EDIT", "Edit", "eDiT")) {
+            assertTrue(parser.parseCommand(word + " 1 /name Amy") instanceof EditCommand, word);
+        }
+        for (String word : List.of("REMARK", "Remark", "rEmArK")) {
+            assertTrue(parser.parseCommand(word + " 1 Diabetic") instanceof RemarkCommand, word);
+        }
+    }
+
+    @Test
     public void parseCommand_list_success() throws Exception {
         for (String input : List.of("list", "   list", "list   ", "   list   ", "\tlist\t",
                 " \t list \t ", "\nlist\r\n")) {
