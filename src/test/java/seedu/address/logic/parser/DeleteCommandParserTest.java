@@ -26,6 +26,23 @@ public class DeleteCommandParserTest {
     }
 
     @Test
+    public void parse_confirmFlag_returnsConfirmedDeleteCommand() {
+        DeleteCommand confirmed = new DeleteCommand(INDEX_FIRST_PERSON, true);
+        assertParseSuccess(parser, "1 /confirm", confirmed);
+        assertParseSuccess(parser, "  1    /CONFIRM  ", confirmed);
+    }
+
+    @Test
+    public void parse_invalidConfirmFlag_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, "/confirm", expectedMessage);
+        assertParseFailure(parser, "/confirm 1", expectedMessage);
+        assertParseFailure(parser, "1 confirm", expectedMessage);
+        assertParseFailure(parser, "1 /confirm /confirm", expectedMessage);
+        assertParseFailure(parser, "1 /confirmed", expectedMessage);
+    }
+
+    @Test
     public void parse_validArgsWithWhitespaceOrLeadingZeros_returnsDeleteCommand() {
         assertParseSuccess(parser, "  1  ", new DeleteCommand(INDEX_FIRST_PERSON));
         assertParseSuccess(parser, "001", new DeleteCommand(INDEX_FIRST_PERSON));

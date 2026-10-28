@@ -70,6 +70,13 @@ public class PersonListPanel extends UiPart<Region> {
     }
 
     /**
+     * Refreshes highlighting and scrolling for each successful view, even when selection is unchanged.
+     */
+    public void scrollToSelectedPerson() {
+        refreshSelection(selectedPerson.get());
+    }
+
+    /**
      * Custom {@code ListCell} that displays the graphics of a {@code Person} using a {@code PersonCard}.
      */
     class PersonListViewCell extends ListCell<Person> {

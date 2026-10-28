@@ -53,7 +53,8 @@ public class ViewCommand extends Command {
 
         Person personToView = lastShownList.get(targetIndex.getZeroBased());
         model.selectPerson(personToView);
-        return new CommandResult(String.format(MESSAGE_VIEW_PERSON_SUCCESS, personToView.getName().fullName));
+        return new CommandResult(String.format(MESSAGE_VIEW_PERSON_SUCCESS, personToView.getName().fullName),
+                false, false, true);
     }
 
     /**

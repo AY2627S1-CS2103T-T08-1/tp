@@ -23,8 +23,10 @@ import seedu.address.logic.commands.SortCommand.Criterion;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.PersonComparators;
 import seedu.address.model.person.PersonHasTagPredicate;
+import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for {@code SortCommand}.
@@ -93,6 +95,36 @@ public class SortCommandTest {
         assertCommandSuccess(new SortCommand(Criterion.NAME, true), model,
                 SortCommand.MESSAGE_SORTED_NAME_ASC, expectedModel);
         assertEquals(List.of(ALICE, BENSON, CARL, DANIEL, ELLE, FIONA, GEORGE), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_checkupAscending_sortsEarliestFirstWithoutCheckupLast() {
+        Person carl = new PersonBuilder(CARL).withCheckupAppointment("01/01/2098 09:00").build();
+        Person daniel = new PersonBuilder(DANIEL).withCheckupAppointment("05/06/2099 08:00").build();
+        model.setPerson(CARL, carl);
+        model.setPerson(DANIEL, daniel);
+        expectedModel.setPerson(CARL, carl);
+        expectedModel.setPerson(DANIEL, daniel);
+
+        expectedModel.updateSortedPersonList(PersonComparators.byCheckup(true));
+        assertCommandSuccess(new SortCommand(Criterion.CHECKUP, true), model,
+                SortCommand.MESSAGE_SORTED_CHECKUP_ASC, expectedModel);
+        assertEquals(List.of(carl, daniel, ALICE, BENSON, ELLE, FIONA, GEORGE), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_checkupDescending_sortsLatestFirstWithoutCheckupLast() {
+        Person carl = new PersonBuilder(CARL).withCheckupAppointment("01/01/2098 09:00").build();
+        Person daniel = new PersonBuilder(DANIEL).withCheckupAppointment("05/06/2099 08:00").build();
+        model.setPerson(CARL, carl);
+        model.setPerson(DANIEL, daniel);
+        expectedModel.setPerson(CARL, carl);
+        expectedModel.setPerson(DANIEL, daniel);
+
+        expectedModel.updateSortedPersonList(PersonComparators.byCheckup(false));
+        assertCommandSuccess(new SortCommand(Criterion.CHECKUP, false), model,
+                SortCommand.MESSAGE_SORTED_CHECKUP_DESC, expectedModel);
+        assertEquals(List.of(daniel, carl, ALICE, BENSON, ELLE, FIONA, GEORGE), model.getFilteredPersonList());
     }
 
     @Test

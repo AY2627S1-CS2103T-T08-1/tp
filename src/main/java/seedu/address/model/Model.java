@@ -68,6 +68,13 @@ public interface Model {
      */
     void setPerson(Person target, Person editedPerson);
 
+    /**
+     * Replaces {@code target} with {@code editedPerson} like {@link #setPerson(Person, Person)}, and keeps
+     * {@code editedPerson} in the displayed list even if it no longer matches the current search.
+     * The rest of the displayed list and its order are unchanged.
+     */
+    void setPersonKeepingDisplayed(Person target, Person editedPerson);
+
     /** Returns an unmodifiable view of the filtered person list, in the current sort order */
     ObservableList<Person> getFilteredPersonList();
 

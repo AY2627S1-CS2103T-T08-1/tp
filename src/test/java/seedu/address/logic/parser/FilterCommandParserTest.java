@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
@@ -8,6 +9,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.model.person.PersonMatchesFilterPredicate;
 
@@ -102,9 +104,14 @@ public class FilterCommandParserTest {
 
         assertParseSuccess(parser, " /address clementi /address jurong west",
                 command(List.of(), List.of(), List.of("clementi", "jurong west")));
+    }
 
-        assertParseSuccess(parser, " /name ali /name bob",
-                command(List.of("ali", "bob"), List.of(), List.of()));
+    @Test
+    public void parse_repeatedName_throwsParseException() {
+        String expectedMessage = Messages.MESSAGE_DUPLICATE_FIELDS + PREFIX_NAME;
+
+        assertParseFailure(parser, " /name ali /name bob", expectedMessage);
+        assertParseFailure(parser, " /name ali /tag HIGH /name bob", expectedMessage);
     }
 
     @Test

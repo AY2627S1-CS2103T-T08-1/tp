@@ -64,6 +64,15 @@ public class SortCommandParserTest {
     }
 
     @Test
+    public void parse_checkup_defaultsToAscending() {
+        assertParseSuccess(parser, "checkup", new SortCommand(Criterion.CHECKUP, true));
+        assertParseSuccess(parser, " checkup asc ", new SortCommand(Criterion.CHECKUP, true));
+        assertParseSuccess(parser, "Checkup DESC", new SortCommand(Criterion.CHECKUP, false));
+        assertParseFailure(parser, "checkup up", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "checkup asc desc", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
     public void parse_recent_success() {
         assertParseSuccess(parser, "recent", new SortCommand(Criterion.RECENT, false));
         assertParseSuccess(parser, " \n recent \t ", new SortCommand(Criterion.RECENT, false));

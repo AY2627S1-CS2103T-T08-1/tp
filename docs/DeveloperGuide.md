@@ -90,36 +90,7 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <puml src="diagrams/LogicClassDiagram.puml" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
-
-<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
-</box>
-
-How the `Logic` component works, using `delete 1` as the example:
-
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex`.
-1. The `DeleteCommand` is returned to the `LogicManager` and executed. It first calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
-1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex` and calls `Model#deletePerson(personToDelete)`.
-1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
-
-The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter /tag HIGH")`.
-
-<puml src="diagrams/FilterSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `filter /tag HIGH` Command" />
-
-How the `filter` command works:
-
-1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse(" /tag HIGH")`.
-1. `FilterCommandParser` replaces every run of whitespace (spaces, tabs and newlines) with a single space before tokenizing, so a prefix is recognized after any whitespace and not only after a literal space.
-1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
-1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/` but is not one of these prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
-1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND).
-1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons matching the criteria. It does not modify the address book data.
-1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
+When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command. The resulting `Command` object is executed by the `LogicManager`, which may call methods of `Model`, and the outcome is returned as a `CommandResult`. The sequence diagrams of individual commands are in the [Implementation](#implementation) section, for example [`delete`](#delete-command), [`filter`](#filter-command), [`sort`](#sort-command) and [`find`](#find-command).
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -183,10 +154,12 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 <puml src="diagrams/SaveSequenceDiagram.puml" alt="How LogicManager decides whether to save after a command" />
 
-1. `LogicManager` parses the command text into a `Command` and executes it.
+1. `LogicManager` parses the command text into a `Command`, keeps a copy of the address book, and executes the command.
 1. It then calls `modifiesData()` on the command.
-1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. If the save fails, the error becomes a `CommandException`, so the user sees `Could not save data to file: ...` and CareBook keeps running.
+1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. If the save fails, `LogicManager` restores the copy with `Model#setAddressBook` and throws a `CommandException`. The user sees `Could not save data to file ...` (or a message about insufficient permissions), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
 1. Otherwise, `LogicManager` only logs that the save was skipped, and the data file is left as it is.
+
+**Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. Restoring the address book also clears the details panel, which is acceptable after an error.
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
 
@@ -213,6 +186,11 @@ It focuses on command parsing and execution; helper calls and UI updates are omi
 1. A new `CommandResult` confirms the selected contact's name; full details appear in the dedicated panel.
    `LogicManager` checks `ViewCommand#modifiesData()`, which returns `false`, and skips saving.
    `MainWindow` displays the returned feedback in `ResultDisplay`.
+
+Every successful view result also sets `CommandResult#isViewRequested()` to `true`. `MainWindow`
+uses this request to refresh highlighting and scroll the selected contact into view. Unlike a selection
+change listener, this also runs when the user repeats `view` for the same contact after scrolling away.
+No temporary deselection or stored-data change is needed to trigger the UI action.
 
 **Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
 with the command usage. During execution, `ViewCommand#validateTargetIndex()` distinguishes an empty
@@ -316,8 +294,10 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
    It asks the current `Remark` for the updated notes (`withNoteAdded()`, `withNoteReplaced()` or
    `withNoteRemoved()`), checks the total length, and replaces the person using `Person#withRemark()` and
    `Model#setPerson()`.
-1. `RemarkCommand` does not change the displayed list. No `find` or `filter` criterion looks at notes, so the
-   changed person still matches the current search, and the search results and sort order stay as they are.
+1. `RemarkCommand` replaces the person with `Model#setPersonKeepingDisplayed()` instead of `Model#setPerson()`.
+   `find /remark` searches notes, so a changed note can stop the person from matching the current search.
+   This method keeps the person in the displayed list anyway, so the search results, the indices on screen and
+   the sort order stay the same until the next `list`, `find` or `filter`. `EditCommand` does the same.
 
 **Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
 are never lost because of a missing argument. A missing or invalid index or note number causes a
@@ -382,13 +362,91 @@ return zero matches. It focuses on parsing and execution; helper calls and UI up
 or phone input other than a single sequence of at least two digits causes `FindCommandParser#parse()` to
 throw a `ParseException` with the command usage. This leaves stored contacts and the display filter unchanged.
 A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
-Use `list` to display all contacts again after a successful search.
+Use `list` to display all active (unarchived) contacts again after a successful search.
+Use `list archive` to display all archived contacts.
+
+
+### Delete command
+
+The `delete INDEX` command removes one contact from the displayed list, but only after a confirmation step.
+`delete INDEX` on its own shows a warning and leaves the contact untouched. The contact is deleted only when the user
+repeats the command as `delete INDEX /confirm`. The index refers to the displayed list, so it is affected by `filter`,
+`find` and `sort`.
+
+The sequence diagram below shows a `delete 1` command. The `alt` fragment shows both outcomes: the confirmed
+`delete 1 /confirm` deletes the contact, and the unconfirmed `delete 1` only returns the warning. It focuses on
+parsing and execution; helper calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Sequence of parsing and executing a delete 1 command" />
+
+<box type="info" seamless>
+
+**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
+</box>
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `delete`
+   and creates a `DeleteCommandParser`.
+1. `DeleteCommandParser#parse()` checks that the argument is a positive integer, optionally followed by the
+   case-insensitive `/confirm` flag, and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand`
+   holding the `targetIndex` and whether the command was confirmed.
+1. `DeleteCommand#execute()` calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this
+   list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
+1. Otherwise, the command retrieves the `Person` at `targetIndex`. If the command was not confirmed, it returns a
+   `CommandResult` containing a warning (and the `delete INDEX /confirm` command to enter) without changing the model.
+1. If the command was confirmed, it calls `Model#deletePerson(personToDelete)` and returns a `CommandResult` with the
+   details of the deleted contact.
+1. `LogicManager` checks `DeleteCommand#modifiesData()`, which returns whether the command was confirmed. Only a
+   confirmed delete is saved to storage.
+
+**Error handling:** A missing, non-numeric or non-positive index, or any other extra argument, causes
+`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. An index larger than the displayed
+list causes `DeleteCommand#execute()` to throw a `CommandException`. Both leave the stored contacts unchanged.
+
+
+### Filter command
+
+The `filter` command narrows the displayed list to contacts matching all of the given criteria: `/name`, `/tag` and
+`/address`. Within one criterion, matching any one of the values is enough, and a contact must satisfy every criterion
+that was given. Matching ignores case. A filter applies to the list currently shown, so it keeps the active or archived
+scope, and it does not modify the stored contacts.
+
+The sequence diagram below shows a successful `filter /tag HIGH` command. It focuses on parsing and execution; helper
+calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/FilterSequenceDiagram.puml" alt="Sequence of parsing and executing a successful filter /tag HIGH command" />
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `filter`
+   and creates a `FilterCommandParser`. It then calls `parse(" /tag HIGH")`.
+1. `FilterCommandParser#parse()` first replaces every run of whitespace (spaces, tabs and newlines) with a single
+   space, so a prefix is recognised after any whitespace and not only after a literal space. It then uses
+   `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. Name values are split on whitespace into
+   keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several
+   alternatives. It creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds
+   this predicate.
+1. `PersonMatchesFilterPredicate#test()` treats an empty list as "criterion not applied". Within a criterion, matching
+   any one value is enough (OR); a person must satisfy every criterion that was given (AND). Name, tag and address
+   matching ignore case, and address matching also collapses each run of whitespace into a single space in both the
+   stored address and the phrase.
+1. `FilterCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)`. This combines the predicate with the
+   scope of the list currently shown (active contacts after `list`, archived contacts after `list archive`), so the
+   filtered list only contains persons in that scope who match the criteria. The scope is kept even when nothing
+   matches, and `find` switches back to active contacts.
+1. The command calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult`
+   with the "N person(s) listed!" message.
+1. `LogicManager` checks `FilterCommand#modifiesData()`, which returns `false`, and skips saving.
+
+**Error handling:** `FilterCommandParser#parse()` throws a `ParseException` with the command usage if there is text
+before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/`
+but is not one of the three prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM`
+or `LOW` (case-insensitive). If `/name` is given more than once, `ArgumentMultimap#verifyNoDuplicatePrefixesFor`
+throws a `ParseException` that lists the repeated prefix. A filter with no matches succeeds, displays an empty list,
+and reports `0 person(s) listed!`. Use `list` to display all active contacts again.
 
 
 ### Sort command
 
-The `sort` command changes the order in which contacts are displayed. It supports three criteria:
-`sort priority [asc|desc]`, `sort name [asc|desc]` and `sort recent`.
+The `sort` command changes the order in which contacts are displayed. It supports four criteria:
+`sort priority [asc|desc]`, `sort name [asc|desc]`, `sort checkup [asc|desc]` and `sort recent`.
 
 **Design.** `ModelManager` keeps a `SortedList` that wraps the `FilteredList`, and
 `Model#getFilteredPersonList()` returns the sorted list. This means:
@@ -402,17 +460,27 @@ The `sort` command changes the order in which contacts are displayed. It support
 
 `PersonComparators` provides the orderings:
 
-* `byName(ascending)` compares names ignoring case.
+* `byName(ascending)` compares names ignoring case and compares each run of digits by its numeric value, so `Ethan2`
+  comes before `Ethan10`. It is also the tie-breaker of `byPriority`.
+* `byCheckup(ascending)` orders by checkup appointment date and time, earliest first when ascending. Contacts without a
+  checkup appointment are always last in both directions, and ties are ordered by name. `CheckupAppointment` implements
+  `Comparable` for this.
 * `byPriority(mostUrgentFirst)` orders `HIGH`, `MEDIUM`, `LOW` (or the reverse). Contacts without a priority tag
   are always last in both directions, and ties are ordered by name. In the user-facing command, `desc` means most
   urgent first, so `SortCommand` passes `!ascending` as `mostUrgentFirst`.
+
+The sequence diagram below shows a successful `sort priority desc` command. It focuses on parsing and execution;
+creating the comparator and updating the UI are omitted for clarity. The other criteria follow the same flow, and
+`sort recent` calls `Model#sortPersonsByMostRecent()` instead of `Model#updateSortedPersonList(comparator)`.
+
+<puml src="diagrams/SortSequenceDiagram.puml" alt="Sequence of parsing and executing a successful sort priority desc command" />
 
 How the `sort` command works:
 
 1. `AddressBookParser` recognises `sort` and creates a `SortCommandParser`.
 2. `SortCommandParser#parse()` lowercases and splits the arguments. It throws a `ParseException` if there is no
    criterion, the criterion or direction is unknown, `recent` is given a direction, or there are extra arguments.
-   Priority defaults to descending and name defaults to ascending. It creates a `SortCommand`.
+   Priority defaults to descending; name and checkup default to ascending. It creates a `SortCommand`.
 3. `SortCommand#execute()` calls `Model#updateSortedPersonList(comparator)` (or `Model#sortPersonsByMostRecent()`
    for `recent`) and returns a `CommandResult` describing the order.
 4. `SortCommand#modifiesData()` returns `false`, so `LogicManager` does not save. The UI observes the sorted list
@@ -604,7 +672,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1.  User requests to list persons
 2.  CareBook shows a list of persons
 3.  User requests to delete a specific person in the list
-4.  CareBook deletes the person
+4.  CareBook shows a warning with the person's details and the command to confirm the deletion
+5.  User confirms the deletion with `delete INDEX /confirm`
+6.  CareBook deletes the person
 
     Use case ends.
 
@@ -619,6 +689,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3a1. CareBook shows an error message.
 
       Use case resumes at step 2.
+
+* 5a. User does not enter the confirm command.
+
+    * 5a1. CareBook keeps the person. Nothing is deleted or saved.
+
+      Use case ends.
 
 **Use case: Edit a contact**
 
@@ -720,14 +796,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
-**Use case: List all contacts**
+**Use case: List all active contacts**
 
 **MSS:**
 
-1. User requests to view all contacts 
+1. User requests to view all active contacts using `list`
 2. CareBook validates the command format
-3. CareBook displays all contacts currently stored 
-4. CareBook displays a confirmation that all contacts have been shown
+3. CareBook displays all active (unarchived) contacts
+4. CareBook displays a confirmation that all active contacts have been shown
 
    Use case ends.
 
@@ -745,11 +821,42 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
         Use case resumes at step 3. 
 
-*3a. No contacts are stored in the address book.
+*3a. No active contacts are stored in the address book.
 
-    *3a1. CareBook shows No contacts found.
+    *3a1. CareBook shows `CareBook is empty`.
 
         Use case ends.
+
+**Use case: List all archived contacts**
+
+**MSS:**
+
+1. User requests to view all archived contacts using `list archive`.
+2. CareBook validates the command format.
+3. CareBook displays all archived contacts in the order they were added, clearing any search filters and sorting.
+4. CareBook displays a confirmation that all archived contacts have been shown.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The command format is invalid.
+
+    * 2a1. CareBook shows an error message.
+
+      Use case ends.
+
+* 2b. The command contains leading or trailing whitespace.
+
+    * 2b1. CareBook ignores the whitespace and validates the command.
+
+      Use case resumes at step 3.
+
+* 3a. No archived contacts are stored in the address book.
+
+    * 3a1. CareBook displays an empty list and shows `CareBook is empty`.
+
+      Use case ends.
 
 **Use case: View contact details**
 
@@ -814,6 +921,12 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
     *3a2. User submits a corrected update request to the contact list.
     
         Use case resumes at step 4.
+
+*4a. CareBook cannot write the data file.
+
+    *4a1. CareBook undoes the change and displays an error message saying the data could not be saved.
+
+        Use case ends.
 
 **Use case: Find contacts**
 
@@ -884,11 +997,14 @@ testers are expected to do more *exploratory* testing.
 
 ### Deleting a person
 
-1. Deleting a person while all persons are being shown
+1. Deleting a person while all active contacts are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with multiple persons in the list.
 
    1. Test case: `delete 1`<br>
+      Expected: No person is deleted. The status message shows a warning with the first contact's details and asks you to enter `delete 1 /confirm`.
+
+   1. Test case: `delete 1 /confirm`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
 
    1. Test case: `delete 0`<br>
@@ -901,9 +1017,9 @@ testers are expected to do more *exploratory* testing.
 
 ### Editing a person
 
-1. Editing a person while all persons are being shown
+1. Editing a person while all active contacts are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with at least two persons in the list.
 
    1. Test case: `edit 1 /patientNo 91234567 /pEmail patient@example.com`<br>
       Expected: The first contact's patient phone number and patient email change, and its other fields stay the same. The status message shows the edited contact's details.
@@ -928,13 +1044,17 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: Use `find` with a name that matches some, but not all, persons.
 
    1. Test case: `edit 1 /address 1 Test Street`<br>
-      Expected: The first person in the filtered list is edited, and the full list is shown again.
+      Expected: The first person in the filtered list is edited, and the same search results stay on screen.
+
+   1. Test case: `edit 1 /name Zachary Tan`<br>
+      Expected: The first person is renamed and stays first in the results, even though the new name no longer
+      matches the search. `list` shows the full list again.
 
 ### Keeping care notes
 
 1. Adding, editing and deleting notes
 
-   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with at least two persons in the list.
 
    1. Test case: `remark 1 Allergic to penicillin`<br>
       Expected: The first contact's card shows `Remark:` and `1. Allergic to penicillin`. The status message shows the added note.
@@ -965,6 +1085,11 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `find` with a name that matches some, but not all, persons, then `remark 1 Diabetic` and
       `remark 1 Uses a wheelchair`<br>
       Expected: The search results stay on screen, and the first result has both notes.
+
+   1. Test case: `remark 1 Allergic to penicillin`, `find /remark penicillin`, then
+      `remark 1 /edit 1 Allergic to aspirin`<br>
+      Expected: The person stays first in the results with the new note, even though it no longer matches
+      `penicillin`.
 
    1. Test case: Add a note, close CareBook and relaunch it.<br>
       Expected: The note is still shown.
@@ -1023,3 +1148,13 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Launch CareBook with a valid `data/contacts.json`, then run `list`, `find` or `view 1`.<br>
       Expected: The commands run normally and the data file is not rewritten (its last modified time does not change).
+
+1. Saving when the data file cannot be written
+
+   1. Prerequisites: Launch CareBook with at least one contact, then make `data/contacts.json` read-only (on Windows, tick *Read-only* in the file's properties).
+
+   1. Test case: `remark 1 Uses a wheelchair`<br>
+      Expected: The result box shows `Could not save data to file ...` and `The command was undone, so your contacts are unchanged.` The first contact's card does not show the note.
+
+   1. Test case: make the file writable again, then enter `remark 1 Uses a wheelchair` again.<br>
+      Expected: The note is added and saved. It is still shown after restarting CareBook.

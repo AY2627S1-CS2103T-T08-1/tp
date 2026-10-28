@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.DESC_BOB;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_ADDRESS_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_AMY;
+import static seedu.address.logic.commands.CommandTestUtil.VALID_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_FAMILY_EMAIL_BOB;
 import static seedu.address.logic.commands.CommandTestUtil.VALID_NAME_BOB;
@@ -18,11 +20,14 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.parser.EditCommandParser;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -37,6 +42,52 @@ import seedu.address.testutil.PersonBuilder;
 public class EditCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_unchangedTag_reportsNoChange() throws Exception {
+        for (String priority : new String[] {"", "HIGH", "MEDIUM", "LOW"}) {
+            Person person = priority.isEmpty() ? new PersonBuilder().withTags().build()
+                    : new PersonBuilder().withTags(priority).build();
+            Model tagModel = new ModelManager();
+            tagModel.addPerson(person);
+            Model expectedModel = new ModelManager(tagModel.getAddressBook(), new UserPrefs());
+            EditCommand command = new EditCommandParser().parse("1 /tag " + priority.toLowerCase());
+
+            assertCommandSuccess(command, tagModel, "No change to tag", expectedModel);
+        }
+    }
+
+    @Test
+    public void execute_changedTag_reportsEditedPerson() throws Exception {
+        for (String priority : new String[] {"", "HIGH", "LOW"}) {
+            Person person = new PersonBuilder().withTags("MEDIUM").build();
+            Person editedPerson = priority.isEmpty() ? new PersonBuilder(person).withTags().build()
+                    : new PersonBuilder(person).withTags(priority).build();
+            Model tagModel = new ModelManager();
+            tagModel.addPerson(person);
+            Model expectedModel = new ModelManager();
+            expectedModel.addPerson(editedPerson);
+            EditCommand command = new EditCommandParser().parse("1 /tag " + priority);
+
+            assertCommandSuccess(command, tagModel,
+                    String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)),
+                    expectedModel);
+        }
+    }
+
+    @Test
+    public void execute_unchangedTagWithChangedName_editsName() throws Exception {
+        Person person = new PersonBuilder().withTags("MEDIUM").build();
+        Person editedPerson = new PersonBuilder(person).withName(VALID_NAME_BOB).build();
+        Model tagModel = new ModelManager();
+        tagModel.addPerson(person);
+        Model expectedModel = new ModelManager();
+        expectedModel.addPerson(editedPerson);
+        EditCommand command = new EditCommandParser().parse("1 /tag MEDIUM /name " + VALID_NAME_BOB);
+
+        assertCommandSuccess(command, tagModel,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+    }
 
     @Test
     public void execute_duplicatePatientPhoneWithUnchangedName_failure() {
@@ -85,6 +136,41 @@ public class EditCommandTest {
                 .execute(checkupModel);
         assertEquals(new PersonBuilder(scheduled).withName(VALID_NAME_BOB).build(),
                 checkupModel.getAddressBook().getPersonList().get(0));
+    }
+
+    @Test
+    public void execute_archivedPerson_keepsArchiveListShown() throws Exception {
+        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).build();
+        Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
+        Model archiveModel = new ModelManager();
+        archiveModel.addPerson(active);
+        archiveModel.addPerson(archived);
+        archiveModel.setArchiveScope(true);
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
+                .execute(archiveModel);
+
+        Person editedArchived = new PersonBuilder(archived).withAddress(VALID_ADDRESS_BOB).build();
+        assertTrue(editedArchived.isArchived());
+        assertEquals(List.of(editedArchived), archiveModel.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_activePerson_showsActiveList() throws Exception {
+        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).build();
+        Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
+        Model archiveModel = new ModelManager();
+        archiveModel.addPerson(active);
+        archiveModel.addPerson(archived);
+        archiveModel.setArchiveScope(false);
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
+                .execute(archiveModel);
+
+        Person editedActive = new PersonBuilder(active).withAddress(VALID_ADDRESS_BOB).build();
+        assertEquals(List.of(editedActive), archiveModel.getFilteredPersonList());
     }
 
     @Test
@@ -219,8 +305,22 @@ public class EditCommandTest {
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
+        // the search results stay on screen, and the edited person stays in them though the name changed
+        expectedModel.updateFilteredPersonList(editedPerson::equals);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_filteredList_keepsOtherResultsAndOrder() throws Exception {
+        model.updateFilteredPersonList(person -> person.getName().fullName.contains("Meier"));
+        List<Person> resultsBefore = List.copyOf(model.getFilteredPersonList());
+
+        new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
+                .execute(model);
+
+        Person editedPerson = new PersonBuilder(resultsBefore.get(0)).withAddress(VALID_ADDRESS_BOB).build();
+        assertEquals(List.of(editedPerson, resultsBefore.get(1)), model.getFilteredPersonList());
     }
 
     @Test

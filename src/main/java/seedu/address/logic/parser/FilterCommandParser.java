@@ -23,10 +23,12 @@ public class FilterCommandParser implements Parser<FilterCommand> {
      * Parses the given {@code String} of arguments in the context of the FilterCommand
      * and returns a FilterCommand object for execution.
      * Any run of whitespace (spaces, tabs, newlines) is treated as a single space, so prefixes are recognized
-     * after any whitespace.
-     * Name keywords are separated by whitespace; tags and addresses are given by repeating their prefix.
+     * after any whitespace. Name keywords are separated by whitespace and {@code /name} may be given only once;
+     * tags and addresses are given by repeating their prefix.
+     *
      * @throws ParseException if no criterion is given, a value is empty, a tag is not a valid tag,
-     *     there is text before the first prefix, or a prefix other than name, tag and address is given
+     *     there is text before the first prefix, {@code /name} is repeated, or a prefix other than
+     *     name, tag and address is given
      */
     public FilterCommand parse(String args) throws ParseException {
         String normalizedArgs = args.trim().replaceAll("\\s+", " ");
@@ -40,6 +42,8 @@ public class FilterCommandParser implements Parser<FilterCommand> {
         if (!argMultimap.getPreamble().isEmpty()) {
             throw invalidFormat();
         }
+
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME);
 
         List<String> nameKeywords = new ArrayList<>();
         for (String value : argMultimap.getAllValues(PREFIX_NAME)) {
