@@ -63,15 +63,11 @@ public class CheckupCommand extends Command {
         } catch (IllegalArgumentException e) {
             throw new CommandException(CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + MESSAGE_USAGE, e);
         }
-        if (appointment.isBeforeToday()) {
-            throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE);
-        }
         if (appointment.isBeforeNow()) {
             throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE_TIME);
         }
-        Person person = displayedPersons.get(targetIndex.getZeroBased());
         boolean hasConflict = model.getAddressBook().getPersonList().stream()
-                .anyMatch(existing -> !existing.equals(person)
+                .anyMatch(existing -> !existing.isArchived() && !existing.equals(person)
                         && existing.getCheckupAppointment().filter(appointment::equals).isPresent()
                         && !existing.getFamilyNo().equals(person.getFamilyNo()));
         if (hasConflict) {

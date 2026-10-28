@@ -12,7 +12,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class CheckupCommandParser implements Parser<CheckupCommand> {
     @Override
     public CheckupCommand parse(String args) throws ParseException {
-        String[] parts = args.trim().split("\\s+", 2);
+        String[] parts = args.trim().replaceAll("\\s+", " ").split(" ", 2);
         if (parts.length != 2) {
             throw invalidFormat();
         }
@@ -22,17 +22,7 @@ public class CheckupCommandParser implements Parser<CheckupCommand> {
         } catch (ParseException e) {
             throw invalidFormat();
         }
-   
-        final CheckupAppointment appointment;
-        try {
-            appointment = new CheckupAppointment(parts[1]);
-        } catch (IllegalArgumentException e) {
-            throw new ParseException(CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE, e);
-        }
-        if (appointment.isBeforeNow()) {
-            throw new ParseException(CheckupAppointment.MESSAGE_PAST_DATE_TIME);
-        }
-        return new CheckupCommand(index, appointment);
+        return new CheckupCommand(index, parts[1]);
     }
 
     private ParseException invalidFormat() {

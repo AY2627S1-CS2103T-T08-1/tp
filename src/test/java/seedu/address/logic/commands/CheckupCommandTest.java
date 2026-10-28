@@ -52,7 +52,7 @@ public class CheckupCommandTest {
                     CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + CheckupCommand.MESSAGE_USAGE);
         }
         assertCommandFailure(parser.parseCommand("checkup 1 " + appointmentOn(LocalDate.now().minusDays(1))),
-                model, CheckupAppointment.MESSAGE_PAST_DATE);
+                model, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
     }
 
     @Test
@@ -89,6 +89,9 @@ public class CheckupCommandTest {
         new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
 
         assertEquals(appointment, model.getFilteredPersonList().get(0).getCheckupAppointment().orElseThrow());
+    }
+
+    @Test
     public void execute_sameBookingDifferentFamilyPhone_rejectsWithoutChangingContactOrSelection() throws Exception {
         Person bookedAlice = new PersonBuilder(alice).withFamilyNo("91234567")
                 .withCheckupAppointment(appointment.toString()).build();
@@ -119,12 +122,35 @@ public class CheckupCommandTest {
     public void execute_conflictingBookingOutsideDisplayedList_stillRejects() throws Exception {
         Person bookedAlice = new PersonBuilder(alice).withFamilyNo("91234567")
                 .withCheckupAppointment(appointment.toString()).build();
-        model.addPerson(bookedAlice.copyWithArchivedStatus(true));
+        model.addPerson(bookedAlice);
         model.addPerson(bob);
         new FilterCommand(new PersonMatchesFilterPredicate(List.of("Bob"), List.of(), List.of())).execute(model);
 
         assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), appointment), model,
                 CheckupCommand.MESSAGE_BOOKING_CONFLICT);
+    }
+
+    @Test
+    public void execute_archivedBookingOutsideDisplayedList_doesNotBlockSlot() throws Exception {
+        Person archivedAlice = new PersonBuilder(alice).withFamilyNo("91234567")
+                .withCheckupAppointment(appointment.toString()).build().copyWithArchivedStatus(true);
+        model.addPerson(archivedAlice);
+        model.addPerson(bob);
+
+        new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
+
+        assertEquals(appointment, model.getFilteredPersonList().get(0).getCheckupAppointment().orElseThrow());
+        assertEquals(archivedAlice, model.getAddressBook().getPersonList().get(0));
+    }
+
+    @Test
+    public void execute_parsedExtraSpaces_preservesWhitespaceSupport() throws Exception {
+        model.addPerson(alice);
+        String spacedValue = appointment.toString().replace(" ", "   ");
+
+        new AddressBookParser().parseCommand("checkup 1   " + spacedValue + "   ").execute(model);
+
+        assertEquals(appointment, model.getFilteredPersonList().get(0).getCheckupAppointment().orElseThrow());
     }
 
     @Test

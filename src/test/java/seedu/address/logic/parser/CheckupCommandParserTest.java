@@ -49,12 +49,11 @@ public class CheckupCommandParserTest {
     public void parse_yesterday_defersValidationUntilExecution() {
         String value = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 23:59";
         assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
-        assertParseFailure(parser, "1 " + value, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
     }
 
     @Test
-    public void parse_pastTime_throwsParseException() {
+    public void parse_pastTime_defersValidationUntilExecution() {
         String value = LocalDateTime.now().minusMinutes(5).format(DateTimeFormatter.ofPattern("dd/MM/uuuu HH:mm"));
-        assertParseFailure(parser, "1 " + value, CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+        assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
     }
 }
