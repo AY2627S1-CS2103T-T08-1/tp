@@ -26,7 +26,7 @@ public class ModelManager implements Model {
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
     private final SortedList<Person> sortedPersons;
-    private Predicate<Person> personListScope = PREDICATE_SHOW_ALL_PERSONS;
+    private boolean archiveScope;
     /** Transient display selection; never written to the address book file. */
     private final ReadOnlyObjectWrapper<Person> selectedPerson = new ReadOnlyObjectWrapper<>();
 
@@ -96,7 +96,7 @@ public class ModelManager implements Model {
     @Override
     public void addPerson(Person person) {
         addressBook.addPerson(person);
-        updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        setArchiveScope(false);
     }
 
     @Override
@@ -121,6 +121,21 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public boolean isShowingArchiveList() {
+        return archiveScope;
+    }
+
+    @Override
+    public void setArchiveScope(boolean archiveScope) {
+        this.archiveScope = archiveScope;
+        updateFilteredPersonList(getScopePredicate());
+    }
+
+    private Predicate<Person> getScopePredicate() {
+        return archiveScope ? PREDICATE_SHOW_ARCHIVED_PERSONS : PREDICATE_SHOW_ALL_PERSONS;
+    }
+
+    @Override
     public ReadOnlyObjectProperty<Person> selectedPersonProperty() {
         return selectedPerson.getReadOnlyProperty();
     }
@@ -136,10 +151,6 @@ public class ModelManager implements Model {
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
-        // Explicit list switches change the scope; search criteria alone keep the current scope.
-        if (predicate == PREDICATE_SHOW_ALL_PERSONS || predicate == PREDICATE_SHOW_ARCHIVED_PERSONS) {
-            personListScope = predicate;
-        }
         filteredPersons.setPredicate(predicate);
         if (!filteredPersons.contains(selectedPerson.get())) {
             selectedPerson.set(null);
@@ -149,7 +160,7 @@ public class ModelManager implements Model {
     @Override
     public void filterPersonsInCurrentList(Predicate<Person> predicate) {
         requireNonNull(predicate);
-        updateFilteredPersonList(personListScope.and(predicate));
+        updateFilteredPersonList(getScopePredicate().and(predicate));
     }
 
     //=========== Sorted Person List Accessors ===============================================================
@@ -185,7 +196,7 @@ public class ModelManager implements Model {
 
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
-                && personListScope == otherModelManager.personListScope
+                && archiveScope == otherModelManager.archiveScope
                 && sortedPersons.equals(otherModelManager.sortedPersons);
     }
 
