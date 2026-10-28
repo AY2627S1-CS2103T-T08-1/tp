@@ -5,7 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_PERSONS_LISTED_OVERVIEW;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.address.testutil.TypicalPersons.ALICE;
+import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.CARL;
+import static seedu.address.testutil.TypicalPersons.DANIEL;
 import static seedu.address.testutil.TypicalPersons.ELLE;
 import static seedu.address.testutil.TypicalPersons.FIONA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -14,6 +17,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
@@ -31,10 +36,111 @@ public class FindCommandTest {
     private Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
+    public void execute_remarkSearchFromActiveList_excludesArchivedContactsAndMatchesPhrase() throws Exception {
+        Model searchModel = new ModelManager();
+        Person activeMatch = new PersonBuilder(ALICE).withRemarks("Bring medication", "Needs assistance").build();
+        Person archivedMatch = new PersonBuilder(BENSON).withRemarks("Needs assistance")
+                .build().copyWithArchivedStatus(true);
+        Person differentPhrase = new PersonBuilder(CARL).withRemarks("Needs medication", "Assistance available")
+                .build();
+        searchModel.addPerson(activeMatch);
+        searchModel.addPerson(archivedMatch);
+        searchModel.addPerson(differentPhrase);
+        AddressBook original = new AddressBook(searchModel.getAddressBook());
+        AddressBookParser parser = new AddressBookParser();
+        for (String command : List.of("find /remark needs assistance   ",
+                "FIND /REMARK NEEDS     ASSISTANCE", "FiNd /ReMaRk needs assistance \t")) {
+            parser.parseCommand("list").execute(searchModel);
+            CommandResult result = parser.parseCommand(command).execute(searchModel);
+            assertEquals(List.of(activeMatch), searchModel.getFilteredPersonList());
+            assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
+            assertEquals(original, searchModel.getAddressBook());
+        }
+    }
+
+    @Test
+    public void execute_archiveList_searchesArchivedContactsOnly() throws Exception {
+        Person archivedDaniel = DANIEL.copyWithArchivedStatus(true);
+        model.setPerson(DANIEL, archivedDaniel);
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("list archive").execute(model);
+
+        CommandResult result = parser.parseCommand("find Meier").execute(model);
+
+        assertEquals(List.of(archivedDaniel), model.getFilteredPersonList());
+        assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_emptyArchiveList_doesNotSearchActiveContacts() throws Exception {
+        new ListCommand(true).execute(model);
+        new FindCommand(preparePredicate("Meier")).execute(model);
+        assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_archiveListSupportsOtherCriteriaAndNoMatches() throws Exception {
+        Person archivedDaniel = DANIEL.copyWithArchivedStatus(true);
+        model.setPerson(DANIEL, archivedDaniel);
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("list archive").execute(model);
+        parser.parseCommand("find /patientNo 87").execute(model);
+        assertEquals(List.of(archivedDaniel), model.getFilteredPersonList());
+
+        parser.parseCommand("list archive").execute(model);
+        parser.parseCommand("find Benson").execute(model);
+        assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_otherViews_searchesAllActiveContacts() throws Exception {
+        model.setPerson(DANIEL, DANIEL.copyWithArchivedStatus(true));
+        AddressBookParser parser = new AddressBookParser();
+        for (String command : List.of("list", "filter /name Carl", "sort name desc", "sort recent")) {
+            parser.parseCommand("list").execute(model);
+            parser.parseCommand(command).execute(model);
+            parser.parseCommand("find Meier").execute(model);
+            assertEquals(List.of(BENSON), model.getFilteredPersonList(), command);
+        }
+    }
+
+    @Test
+    public void execute_filteredOrSortedArchiveView_searchesArchivedContactsOnly() throws Exception {
+        Person archivedDaniel = DANIEL.copyWithArchivedStatus(true);
+        model.setPerson(DANIEL, archivedDaniel);
+        AddressBookParser parser = new AddressBookParser();
+        for (String command : List.of("filter /name Daniel", "sort name desc", "sort recent")) {
+            parser.parseCommand("list archive").execute(model);
+            parser.parseCommand(command).execute(model);
+            parser.parseCommand("find Meier").execute(model);
+            assertEquals(List.of(archivedDaniel), model.getFilteredPersonList(), command);
+        }
+    }
+
+    @Test
+    public void execute_repeatedArchiveSearches_neverReturnsActiveContacts() throws Exception {
+        Person archivedDaniel = DANIEL.copyWithArchivedStatus(true);
+        model.setPerson(DANIEL, archivedDaniel);
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("list archive").execute(model);
+        parser.parseCommand("find Meier").execute(model);
+        assertEquals(List.of(archivedDaniel), model.getFilteredPersonList());
+        parser.parseCommand("find Benson").execute(model);
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        parser.parseCommand("find Meier").execute(model);
+        assertEquals(List.of(archivedDaniel), model.getFilteredPersonList());
+
+        parser.parseCommand("list").execute(model);
+        parser.parseCommand("find Meier").execute(model);
+        assertEquals(List.of(BENSON), model.getFilteredPersonList());
+    }
+
+    @Test
     public void execute_phoneCriterion_filtersConsecutiveDigitsWithoutChangingStoredContacts() {
         Model phoneModel = new ModelManager();
         Person match = new PersonBuilder().withName("Alice").withPatientNo("900087000").build();
-        Person nonMatch = new PersonBuilder().withName("Bob").withPatientNo("89700000").build();
+        Person nonMatch = new PersonBuilder().withName("Bob").withPatientNo("89700000")
+                .withEmail("bob@example.com").build();
         phoneModel.addPerson(match);
         phoneModel.addPerson(nonMatch);
         phoneModel.updateFilteredPersonList(person -> false);
@@ -82,12 +188,26 @@ public class FindCommandTest {
      */
     @Test
     public void execute_zeroKeywords_noPersonFound() {
-        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0);
+        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0)
+                + "\nUse 'list archive' to search through archived contacts";
         NameContainsKeywordsPredicate predicate = preparePredicate(" ");
         FindCommand command = new FindCommand(predicate);
         expectedModel.updateFilteredPersonList(predicate);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
         assertEquals(List.of(), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_noMatches_appendsArchiveHintInEitherScope() throws Exception {
+        AddressBookParser parser = new AddressBookParser();
+        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0)
+                + "\nUse 'list archive' to search through archived contacts";
+        for (String listCommand : List.of("list", "list archive")) {
+            parser.parseCommand(listCommand).execute(model);
+            CommandResult result = parser.parseCommand("find NobodyMatchesThisName").execute(model);
+            assertEquals(expectedMessage, result.getFeedbackToUser());
+            assertTrue(model.getFilteredPersonList().isEmpty());
+        }
     }
 
     /**

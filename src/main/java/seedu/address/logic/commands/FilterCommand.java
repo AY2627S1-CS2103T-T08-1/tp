@@ -30,7 +30,7 @@ public class FilterCommand extends Command {
             + PREFIX_ADDRESS + "ADDRESS]...\n"
             + "At least one criterion is required.\n"
             + PREFIX_NAME + " takes space-separated keywords; a name containing any of them matches (partial match "
-            + "allowed).\n"
+            + "allowed). It can be given only once.\n"
             + PREFIX_TAG + " must be one of " + String.join(", ", VALID_TAGS) + "; repeat it to match any of "
             + "several tags.\n"
             + PREFIX_ADDRESS + " takes a phrase; repeat it to match any of several phrases (partial match "

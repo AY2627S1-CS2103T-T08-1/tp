@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -7,6 +8,15 @@ import static seedu.address.testutil.Assert.assertThrows;
 import org.junit.jupiter.api.Test;
 
 public class NameTest {
+
+    @Test
+    public void constructor_extraSpaces_normalizesName() {
+        Name normalized = new Name("Kim Lee");
+        Name spaced = new Name("  Kim    Lee   ");
+        assertEquals("Kim Lee", spaced.fullName);
+        assertEquals(normalized, spaced);
+        assertEquals(normalized.hashCode(), spaced.hashCode());
+    }
 
     @Test
     public void constructor_null_throwsNullPointerException() {

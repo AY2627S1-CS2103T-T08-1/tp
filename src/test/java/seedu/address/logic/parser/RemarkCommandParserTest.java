@@ -96,8 +96,17 @@ public class RemarkCommandParserTest {
     public void parse_invalidPersonIndex_throwsParseException() {
         assertParseFailure(parser, " 0 note", MESSAGE_INVALID_INDEX);
         assertParseFailure(parser, " -1 note", MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, " abc note", MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, " /clear", MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, " 00 note", MESSAGE_INVALID_INDEX);
+    }
+
+    @Test
+    public void parse_missingPersonIndex_throwsParseException() {
+        assertParseFailure(parser, " /clear", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /delete 1", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /edit 1 Visits after 4pm", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " Diabetic", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " abc note", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " +1 note", MESSAGE_INVALID_FORMAT);
     }
 
     @Test
