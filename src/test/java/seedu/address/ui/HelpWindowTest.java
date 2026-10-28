@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CheckupCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.FilterCommand;
@@ -22,6 +23,21 @@ import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
 
 public class HelpWindowTest {
+
+    @Test
+    public void focus_iconifiedStage_clearsIconifiedState() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow();
+            // Keep the stage hidden so native window-manager events cannot override its state.
+            // This tests the restore request; showing the window is covered separately below.
+            helpWindow.getRoot().setIconified(true);
+            assertTrue(helpWindow.getRoot().isIconified());
+
+            helpWindow.focus();
+
+            assertFalse(helpWindow.getRoot().isIconified());
+        });
+    }
 
     @Test
     public void show_commandList_displaysAvailableCommands() throws Exception {
@@ -45,6 +61,9 @@ public class HelpWindowTest {
                 assertTrue(commandList.getText().contains("Example: unarchive 1"));
                 assertTrue(commandList.getText().contains("Example: list archive"));
                 assertTrue(commandList.getText().contains("Run list archive first"));
+                assertTrue(commandList.getText().contains(AddCommand.MESSAGE_USAGE));
+                assertTrue(commandList.getText().contains(
+                        "The '/' character is reserved for valid prefixes and is not allowed in any field value."));
                 assertTrue(commandList.getText().contains(FilterCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(CheckupCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(MarkCommand.MESSAGE_USAGE));

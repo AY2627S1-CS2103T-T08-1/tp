@@ -105,6 +105,23 @@ public class PersonComparators {
     /** Folds case the same way as {@link String#CASE_INSENSITIVE_ORDER}. */
     private static char foldCase(char c) {
         return Character.toLowerCase(Character.toUpperCase(c));
+     * Returns a comparator ordering persons by checkup appointment date and time. Persons without a checkup
+     * appointment always come last. Persons with the same appointment (or none) are ordered by name, A to Z.
+     *
+     * @param ascending True for the earliest appointment first, false for the latest appointment first.
+     */
+    public static Comparator<Person> byCheckup(boolean ascending) {
+        Comparator<Person> byCheckup = (first, second) -> {
+            Optional<CheckupAppointment> firstCheckup = first.getCheckupAppointment();
+            Optional<CheckupAppointment> secondCheckup = second.getCheckupAppointment();
+            if (firstCheckup.isEmpty() || secondCheckup.isEmpty()) {
+                // persons without a checkup go last regardless of direction
+                return Boolean.compare(firstCheckup.isEmpty(), secondCheckup.isEmpty());
+            }
+            int comparison = firstCheckup.get().compareTo(secondCheckup.get());
+            return ascending ? comparison : -comparison;
+        };
+        return byCheckup.thenComparing(BY_NAME_IGNORING_CASE);
     }
 
     private static Optional<Priority> getPriority(Person person) {

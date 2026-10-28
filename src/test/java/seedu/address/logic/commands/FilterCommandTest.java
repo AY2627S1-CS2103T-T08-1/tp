@@ -74,15 +74,16 @@ public class FilterCommandTest {
     }
 
     @Test
-    public void execute_afterFindFromArchiveList_filtersActiveContacts() throws Exception {
+    public void execute_afterFindFromArchiveList_filtersArchivedContacts() throws Exception {
         model.setPerson(ALICE, ALICE.copyWithArchivedStatus(true));
         AddressBookParser parser = new AddressBookParser();
         parser.parseCommand("list archive").execute(model);
         parser.parseCommand("find NobodyMatches").execute(model);
+        assertTrue(model.getFilteredPersonList().isEmpty());
 
         parser.parseCommand("filter /tag HIGH").execute(model);
 
-        assertEquals(List.of(DANIEL), model.getFilteredPersonList());
+        assertEquals(List.of(ALICE.copyWithArchivedStatus(true)), model.getFilteredPersonList());
     }
 
     @Test
