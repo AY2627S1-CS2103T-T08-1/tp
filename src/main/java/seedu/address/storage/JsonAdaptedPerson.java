@@ -25,6 +25,7 @@ import seedu.address.model.tag.Tag;
 class JsonAdaptedPerson {
 
     public static final String MISSING_FIELD_MESSAGE_FORMAT = "Person's %s field is missing!";
+    public static final String INVALID_BOOLEAN_MESSAGE_FORMAT = "Person's %s field must be true or false!";
 
     private final String name;
     private final String patientNo;
@@ -32,9 +33,10 @@ class JsonAdaptedPerson {
     private final String patientEmail;
     private final String familyEmail;
     private final String address;
-    private final boolean archived;
+    // kept as read from the file, so that values such as "true" or 1 are rejected instead of converted
+    private final Object archived;
     private final String checkupAppointment;
-    private final boolean checkupMarked;
+    private final Object checkupMarked;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
     private final List<String> remarks = new ArrayList<>();
 
@@ -47,8 +49,8 @@ class JsonAdaptedPerson {
             @JsonProperty("fEmail") String familyEmail, @JsonProperty("email") String legacyEmail,
             @JsonProperty("address") String address, @JsonProperty("tags") List<JsonAdaptedTag> tags,
             @JsonProperty("checkupAppointment") String checkupAppointment,
-            @JsonProperty("remarks") List<String> remarks, @JsonProperty("archived") boolean archived,
-            @JsonProperty("checkupMarked") boolean checkupMarked) {
+            @JsonProperty("remarks") List<String> remarks, @JsonProperty("archived") Object archived,
+            @JsonProperty("checkupMarked") Object checkupMarked) {
         this.name = name;
         this.patientNo = patientNo;
         this.familyNo = familyNo;
@@ -201,11 +203,29 @@ class JsonAdaptedPerson {
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException(CheckupAppointment.MESSAGE_CONSTRAINTS);
         }
-        if (checkupMarked && modelAppointment == null) {
+        final boolean modelArchived = toModelBoolean(archived, "archived");
+        final boolean modelCheckupMarked = toModelBoolean(checkupMarked, "checkupMarked");
+        if (modelCheckupMarked && modelAppointment == null) {
             throw new IllegalValueException(Person.MESSAGE_MARK_WITHOUT_CHECKUP);
         }
         return new Person(modelName, modelPatientPhone, modelFamilyPhone, modelPatientEmail, modelFamilyEmail,
-                modelAddress, modelTags, modelAppointment, toModelRemark(), archived, checkupMarked);
+                modelAddress, modelTags, modelAppointment, toModelRemark(), modelArchived, modelCheckupMarked);
+    }
+
+    /**
+     * Converts a true-or-false field as read from the file. A missing field (or {@code null}) is {@code false},
+     * since data files from before the field existed leave it out.
+     *
+     * @throws IllegalValueException if the value is anything other than {@code true} or {@code false}.
+     */
+    private static boolean toModelBoolean(Object value, String fieldName) throws IllegalValueException {
+        if (value == null) {
+            return false;
+        }
+        if (!(value instanceof Boolean)) {
+            throw new IllegalValueException(String.format(INVALID_BOOLEAN_MESSAGE_FORMAT, fieldName));
+        }
+        return (Boolean) value;
     }
 
     /**

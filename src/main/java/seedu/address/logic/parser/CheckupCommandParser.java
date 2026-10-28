@@ -7,7 +7,7 @@ import seedu.address.logic.commands.CheckupCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
- * Parses a displayed index followed by a checkup date and time.
+ * Parses a displayed index followed by a checkup date and time or the /delete option.
  */
 public class CheckupCommandParser implements Parser<CheckupCommand> {
     @Override
@@ -22,7 +22,12 @@ public class CheckupCommandParser implements Parser<CheckupCommand> {
         } catch (ParseException e) {
             throw invalidFormat();
         }
+
+        if (parts[1].equalsIgnoreCase("/delete")) {
+            return CheckupCommand.delete(index);
+        }
         return new CheckupCommand(index, parts[1]);
+
     }
 
     private ParseException invalidFormat() {
