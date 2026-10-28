@@ -26,6 +26,31 @@ public class PersonComparatorsTest {
     }
 
     @Test
+    public void byName_numbersInNamesComparedByValue() {
+        Person ethan1 = new PersonBuilder().withName("Ethan1").build();
+        Person ethan2 = new PersonBuilder().withName("Ethan2").build();
+        Person ethan10 = new PersonBuilder().withName("ethan10").build();
+        Person ethan100 = new PersonBuilder().withName("Ethan100").build();
+        Person ethanAlone = new PersonBuilder().withName("Ethan").build();
+        Person ethanB = new PersonBuilder().withName("Ethan B").build();
+        List<Person> persons = List.of(ethan100, ethan10, ethanB, ethan2, ethan1, ethanAlone);
+
+        assertEquals(List.of(ethanAlone, ethanB, ethan1, ethan2, ethan10, ethan100),
+                sorted(persons, PersonComparators.byName(true)));
+        assertEquals(List.of(ethan100, ethan10, ethan2, ethan1, ethanB, ethanAlone),
+                sorted(persons, PersonComparators.byName(false)));
+    }
+
+    @Test
+    public void byName_numbersInMiddleAndWithLeadingZeros() {
+        Person room2 = new PersonBuilder().withName("Room 2 Alice").build();
+        Person room02Bob = new PersonBuilder().withName("Room 02 Bob").build();
+        Person room10 = new PersonBuilder().withName("Room 10 Alice").build();
+        Person huge = new PersonBuilder().withName("Room 99999999999999999999999 Alice").build();
+        List<Person> persons = List.of(huge, room10, room02Bob, room2);
+
+        // 2 and 02 are the same number, so the rest of the name decides
+        assertEquals(List.of(room2, room02Bob, room10, huge), sorted(persons, PersonComparators.byName(true)));
     public void byCheckup_earliestOrLatestFirstWithoutCheckupLast() {
         Person early = new PersonBuilder().withName("Zed").withCheckupAppointment("01/01/2098 09:00").build();
         Person sameDayLater = new PersonBuilder().withName("Bob").withCheckupAppointment("01/01/2098 15:30").build();
