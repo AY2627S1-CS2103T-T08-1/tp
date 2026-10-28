@@ -57,6 +57,7 @@ public class EditCommand extends Command {
             + PREFIX_TAG + " HIGH";
 
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
+    public static final String MESSAGE_NO_TAG_CHANGE = "No change to tag";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON =
             "Someone with this patient HP or email already exists in CareBook.";
@@ -91,12 +92,20 @@ public class EditCommand extends Command {
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
 
+        if (editPersonDescriptor.getTags().isPresent()
+                && personToEdit.getTags().equals(editedPerson.getTags())
+                && personToEdit.equals(editedPerson)) {
+            return new CommandResult(MESSAGE_NO_TAG_CHANGE);
+        }
+      
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
                 .filter(person -> !person.equals(personToEdit)).toList();
+
         if (otherPersons.stream().anyMatch(editedPerson::hasSamePatientContactDetails)) {
             logger.fine("Edit rejected: patient contact details already exist");
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
+      
         if (otherPersons.stream().anyMatch(editedPerson::hasSameNameAndAddress)) {
             throw new CommandException(Person.MESSAGE_NAME_ADDRESS_CONFLICT);
         }

@@ -368,7 +368,8 @@ return zero matches. It focuses on parsing and execution; helper calls and UI up
 or phone input other than a single sequence of at least two digits causes `FindCommandParser#parse()` to
 throw a `ParseException` with the command usage. This leaves stored contacts and the display filter unchanged.
 A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
-Use `list` to display all contacts again after a successful search.
+Use `list` to display all active (unarchived) contacts again after a successful search.
+Use `list archive` to display all archived contacts.
 
 
 ### Sort command
@@ -706,14 +707,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case ends.
 
-**Use case: List all contacts**
+**Use case: List all active contacts**
 
 **MSS:**
 
-1. User requests to view all contacts 
+1. User requests to view all active contacts using `list`
 2. CareBook validates the command format
-3. CareBook displays all contacts currently stored 
-4. CareBook displays a confirmation that all contacts have been shown
+3. CareBook displays all active (unarchived) contacts
+4. CareBook displays a confirmation that all active contacts have been shown
 
    Use case ends.
 
@@ -731,11 +732,42 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
         Use case resumes at step 3. 
 
-*3a. No contacts are stored in the address book.
+*3a. No active contacts are stored in the address book.
 
-    *3a1. CareBook shows No contacts found.
+    *3a1. CareBook shows `CareBook is empty`.
 
         Use case ends.
+
+**Use case: List all archived contacts**
+
+**MSS:**
+
+1. User requests to view all archived contacts using `list archive`.
+2. CareBook validates the command format.
+3. CareBook displays all archived contacts in the order they were added, clearing any search filters and sorting.
+4. CareBook displays a confirmation that all archived contacts have been shown.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The command format is invalid.
+
+    * 2a1. CareBook shows an error message.
+
+      Use case ends.
+
+* 2b. The command contains leading or trailing whitespace.
+
+    * 2b1. CareBook ignores the whitespace and validates the command.
+
+      Use case resumes at step 3.
+
+* 3a. No archived contacts are stored in the address book.
+
+    * 3a1. CareBook displays an empty list and shows `CareBook is empty`.
+
+      Use case ends.
 
 **Use case: View contact details**
 
@@ -870,9 +902,9 @@ testers are expected to do more *exploratory* testing.
 
 ### Deleting a person
 
-1. Deleting a person while all persons are being shown
+1. Deleting a person while all active contacts are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with multiple persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with multiple persons in the list.
 
    1. Test case: `delete 1`<br>
       Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
@@ -887,9 +919,9 @@ testers are expected to do more *exploratory* testing.
 
 ### Editing a person
 
-1. Editing a person while all persons are being shown
+1. Editing a person while all active contacts are being shown
 
-   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with at least two persons in the list.
 
    1. Test case: `edit 1 /patientNo 91234567 /pEmail patient@example.com`<br>
       Expected: The first contact's patient phone number and patient email change, and its other fields stay the same. The status message shows the edited contact's details.
@@ -920,7 +952,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Adding, editing and deleting notes
 
-   1. Prerequisites: List all persons using the `list` command, with at least two persons in the list.
+   1. Prerequisites: List all active contacts using the `list` command, with at least two persons in the list.
 
    1. Test case: `remark 1 Allergic to penicillin`<br>
       Expected: The first contact's card shows `Remark:` and `1. Allergic to penicillin`. The status message shows the added note.

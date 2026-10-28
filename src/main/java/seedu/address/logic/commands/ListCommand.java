@@ -16,6 +16,8 @@ public class ListCommand extends Command {
 
     public static final String MESSAGE_SUCCESS = "Listed all persons.";
 
+    public static final String MESSAGE_NO_CONTACTS = "CareBook is empty";
+
     public static final String MESSAGE_ARCHIVE_SUCCESS = "Listed archived persons.";
 
     /* Error string for list command */
@@ -42,6 +44,9 @@ public class ListCommand extends Command {
         requireNonNull(model);
         model.setArchiveScope(showArchive);
         model.resetSortedPersonList();
+        if (model.getFilteredPersonList().isEmpty()) {
+            return new CommandResult(MESSAGE_NO_CONTACTS);
+        }
         return new CommandResult(showArchive ? MESSAGE_ARCHIVE_SUCCESS : MESSAGE_SUCCESS);
     }
 }

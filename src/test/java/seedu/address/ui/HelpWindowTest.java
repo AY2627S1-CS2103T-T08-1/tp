@@ -25,6 +25,21 @@ import seedu.address.logic.commands.SortCommand;
 public class HelpWindowTest {
 
     @Test
+    public void focus_iconifiedStage_clearsIconifiedState() throws Exception {
+        runOnFxThread(() -> {
+            HelpWindow helpWindow = new HelpWindow();
+            // Keep the stage hidden so native window-manager events cannot override its state.
+            // This tests the restore request; showing the window is covered separately below.
+            helpWindow.getRoot().setIconified(true);
+            assertTrue(helpWindow.getRoot().isIconified());
+
+            helpWindow.focus();
+
+            assertFalse(helpWindow.getRoot().isIconified());
+        });
+    }
+
+    @Test
     public void show_commandList_displaysAvailableCommands() throws Exception {
         runOnFxThread(() -> {
             HelpWindow helpWindow = new HelpWindow();
