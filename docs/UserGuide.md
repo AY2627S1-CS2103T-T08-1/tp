@@ -60,6 +60,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
+  The exception is `remark`, whose parts must be in the order shown, e.g. `remark INDEX /edit NOTE_NUMBER NOTE`.
 
 * After `add`, `edit`, `archive`, `unarchive` and `delete`, the success message shows the contact's details, including the checkup appointment (if any) and the remark (if any).
 
@@ -304,10 +305,12 @@ selecting a contact from the full stored list when that contact is not currently
 
 Edits an existing person in CareBook.
 
-Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `
+Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY]`
 
 * Edits the person at the specified `INDEX`. The index refers to the index number shown in the displayed person list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
+* Each field follows the [contact field rules](#adding-a-person-add), which also say when two contacts count as the same person.
+* Prefixes must be typed exactly as shown, except `/tag`, which works in any letter case. For example, `/NAME` is not recognised.
 * Existing values will be updated to the input values. Fields you leave out, including both emails, stay as they are.
 * To remove an email, supply `/pEmail` or `/fEmail` without a value.
 * The old `/email` prefix is not accepted. Use `/pEmail` for the patient's email and `/fEmail` for the family member's email.
@@ -318,11 +321,11 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * Editing an archived person in `list archive` keeps them archived.
 
 Examples:
-*  `edit 1 /patientNo 91234567 /pEmail johndoe@example.com` Edits the patient phone number and patient email of the 1st person to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 3 /fEmail daughter@example.com` Sets the family email of the 3rd person to `daughter@example.com`. Their patient email is unchanged.
-*  `edit 2 /pEmail` Removes the patient email of the 2nd person.
-*  `edit 1 /TAG Medium` Replaces the priority tag of the 1st person with `MEDIUM`.
-*  `edit 2 /name Betsy Crower /tag` Edits the name of the 2nd person to be `Betsy Crower` and removes their priority tag.
+* `edit 1 /patientNo 91234567 /pEmail johndoe@example.com` Edits the patient phone number and patient email of the 1st person to be `91234567` and `johndoe@example.com` respectively.
+* `edit 3 /fEmail daughter@example.com` Sets the family email of the 3rd person to `daughter@example.com`. Their patient email is unchanged.
+* `edit 2 /pEmail` Removes the patient email of the 2nd person.
+* `edit 1 /TAG Medium` Replaces the priority tag of the 1st person with `MEDIUM`.
+* `edit 2 /name Betsy Crower /tag` Edits the name of the 2nd person to be `Betsy Crower` and removes their priority tag.
 
 **Common errors:**
 
@@ -404,9 +407,11 @@ Format:
 * `remark INDEX /delete NOTE_NUMBER` deletes note `NOTE_NUMBER`.
 * `remark INDEX /clear` deletes all of the person's notes.
 
+Notes:
+
 * The index refers to the index number shown in the displayed person list. The index and note number **must be positive integers** 1, 2, 3, ...
 * The notes appear on the person's card under `Remark:`, numbered 1., 2., 3., ... A person with no notes shows no `Remark:` line.
-* Everything after the index is kept exactly as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note.
+* Apart from spaces at the start and end, the note is saved as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note. A note cannot start with `/edit`, `/delete` or `/clear`, because those words straight after the index choose the action.
 * `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case.
 * `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
 * A person cannot have the same note twice. Notes that differ only in letter case count as the same note.
@@ -420,6 +425,10 @@ Examples:
 * `remark 1 /edit 2 Visits after 4pm only` replaces the 1st person's 2nd note.
 * `remark 1 /delete 1` deletes the 1st person's 1st note, so `Visits after 4pm only` becomes note 1.
 * `remark 3 /clear` deletes all notes of the 3rd person.
+
+After `remark 1 /edit 3 Visits after 4pm only`, the person's card shows the numbered notes. Use `view 1` to see them in the details panel as well:
+
+![The contact card after editing a note](images/remarkResult.png)
 
 **Common errors:**
 
@@ -630,7 +639,10 @@ Example:
     "familyNo" : "81234567",
     "address" : "123, Jurong West Ave 6, #08-111",
     "tags" : [ "HIGH" ],
-    "patientEmail" : "alice@example.com"
+    "patientEmail" : "alice@example.com",
+    "familyEmail" : "family@example.com",
+    "remarks" : [ "Allergic to penicillin", "Visits after 4pm only" ],
+    "archived" : false
   } ]
 }
 ```
@@ -673,7 +685,7 @@ Action     | Format, Examples
 **Checkup** | `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX delete`<br> e.g., `checkup 1 25/12/2030 14:30`, `checkup 1 delete`
 **Remove checkup** | `checkup INDEX /delete`<br> e.g., `checkup 1 /delete`
 **Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
-**Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY] `<br> e.g.,`edit 2 /name James Lee /pEmail jameslee@example.com`
+**Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY]`<br> e.g., `edit 2 /name James Lee /pEmail jameslee@example.com`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
 **Archive** | `archive INDEX`<br> e.g., `archive 3`
 **List**   | `list` or `list archive`
