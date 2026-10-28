@@ -196,12 +196,18 @@ public class ContactDetailsUiTest {
             assertTrue(window.title().getText().contains(BENSON.getName().fullName));
             window.enter("remark 1 Bring medication list");
             window.enter("remark 1 Call family /tag HIGH is literal text");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("1. Bring medication list"));
             assertTrue(window.detailsText().getText().contains("2. Call family /tag HIGH is literal text"));
             assertEquals(2, window.model.getFilteredPersonList().size());
             window.enter("remark 1 /edit 1 Bring updated medication list");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("1. Bring updated medication list"));
             window.enter("remark 1 /clear");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("Remark: None"));
             assertFalse(window.detailsText().getText().contains("Call family"));
             assertTrue(window.detailsPanel().isVisible());
@@ -219,6 +225,8 @@ public class ContactDetailsUiTest {
             String appointment = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"))
                     + " 09:30";
             window.enter("checkup 1 " + appointment);
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("Checkup appointment: " + appointment));
             assertTrue(window.title().getText().contains(BENSON.getName().fullName));
             assertEquals(BENSON.getName(), window.model.selectedPersonProperty().get().getName());
