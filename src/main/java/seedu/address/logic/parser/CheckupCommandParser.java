@@ -27,7 +27,6 @@ public class CheckupCommandParser implements Parser<CheckupCommand> {
             return CheckupCommand.delete(index);
         }
         return new CheckupCommand(index, parts[1]);
-
     }
 
     private ParseException invalidFormat() {

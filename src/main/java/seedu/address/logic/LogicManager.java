@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -30,6 +31,10 @@ public class LogicManager implements Logic {
     public static final String FILE_OPS_PERMISSION_ERROR_FORMAT =
             "Could not save data to file %s due to insufficient permissions to write to the file or the folder."
             + MESSAGE_CHANGE_UNDONE;
+
+    public static final String FILE_OPS_FOLDER_BLOCKED_ERROR_FORMAT =
+            "Could not save data, because %s is a file, so the data folder cannot be created there. "
+            + "Move or rename that file, then try again." + MESSAGE_CHANGE_UNDONE;
 
     private final Logger logger = LogsCenter.getLogger(LogicManager.class);
 
@@ -61,6 +66,10 @@ public class LogicManager implements Logic {
             logger.info("Command does not modify data, skipping save.");
         }
 
+        if (!command.preservesPersonSelection()) {
+            model.selectPerson(null);
+        }
+
         return commandResult;
     }
 
@@ -82,9 +91,15 @@ public class LogicManager implements Logic {
     }
 
     private static CommandException toSaveFailure(IOException ioe) {
-        String errorFormat = ioe instanceof AccessDeniedException
-                ? FILE_OPS_PERMISSION_ERROR_FORMAT
-                : FILE_OPS_ERROR_FORMAT;
+        String errorFormat;
+        if (ioe instanceof AccessDeniedException) {
+            errorFormat = FILE_OPS_PERMISSION_ERROR_FORMAT;
+        } else if (ioe instanceof FileAlreadyExistsException) {
+            // creating the data folder fails this way when a file already has the folder's name
+            errorFormat = FILE_OPS_FOLDER_BLOCKED_ERROR_FORMAT;
+        } else {
+            errorFormat = FILE_OPS_ERROR_FORMAT;
+        }
         return new CommandException(String.format(errorFormat, ioe.getMessage()), ioe);
     }
 

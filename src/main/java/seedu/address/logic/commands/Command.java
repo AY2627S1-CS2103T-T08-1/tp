@@ -24,4 +24,12 @@ public abstract class Command {
         return true;
     }
 
+    /**
+     * Returns whether the selected contact remains displayed after successful command processing.
+     * Only view commands preserve the details panel; other commands return to their normal list display.
+     */
+    public boolean preservesPersonSelection() {
+        return false;
+    }
+
 }
