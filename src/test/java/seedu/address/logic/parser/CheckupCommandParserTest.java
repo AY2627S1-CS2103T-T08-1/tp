@@ -26,13 +26,11 @@ public class CheckupCommandParserTest {
     }
 
     @Test
-    public void parse_deleteWithInvalidIndexOrExtraArguments_failure() {
+    public void parse_deleteWithInvalidIndex_failure() {
         for (String args : List.of("0 /delete", "-1 /delete", "abc /delete", "2147483648 /delete")) {
             assertParseFailure(parser, args,
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, CheckupCommand.MESSAGE_USAGE));
         }
-        assertParseSuccess(parser, "1 /delete extra",
-                new CheckupCommand(Index.fromOneBased(1), "/delete extra"));
     }
 
     @Test
@@ -70,7 +68,7 @@ public class CheckupCommandParserTest {
     @Test
     public void parse_invalidDateTime_defersValidationUntilExecution() {
         for (String value : List.of("31/02/2030 12:00", "01/01/2030 24:00", "01/01/2030",
-                "2030-01-01 12:00", "01/01/2030 12:00 extra")) {
+                "2030-01-01 12:00", "01/01/2030 12:00 extra", "delete", "/delete extra")) {
             assertParseSuccess(parser, "1 " + value, new CheckupCommand(Index.fromOneBased(1), value));
         }
     }
