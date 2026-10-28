@@ -29,7 +29,7 @@ final class PersonDetailsFormatter {
                 + "\nAddress: " + person.getAddress().value
                 + "\nPriority: " + formatPriority(person)
                 + "\nCheckup appointment: " + formatAppointment(person.getCheckupAppointment())
-                + "\nRemarks: " + formatRemarks(person.getRemark());
+                + "\nRemark: " + formatRemarks(person.getRemark());
     }
 
     /**

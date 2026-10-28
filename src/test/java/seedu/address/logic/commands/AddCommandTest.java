@@ -54,14 +54,25 @@ public class AddCommandTest {
     }
 
     @Test
+    public void execute_samePatientPhoneAsArchivedContact_mentionsArchive() {
+        Model model = new ModelManager();
+        model.addPerson(ALICE.copyWithArchivedStatus(true));
+        Person samePhone = new PersonBuilder(ALICE).withName("Another Patient").withAddress("Another Street").build();
+
+        assertCommandFailure(new AddCommand(samePhone), model,
+                AddCommand.MESSAGE_DUPLICATE_PERSON + " " + Messages.MESSAGE_CLASHING_PERSON_ARCHIVED);
+    }
+
+    @Test
     public void execute_sameNameAndAddressIgnoringCaseAndSpacing_requiresDifferentiator() throws Exception {
         Model model = new ModelManager();
         Person existing = new PersonBuilder(ALICE).withAddress("Block 123 Main Street #01-02").build();
         model.addPerson(existing.copyWithArchivedStatus(true));
         Person sameAddress = new PersonBuilder(existing).withPhone("91234567")
                 .withAddress("bLoCk123   MAINstreet#01-02  ").build();
+        // the existing contact is archived, so the message says where to find it
         assertCommandFailure(new AddCommand(sameAddress), model,
-                Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+                Person.MESSAGE_NAME_ADDRESS_CONFLICT + " " + Messages.MESSAGE_CLASHING_PERSON_ARCHIVED);
         Person differentiated = new PersonBuilder(sameAddress).withName("Alice Pauline 2").build();
         new AddCommand(differentiated).execute(model);
         assertEquals(2, model.getAddressBook().getPersonList().size());
