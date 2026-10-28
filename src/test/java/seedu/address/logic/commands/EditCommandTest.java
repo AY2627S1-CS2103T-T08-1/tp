@@ -53,8 +53,20 @@ public class EditCommandTest {
             Model expectedModel = new ModelManager(tagModel.getAddressBook(), new UserPrefs());
             EditCommand command = new EditCommandParser().parse("1 /tag " + priority.toLowerCase());
 
-            assertCommandSuccess(command, tagModel, "No change to tag", expectedModel);
+            assertCommandSuccess(command, tagModel, String.format(EditCommand.MESSAGE_NO_CHANGE, person.getName()),
+                    expectedModel);
         }
+    }
+
+    @Test
+    public void execute_unchangedFields_reportsNoChange() throws Exception {
+        Person firstPerson = model.getFilteredPersonList().get(0);
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        EditCommand command = new EditCommandParser().parse("1 /name " + firstPerson.getName().fullName
+                + " /address " + firstPerson.getAddress().value);
+
+        assertCommandSuccess(command, model, String.format(EditCommand.MESSAGE_NO_CHANGE, firstPerson.getName()),
+                expectedModel);
     }
 
     @Test
@@ -292,11 +304,11 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_noFieldSpecifiedUnfilteredList_success() {
+    public void execute_noFieldSpecifiedUnfilteredList_reportsNoChange() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
-        Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        Person unchangedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        String expectedMessage = String.format(EditCommand.MESSAGE_NO_CHANGE, unchangedPerson.getName());
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
 
