@@ -90,39 +90,7 @@ Here's a (partial) class diagram of the `Logic` component:
 
 <puml src="diagrams/LogicClassDiagram.puml" width="550"/>
 
-The sequence diagram below illustrates the interactions within the `Logic` component, taking `execute("delete 1")` API call as an example.
-
-<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
-
-<box type="info" seamless>
-
-**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
-</box>
-
-How the `Logic` component works, using `delete 1` as the example:
-
-1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
-1. `DeleteCommandParser` checks that the argument is a positive integer and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand` holding the `targetIndex` and whether the optional `/confirm` flag was given.
-1. The `DeleteCommand` is returned to the `LogicManager` and executed. It first calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
-1. Otherwise, the `DeleteCommand` retrieves the `Person` at `targetIndex`. If the command was not confirmed, it returns a `CommandResult` containing a warning (and the `delete INDEX /confirm` command to enter) without changing the model, and `modifiesData()` is false so nothing is saved.
-1. If the command was confirmed, it calls `Model#deletePerson(personToDelete)`.
-1. The result of the command execution is encapsulated as a `CommandResult` object (containing the success message) which is returned from `Logic`.
-
-The `filter` command follows the same flow, as shown in the sequence diagram below for `execute("filter /tag HIGH")`.
-
-<puml src="diagrams/FilterSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `filter /tag HIGH` Command" />
-
-How the `filter` command works:
-
-1. `AddressBookParser` creates a `FilterCommandParser` and calls `parse(" /tag HIGH")`.
-1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if `/name` is given more than once (using `ArgumentMultimap#verifyNoDuplicatePrefixesFor`, so the message lists the repeated prefix), if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
-1. `FilterCommandParser` replaces every run of whitespace (spaces, tabs and newlines) with a single space before tokenizing, so a prefix is recognized after any whitespace and not only after a literal space.
-1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
-1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND). Name, tag and address matching ignore case, and address matching also collapses each run of whitespace into a single space in both the stored address and the phrase.
-1. `FilterCommandParser` uses `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. It throws a `ParseException` if there is text before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/` but is not one of these prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). Name values are split on whitespace into keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several alternatives. It then creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
-1. `PersonMatchesFilterPredicate` treats an empty list as "criterion not applied". Within a criterion, matching any one value is enough (OR); a person must satisfy every criterion that was given (AND).
-1. When executed, `FilterCommand` calls `Model#updateFilteredPersonList(predicate)`, so the filtered list only contains persons matching the criteria. It does not modify the address book data.
-1. `FilterCommand` calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult` with the "N person(s) listed!" message.
+When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command. The resulting `Command` object is executed by the `LogicManager`, which may call methods of `Model`, and the outcome is returned as a `CommandResult`. The sequence diagrams of individual commands are in the [Implementation](#implementation) section, for example [`delete`](#delete-command), [`filter`](#filter-command), [`sort`](#sort-command) and [`find`](#find-command).
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
 
@@ -377,6 +345,83 @@ Use `list` to display all active (unarchived) contacts again after a successful 
 Use `list archive` to display all archived contacts.
 
 
+### Delete command
+
+The `delete INDEX` command removes one contact from the displayed list, but only after a confirmation step.
+`delete INDEX` on its own shows a warning and leaves the contact untouched. The contact is deleted only when the user
+repeats the command as `delete INDEX /confirm`. The index refers to the displayed list, so it is affected by `filter`,
+`find` and `sort`.
+
+The sequence diagram below shows a `delete 1` command. The `alt` fragment shows both outcomes: the confirmed
+`delete 1 /confirm` deletes the contact, and the unconfirmed `delete 1` only returns the warning. It focuses on
+parsing and execution; helper calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/DeleteSequenceDiagram.puml" alt="Sequence of parsing and executing a delete 1 command" />
+
+<box type="info" seamless>
+
+**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
+</box>
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `delete`
+   and creates a `DeleteCommandParser`.
+1. `DeleteCommandParser#parse()` checks that the argument is a positive integer, optionally followed by the
+   case-insensitive `/confirm` flag, and throws a `ParseException` otherwise. If valid, it creates a `DeleteCommand`
+   holding the `targetIndex` and whether the command was confirmed.
+1. `DeleteCommand#execute()` calls `Model#getFilteredPersonList()` to get the list currently shown to the user. If this
+   list is empty, or `targetIndex` is beyond its size, a `CommandException` is thrown.
+1. Otherwise, the command retrieves the `Person` at `targetIndex`. If the command was not confirmed, it returns a
+   `CommandResult` containing a warning (and the `delete INDEX /confirm` command to enter) without changing the model.
+1. If the command was confirmed, it calls `Model#deletePerson(personToDelete)` and returns a `CommandResult` with the
+   details of the deleted contact.
+1. `LogicManager` checks `DeleteCommand#modifiesData()`, which returns whether the command was confirmed. Only a
+   confirmed delete is saved to storage.
+
+**Error handling:** A missing, non-numeric or non-positive index, or any other extra argument, causes
+`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. An index larger than the displayed
+list causes `DeleteCommand#execute()` to throw a `CommandException`. Both leave the stored contacts unchanged.
+
+
+### Filter command
+
+The `filter` command narrows the displayed list to contacts matching all of the given criteria: `/name`, `/tag` and
+`/address`. Within one criterion, matching any one of the values is enough, and a contact must satisfy every criterion
+that was given. Matching ignores case. A filter applies to the list currently shown, so it keeps the active or archived
+scope, and it does not modify the stored contacts.
+
+The sequence diagram below shows a successful `filter /tag HIGH` command. It focuses on parsing and execution; helper
+calls and UI updates are omitted for clarity.
+
+<puml src="diagrams/FilterSequenceDiagram.puml" alt="Sequence of parsing and executing a successful filter /tag HIGH command" />
+
+1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `filter`
+   and creates a `FilterCommandParser`. It then calls `parse(" /tag HIGH")`.
+1. `FilterCommandParser#parse()` first replaces every run of whitespace (spaces, tabs and newlines) with a single
+   space, so a prefix is recognised after any whitespace and not only after a literal space. It then uses
+   `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. Name values are split on whitespace into
+   keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several
+   alternatives. It creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds
+   this predicate.
+1. `PersonMatchesFilterPredicate#test()` treats an empty list as "criterion not applied". Within a criterion, matching
+   any one value is enough (OR); a person must satisfy every criterion that was given (AND). Name, tag and address
+   matching ignore case, and address matching also collapses each run of whitespace into a single space in both the
+   stored address and the phrase.
+1. `FilterCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)`. This combines the predicate with the
+   scope of the list currently shown (active contacts after `list`, archived contacts after `list archive`), so the
+   filtered list only contains persons in that scope who match the criteria. The scope is kept even when nothing
+   matches, and `find` switches back to active contacts.
+1. The command calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult`
+   with the "N person(s) listed!" message.
+1. `LogicManager` checks `FilterCommand#modifiesData()`, which returns `false`, and skips saving.
+
+**Error handling:** `FilterCommandParser#parse()` throws a `ParseException` with the command usage if there is text
+before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/`
+but is not one of the three prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM`
+or `LOW` (case-insensitive). If `/name` is given more than once, `ArgumentMultimap#verifyNoDuplicatePrefixesFor`
+throws a `ParseException` that lists the repeated prefix. A filter with no matches succeeds, displays an empty list,
+and reports `0 person(s) listed!`. Use `list` to display all active contacts again.
+
+
 ### Sort command
 
 The `sort` command changes the order in which contacts are displayed. It supports four criteria:
@@ -396,13 +441,18 @@ The `sort` command changes the order in which contacts are displayed. It support
 
 * `byName(ascending)` compares names ignoring case and compares each run of digits by its numeric value, so `Ethan2`
   comes before `Ethan10`. It is also the tie-breaker of `byPriority`.
-* `byName(ascending)` compares names ignoring case.
 * `byCheckup(ascending)` orders by checkup appointment date and time, earliest first when ascending. Contacts without a
   checkup appointment are always last in both directions, and ties are ordered by name. `CheckupAppointment` implements
   `Comparable` for this.
 * `byPriority(mostUrgentFirst)` orders `HIGH`, `MEDIUM`, `LOW` (or the reverse). Contacts without a priority tag
   are always last in both directions, and ties are ordered by name. In the user-facing command, `desc` means most
   urgent first, so `SortCommand` passes `!ascending` as `mostUrgentFirst`.
+
+The sequence diagram below shows a successful `sort priority desc` command. It focuses on parsing and execution;
+creating the comparator and updating the UI are omitted for clarity. The other criteria follow the same flow, and
+`sort recent` calls `Model#sortPersonsByMostRecent()` instead of `Model#updateSortedPersonList(comparator)`.
+
+<puml src="diagrams/SortSequenceDiagram.puml" alt="Sequence of parsing and executing a successful sort priority desc command" />
 
 How the `sort` command works:
 
