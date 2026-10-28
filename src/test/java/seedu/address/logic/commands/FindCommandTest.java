@@ -39,11 +39,15 @@ public class FindCommandTest {
     public void execute_extraSpacesWithinSearchText_returnsSameMatches() throws Exception {
         Model searchModel = new ModelManager();
         Person match = new PersonBuilder().withName("D Est").withAddress("D Est").build();
-        Person containingPhrase = new PersonBuilder().withName("Dr D Est Tan").withAddress("Dr D Est Tan").build();
+        Person containingPhrase = new PersonBuilder().withName("Dr D Est Tan").withAddress("Dr D Est Tan")
+                .withPhone("90000001").withoutEmail().build();
         searchModel.addPerson(match);
         searchModel.addPerson(containingPhrase);
-        for (String name : List.of("Kim Lee", "D Tan", "Est Lee", "D Middle Est", "Est D", "Brandy")) {
-            searchModel.addPerson(new PersonBuilder().withName(name).withAddress(name).build());
+        List<String> nonMatchingNames = List.of("Kim Lee", "D Tan", "Est Lee", "D Middle Est", "Est D", "Brandy");
+        for (int i = 0; i < nonMatchingNames.size(); i++) {
+            String name = nonMatchingNames.get(i);
+            searchModel.addPerson(new PersonBuilder().withName(name).withAddress(name)
+                    .withPhone(Integer.toString(90000002 + i)).withoutEmail().build());
         }
         AddressBookParser parser = new AddressBookParser();
         for (String command : List.of("find D Est", "find D       Est   ",
@@ -53,6 +57,7 @@ public class FindCommandTest {
         }
     }
 
+    @Test
     public void execute_remarkSearchFromActiveList_excludesArchivedContactsAndMatchesPhrase() throws Exception {
         Model searchModel = new ModelManager();
         Person activeMatch = new PersonBuilder(ALICE).withRemarks("Bring medication", "Needs assistance").build();
@@ -125,16 +130,18 @@ public class FindCommandTest {
     public void execute_singleSubstring_stillMatchesWithinName() throws Exception {
         Model searchModel = new ModelManager();
         Person brandy = new PersonBuilder().withName("Brandy").build();
+        Person dylan = new PersonBuilder().withName("Dylan").withPhone("90000001").withoutEmail().build();
+        Person spaced = new PersonBuilder().withName("D Y").withPhone("90000002").withoutEmail().build();
         searchModel.addPerson(brandy);
-        searchModel.addPerson(new PersonBuilder().withName("Dylan").build());
-        searchModel.addPerson(new PersonBuilder().withName("D Y").build());
+        searchModel.addPerson(dylan);
+        searchModel.addPerson(spaced);
         for (String command : List.of("find dy", "find /name dy")) {
             new AddressBookParser().parseCommand(command).execute(searchModel);
-            assertEquals(List.of(brandy, new PersonBuilder().withName("Dylan").build()),
-                    searchModel.getFilteredPersonList());
+            assertEquals(List.of(brandy, dylan), searchModel.getFilteredPersonList());
         }
     }
 
+    @Test
     public void execute_filteredOrSortedArchiveView_searchesArchivedContactsOnly() throws Exception {
         Person archivedDaniel = DANIEL.copyWithArchivedStatus(true);
         model.setPerson(DANIEL, archivedDaniel);

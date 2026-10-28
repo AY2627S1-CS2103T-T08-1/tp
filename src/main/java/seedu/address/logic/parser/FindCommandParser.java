@@ -80,7 +80,7 @@ public class FindCommandParser implements Parser<FindCommand> {
 
         String normalizedInput = input.trim().replaceAll("\\s+", " ");
         return new FindCommand(
-            new PersonContainsKeywordsPredicate(criterion, List.of(normalizedInput)));
+                new PersonContainsKeywordsPredicate(criterion, List.of(normalizedInput)));
     }
 
 }
