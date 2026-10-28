@@ -35,7 +35,7 @@ public class ViewCommandTest {
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         expectedModel.selectPerson(personToView);
 
-        assertCommandSuccess(viewCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(viewCommand, model, new CommandResult(expectedMessage, false, false, true), expectedModel);
         assertEquals(personToView, model.selectedPersonProperty().get());
         assertEquals(expectedModel.getFilteredPersonList(), model.getFilteredPersonList());
     }
@@ -61,7 +61,7 @@ public class ViewCommandTest {
         expectedModel.updateFilteredPersonList(person -> person.equals(personToView));
         expectedModel.selectPerson(personToView);
 
-        assertCommandSuccess(viewCommand, model, expectedMessage, expectedModel);
+        assertCommandSuccess(viewCommand, model, new CommandResult(expectedMessage, false, false, true), expectedModel);
         assertEquals(personToView, model.selectedPersonProperty().get());
     }
 

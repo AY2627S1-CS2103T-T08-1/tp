@@ -53,11 +53,23 @@ public class CommandResultTest {
     }
 
     @Test
+    public void viewRequest_isDistinctFromOrdinaryFeedback() {
+        CommandResult ordinary = new CommandResult("feedback");
+        CommandResult view = new CommandResult("feedback", false, false, true);
+
+        assertFalse(ordinary.isViewRequested());
+        assertTrue(view.isViewRequested());
+        assertNotEquals(ordinary, view);
+        assertNotEquals(ordinary.hashCode(), view.hashCode());
+        assertEquals(view, new CommandResult("feedback", false, false, true));
+    }
+
+    @Test
     public void toStringMethod() {
         CommandResult commandResult = new CommandResult("feedback");
         String expected = CommandResult.class.getCanonicalName() + "{feedbackToUser="
                 + commandResult.getFeedbackToUser() + ", showHelp=" + commandResult.isShowHelp()
-                + ", exit=" + commandResult.isExit() + "}";
+                + ", exit=" + commandResult.isExit() + ", viewRequested=" + commandResult.isViewRequested() + "}";
         assertEquals(expected, commandResult.toString());
     }
 }
