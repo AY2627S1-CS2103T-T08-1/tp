@@ -55,6 +55,10 @@ public class FindCommandTest {
             assertEquals(List.of(activeMatch), searchModel.getFilteredPersonList());
             assertEquals(String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 1), result.getFeedbackToUser());
             assertEquals(original, searchModel.getAddressBook());
+        }
+    }
+
+    @Test
     public void execute_archiveList_searchesArchivedContactsOnly() throws Exception {
         Person archivedDaniel = DANIEL.copyWithArchivedStatus(true);
         model.setPerson(DANIEL, archivedDaniel);
