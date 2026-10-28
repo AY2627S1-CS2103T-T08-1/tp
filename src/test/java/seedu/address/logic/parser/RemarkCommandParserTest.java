@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.RemarkCommand;
+import seedu.address.model.person.Remark;
 
 public class RemarkCommandParserTest {
 
@@ -116,5 +117,13 @@ public class RemarkCommandParserTest {
         assertParseFailure(parser, " 1 /delete abc", MESSAGE_INVALID_NOTE_NUMBER);
         assertParseFailure(parser, " 1 /edit +2 text", MESSAGE_INVALID_NOTE_NUMBER);
         assertParseFailure(parser, " 1 /edit new text", MESSAGE_INVALID_NOTE_NUMBER);
+        assertParseFailure(parser, " 1 /delete \u0662", MESSAGE_INVALID_NOTE_NUMBER); // Arabic-Indic digit two
+    }
+
+    @Test
+    public void parse_blankNote_throwsParseException() {
+        // a non-breaking space is not removed by trimming, but is still blank
+        assertParseFailure(parser, " 1 \u00A0", Remark.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, " 1 /edit 1 \u00A0", Remark.MESSAGE_CONSTRAINTS);
     }
 }

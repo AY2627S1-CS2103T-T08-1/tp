@@ -44,6 +44,8 @@ public class RemarkTest {
         assertFalse(Remark.isValidNote("")); // empty string
         assertFalse(Remark.isValidNote(" ")); // spaces only
         assertFalse(Remark.isValidNote(" leading space"));
+        assertFalse(Remark.isValidNote("\u00A0")); // non-breaking space only
+        assertFalse(Remark.isValidNote("\u3000note")); // starts with an ideographic space
 
         // valid notes
         assertTrue(Remark.isValidNote("a"));

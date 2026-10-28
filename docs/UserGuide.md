@@ -435,6 +435,7 @@ Examples:
 | `remark 1 /delete abc` | `Note number must be a positive integer.` | Use the number shown before the note, e.g. `remark 1 /delete 2`. |
 | `remark 1 /edit 2` (no new note) | `Invalid command format!` followed by the correct usage | Add the new note, e.g. `remark 1 /edit 2 Visits after 4pm`. |
 | `remark 1 /clear all` | `Invalid command format!` followed by the correct usage | Enter `remark 1 /clear` with nothing after it. |
+| `remark 1 /clear` (the person has no notes) | `Alex Yeoh has no notes to clear.` | Nothing needs to be done. |
 | A note that takes the person's notes past 500 characters | `A contact's notes can be at most 500 characters in total. Use /delete to remove a note or /clear to remove them all.` | Shorten the note, or delete notes you no longer need. |
 
 ### Locating persons: `find`
