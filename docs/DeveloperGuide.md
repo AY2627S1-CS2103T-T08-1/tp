@@ -325,6 +325,18 @@ would be too long cause a `CommandException`. In each case the person is unchang
   * Pros: Simpler model.
   * Cons: Changing one detail means retyping the whole remark.
 
+**Aspect: how the four formats are implemented**
+
+* **Alternative 1 (current choice):** one `RemarkCommand` class with an `Action` enum, created through the factory
+  methods `add()`, `edit()`, `delete()` and `clear()`. `execute()` switches on the action once to compute the notes,
+  and `getSuccessMessage()` switches again for the message.
+  * Pros: The shared steps (finding the person, the length check, saving) are written once, and all four formats
+    stay in one place that matches the single `remark` command word.
+  * Cons: Two switches on the same action, and `noteIndex` and `note` are `null` for actions that do not use them.
+* **Alternative 2:** one command class per format, e.g. `AddRemarkCommand` and `DeleteRemarkCommand`.
+  * Pros: Each class holds only the fields it needs, with no switches.
+  * Cons: Four classes repeat the shared steps, or need a common superclass for them.
+
 ### Find command
 
 

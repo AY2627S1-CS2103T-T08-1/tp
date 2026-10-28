@@ -4,13 +4,11 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
-import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.Remark;
 
 /**
  * Parses input arguments and creates a new RemarkCommand object.
@@ -23,8 +21,8 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     /** Matches a whole number with an optional minus sign, which is what an attempted index looks like. */
     private static final String INTEGER_REGEX = "-?\\d+";
 
-    /** Splits text into its first word and the rest, which may be empty. */
-    private static final Pattern FIRST_WORD_FORMAT = Pattern.compile("(?<first>\\S+)\\s*(?<rest>.*)");
+    /** The first word of some text and the rest of it, which may be empty. */
+    private record FirstWordAndRest(String firstWord, String rest) {}
 
     /**
      * Parses the given {@code String} of arguments in the context of the RemarkCommand
@@ -33,53 +31,58 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
      */
     public RemarkCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        Matcher indexAndDetails = splitFirstWord(args.trim());
-        String firstWord = indexAndDetails.group("first");
+        FirstWordAndRest indexAndDetails = splitFirstWord(args.trim());
+        Index personIndex = parsePersonIndex(indexAndDetails.firstWord());
+        String details = indexAndDetails.rest();
+
+        // a missing note is an error rather than a way to clear, so notes are never lost by accident
+        FirstWordAndRest keywordAndRest = splitFirstWord(details);
+        return switch (keywordAndRest.firstWord().toLowerCase(Locale.ROOT)) {
+            case RemarkCommand.KEYWORD_CLEAR -> parseClear(personIndex, keywordAndRest.rest());
+            case RemarkCommand.KEYWORD_DELETE -> parseDelete(personIndex, keywordAndRest.rest());
+            case RemarkCommand.KEYWORD_EDIT -> parseEdit(personIndex, keywordAndRest.rest());
+            default -> RemarkCommand.add(personIndex, parseNote(details));
+        };
+    }
+
+    private static Index parsePersonIndex(String firstWord) throws ParseException {
         // a first word that is not a number means the index was left out, not that it was mistyped
         if (!firstWord.matches(INTEGER_REGEX)) {
             throw invalidFormat();
         }
-        Index personIndex = ParserUtil.parseDisplayedIndex(firstWord);
-        String details = indexAndDetails.group("rest");
+        return ParserUtil.parseDisplayedIndex(firstWord);
+    }
 
-        // a missing note is an error rather than a way to clear, so notes are never lost by accident
-        Matcher keywordAndRest = splitFirstWord(details);
-        String keyword = keywordAndRest.group("first").toLowerCase(Locale.ROOT);
-        String rest = keywordAndRest.group("rest");
+    private static RemarkCommand parseClear(Index personIndex, String rest) throws ParseException {
+        requireNothingAfter(rest);
+        return RemarkCommand.clear(personIndex);
+    }
 
-        return switch (keyword) {
-            case RemarkCommand.KEYWORD_CLEAR -> {
-                requireNothingAfter(rest);
-                yield RemarkCommand.clear(personIndex);
-            }
-            case RemarkCommand.KEYWORD_DELETE -> {
-                Matcher noteNumberAndRest = splitFirstWord(rest);
-                requireNothingAfter(noteNumberAndRest.group("rest"));
-                yield RemarkCommand.delete(personIndex, parseNoteIndex(noteNumberAndRest.group("first")));
-            }
-            case RemarkCommand.KEYWORD_EDIT -> {
-                Matcher noteNumberAndNote = splitFirstWord(rest);
-                Index noteIndex = parseNoteIndex(noteNumberAndNote.group("first"));
-                String note = noteNumberAndNote.group("rest");
-                if (note.isEmpty()) {
-                    throw invalidFormat();
-                }
-                yield RemarkCommand.edit(personIndex, noteIndex, note);
-            }
-            default -> RemarkCommand.add(personIndex, details);
-        };
+    private static RemarkCommand parseDelete(Index personIndex, String rest) throws ParseException {
+        FirstWordAndRest noteNumberAndRest = splitFirstWord(rest);
+        requireNothingAfter(noteNumberAndRest.rest());
+        return RemarkCommand.delete(personIndex, parseNoteIndex(noteNumberAndRest.firstWord()));
+    }
+
+    private static RemarkCommand parseEdit(Index personIndex, String rest) throws ParseException {
+        FirstWordAndRest noteNumberAndNote = splitFirstWord(rest);
+        Index noteIndex = parseNoteIndex(noteNumberAndNote.firstWord());
+        if (noteNumberAndNote.rest().isEmpty()) {
+            throw invalidFormat();
+        }
+        return RemarkCommand.edit(personIndex, noteIndex, parseNote(noteNumberAndNote.rest()));
     }
 
     /**
-     * Returns a matcher holding the first word of {@code text} and the rest of it.
-     * @throws ParseException if {@code text} is empty
+     * Returns {@code text} split into its first word and the rest.
+     * @throws ParseException if {@code text} has no words
      */
-    private static Matcher splitFirstWord(String text) throws ParseException {
-        Matcher matcher = FIRST_WORD_FORMAT.matcher(text);
-        if (!matcher.matches()) {
+    private static FirstWordAndRest splitFirstWord(String text) throws ParseException {
+        String[] parts = text.strip().split("\\s+", 2);
+        if (parts[0].isEmpty()) {
             throw invalidFormat();
         }
-        return matcher;
+        return new FirstWordAndRest(parts[0], parts.length > 1 ? parts[1] : "");
     }
 
     private static void requireNothingAfter(String rest) throws ParseException {
@@ -89,10 +92,22 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     }
 
     private static Index parseNoteIndex(String noteNumber) throws ParseException {
-        if (!StringUtil.isNonZeroUnsignedInteger(noteNumber)) {
-            throw new ParseException(MESSAGE_INVALID_NOTE_NUMBER);
+        try {
+            return ParserUtil.parseIndex(noteNumber);
+        } catch (ParseException pe) {
+            throw new ParseException(MESSAGE_INVALID_NOTE_NUMBER, pe);
         }
-        return Index.fromOneBased(Integer.parseInt(noteNumber));
+    }
+
+    /**
+     * Returns {@code note} if it is a valid note.
+     * @throws ParseException if {@code note} is blank, e.g. made only of non-breaking spaces
+     */
+    private static String parseNote(String note) throws ParseException {
+        if (!Remark.isValidNote(note)) {
+            throw new ParseException(Remark.MESSAGE_CONSTRAINTS);
+        }
+        return note;
     }
 
     private static ParseException invalidFormat() {

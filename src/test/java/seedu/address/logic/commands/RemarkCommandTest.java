@@ -159,9 +159,17 @@ public class RemarkCommandTest {
         int roomLeft = Remark.MAX_TOTAL_LENGTH - NOTE_ALLERGY.length() - NOTE_VISITS.length();
 
         assertCommandFailure(RemarkCommand.add(INDEX_FIRST_PERSON, "a".repeat(roomLeft + 1)), model,
-                Remark.MESSAGE_TOO_LONG);
+                RemarkCommand.MESSAGE_TOO_LONG);
         assertCommandFailure(RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_SECOND,
-                "a".repeat(roomLeft + NOTE_VISITS.length() + 1)), model, Remark.MESSAGE_TOO_LONG);
+                "a".repeat(roomLeft + NOTE_VISITS.length() + 1)), model, RemarkCommand.MESSAGE_TOO_LONG);
+    }
+
+    @Test
+    public void execute_clearWithoutNotes_throwsCommandException() {
+        Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+
+        assertCommandFailure(RemarkCommand.clear(INDEX_FIRST_PERSON), model,
+                String.format(RemarkCommand.MESSAGE_NO_NOTES_TO_CLEAR, firstPerson.getName()));
     }
 
     @Test
