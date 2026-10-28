@@ -1,0 +1,118 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":CheckupCommandParser" as Parser LOGIC_COLOR
+participant "c:CheckupCommand" as Command LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+[-> LogicManager : execute(commandText)
+activate LogicManager
+LogicManager -> AddressBookParser : parseCommand(commandText)
+activate AddressBookParser
+AddressBookParser -> Parser : parse(args)
+activate Parser
+
+note right of Parser
+  Normalize whitespace and parse INDEX.
+  Recognise a date/time or delete.
+  Missing arguments or invalid index syntax
+  cause a ParseException.
+end note
+
+create Command
+Parser -> Command : index, requested operation
+activate Command
+Command --> Parser : c
+deactivate Command
+Parser --> AddressBookParser : c
+deactivate Parser
+AddressBookParser --> LogicManager : c
+deactivate AddressBookParser
+
+LogicManager -> Command : execute(m)
+activate Command
+Command -> Model : getFilteredPersonList()
+activate Model
+Model --> Command : displayedPersons
+deactivate Model
+
+note over Command, Model
+  Validate the displayed index and retrieve person.
+  An out-of-range index stops execution.
+end note
+
+alt delete appointment
+    note right of Command
+      Require an existing appointment.
+      Prepare a copy with no appointment
+      and checkupMarked = false.
+    end note
+else set or replace appointment
+    note right of Command
+      Reject an archived target first.
+      Then validate the date/time and
+      reject appointments earlier than now.
+    end note
+
+    Command -> Model : getAddressBook()
+    activate Model
+    Model --> Command : stored contacts
+    deactivate Model
+
+    note over Command, Model
+      Check the requested slot against other active contacts.
+      Ignore archived contacts and the target itself.
+      A shared slot requires the same family HP.
+      A conflict throws CommandException before any change.
+    end note
+
+    note right of Command
+      Prepare the replacement Person.
+      Preserve the mark only when
+      the appointment is unchanged.
+    end note
+end
+
+Command -> Model : setPerson(person, updatedPerson)
+activate Model
+note right of Model
+  Refresh the selected contact and UI.
+  Deletion hides the appointment row
+  and removes the mark indicator.
+end note
+Model --> Command
+deactivate Model
+
+opt a view predicate hides the updated contact
+    Command -> Model : updateFilteredPersonList(updatedPerson::isSamePerson)
+end
+
+Command --> LogicManager : CommandResult
+deactivate Command
+LogicManager -> Command : modifiesData()
+activate Command
+Command --> LogicManager : true
+deactivate Command
+LogicManager -> Model : getAddressBook()
+activate Model
+Model --> LogicManager : addressBook
+deactivate Model
+LogicManager -> Storage : saveAddressBook(addressBook)
+activate Storage
+Storage --> LogicManager
+deactivate Storage
+[<-- LogicManager : CommandResult
+deactivate LogicManager
+@enduml
