@@ -61,7 +61,7 @@ public class AddCommandTest {
         Person sameAddress = new PersonBuilder(existing).withPhone("91234567")
                 .withAddress("bLoCk123   MAINstreet#01-02  ").build();
         assertCommandFailure(new AddCommand(sameAddress), model,
-                "WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.");
+                Person.MESSAGE_NAME_ADDRESS_CONFLICT);
         Person differentiated = new PersonBuilder(sameAddress).withName("Alice Pauline 2").build();
         new AddCommand(differentiated).execute(model);
         assertEquals(2, model.getAddressBook().getPersonList().size());

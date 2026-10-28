@@ -22,7 +22,8 @@ public class Person {
     public static final String MESSAGE_MARK_WITHOUT_CHECKUP =
             "Contacts with no checkup appointments cannot be marked.";
     public static final String MESSAGE_NAME_ADDRESS_CONFLICT =
-            "Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.";
+            "Another contact with this name already has this Address. "
+            + "Include a differentiator such as a number (e.g. Alice 2) or surname.";
 
     // Identity fields
     private final Name name;
