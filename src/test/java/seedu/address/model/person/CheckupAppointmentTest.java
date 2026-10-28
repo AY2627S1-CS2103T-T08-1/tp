@@ -5,8 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -32,12 +33,19 @@ public class CheckupAppointmentTest {
     }
 
     @Test
-    public void isBeforeToday_comparesDateOnly() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-        LocalDate today = LocalDate.now();
-        assertFalse(new CheckupAppointment(today.format(formatter) + " 00:00").isBeforeToday());
-        assertFalse(new CheckupAppointment(today.plusDays(1).format(formatter) + " 00:00").isBeforeToday());
-        assertTrue(new CheckupAppointment(today.minusDays(1).format(formatter) + " 23:59").isBeforeToday());
+    public void isBeforeNow_comparesDateAndTimeInLocalTimezone() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-27T07:30:00Z"), ZoneId.of("Asia/Singapore"));
+        assertTrue(new CheckupAppointment("27/10/2026 15:29").isBeforeNow(clock));
+        assertFalse(new CheckupAppointment("27/10/2026 15:30").isBeforeNow(clock));
+        assertFalse(new CheckupAppointment("27/10/2026 15:31").isBeforeNow(clock));
+        assertTrue(new CheckupAppointment("26/10/2026 23:59").isBeforeNow(clock));
+        assertFalse(new CheckupAppointment("28/10/2026 00:00").isBeforeNow(clock));
+    }
+
+    @Test
+    public void isBeforeNow_currentMinuteAfterItsStart_isInThePast() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-27T07:30:30Z"), ZoneId.of("Asia/Singapore"));
+        assertTrue(new CheckupAppointment("27/10/2026 15:30").isBeforeNow(clock));
     }
 
     @Test

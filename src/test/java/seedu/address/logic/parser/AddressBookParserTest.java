@@ -69,7 +69,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_checkup() throws Exception {
-        String value = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 00:00";
+        String value = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 00:00";
         assertEquals(new CheckupCommand(INDEX_FIRST_PERSON, new CheckupAppointment(value)),
                 new AddressBookParser().parseCommand("checkup 1 " + value));
     }
