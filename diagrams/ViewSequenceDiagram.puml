@@ -55,7 +55,7 @@ Model --> ViewCommand
 deactivate Model
 
 create CommandResult
-ViewCommand -> CommandResult : CommandResult(feedback)
+ViewCommand -> CommandResult : CommandResult(feedback, false, false, true)
 activate CommandResult
 CommandResult --> ViewCommand
 deactivate CommandResult
