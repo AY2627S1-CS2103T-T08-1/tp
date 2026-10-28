@@ -21,14 +21,15 @@ public class Name {
     public final String fullName;
 
     /**
-     * Constructs a {@code Name}.
+     * Constructs a {@code Name}, trimming surrounding whitespace and collapsing repeated spaces.
      *
      * @param name A valid name.
      */
     public Name(String name) {
         requireNonNull(name);
-        checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
-        fullName = name;
+        String normalizedName = name.trim().replaceAll(" +", " ");
+        checkArgument(isValidName(normalizedName), MESSAGE_CONSTRAINTS);
+        fullName = normalizedName;
     }
 
     /**

@@ -83,6 +83,43 @@ public class EditCommandTest {
 
         assertCommandSuccess(command, tagModel,
                 String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+      
+    @Test
+    public void execute_duplicatePatientPhoneWithUnchangedName_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withPhone(first.getPatientNo().value).build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    @Test
+    public void execute_sameNameWithDifferentAddress_success() throws Exception {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(first.getName().fullName).build();
+        new EditCommand(INDEX_SECOND_PERSON, descriptor).execute(model);
+        assertEquals(first.getName(), model.getAddressBook().getPersonList().get(1).getName());
+    }
+
+    @Test
+    public void execute_sameNameAndNormalizedAddress_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withName(first.getName().fullName)
+                .withAddress(first.getAddress().value.toUpperCase().replace(" ", "")).build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                Person.MESSAGE_NAME_ADDRESS_CONFLICT);
+    }
+
+    @Test
+    public void execute_duplicatePatientEmailWithUnchangedPhone_failure() {
+        Person first = model.getFilteredPersonList().get(0);
+        model.setPerson(first, new PersonBuilder(first).withEmail("alice@example.com").build());
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withPatientEmail("ALICE@example.com").build();
+        assertCommandFailure(new EditCommand(INDEX_SECOND_PERSON, descriptor), model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
     }
 
     @Test

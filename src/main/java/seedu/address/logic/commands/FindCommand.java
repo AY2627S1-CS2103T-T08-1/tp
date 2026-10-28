@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_LEGACY_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PATIENT_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_REMARK;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.function.Predicate;
@@ -26,13 +27,15 @@ import seedu.address.model.person.Person;
 public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
+    public static final String MESSAGE_NO_MATCHES_HINT = "Use 'list archive' to search through archived contacts";
 
     public static final String MESSAGE_USAGE = "find /CRITERION INPUT: Finds contacts by a field "
             + "using case-insensitive partial matches.\n"
             + "Criteria: " + Stream.of(PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE, PREFIX_ADDRESS,
-                    PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_TAG)
+                    PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_TAG, PREFIX_REMARK)
                     .map(Object::toString).collect(Collectors.joining(", ")) + ".\n"
             + "Phone input must be one sequence of at least 2 digits; digits must occur consecutively.\n"
+            + "Remark input matches a case-insensitive phrase within any one care note.\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_PATIENT_PHONE + " 87\n"
             + "Name searches also support: find KEYWORD [MORE_KEYWORDS]...";
 
@@ -54,15 +57,19 @@ public class FindCommand extends Command {
     }
 
     /**
-     * Filters the displayed persons and returns the number of matches.
+     * Searches all contacts within the current active or archive scope, replacing previous search criteria.
+     * Returns the number of matches.
      */
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
-        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
         model.filterPersonsInCurrentList(predicate);
-        return new CommandResult(
-                String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, model.getFilteredPersonList().size()));
+        int matchCount = model.getFilteredPersonList().size();
+        String feedback = String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, matchCount);
+        if (matchCount == 0) {
+            feedback += "\n" + MESSAGE_NO_MATCHES_HINT;
+        }
+        return new CommandResult(feedback);
     }
 
     /**
