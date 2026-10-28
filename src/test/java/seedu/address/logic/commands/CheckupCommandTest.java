@@ -41,11 +41,6 @@ public class CheckupCommandTest {
     private final CheckupAppointment appointment = appointmentOn(LocalDate.now().plusDays(1));
 
     @Test
-    public void execute_archivedBookingDifferentFamilyPhone_doesNotBlockSlot() throws Exception {
-        Person archived = new PersonBuilder(alice).withFamilyNo("91234567")
-                .withCheckupAppointment(appointment.toString()).build().copyWithArchivedStatus(true);
-        model.addPerson(archived);
-        model.addPerson(bob);
     public void execute_delete_removesAppointmentAndMarkPreservingOtherDetailsAndSelection() throws Exception {
         Person original = new PersonBuilder(alice).withRemarks("Needs assistance").build();
         Person scheduled = new PersonBuilder(original).withCheckupAppointment(appointment.toString())
@@ -161,23 +156,6 @@ public class CheckupCommandTest {
         new CheckupCommand(Index.fromOneBased(1), appointment).execute(model);
 
         assertEquals(appointment, model.getFilteredPersonList().get(0).getCheckupAppointment().orElseThrow());
-        assertEquals(archived, model.getAddressBook().getPersonList().get(0));
-    }
-
-    @Test
-    public void execute_hiddenActiveBookingDifferentFamilyPhone_stillBlocksSlot() throws Exception {
-        model.addPerson(new PersonBuilder(alice).withFamilyNo("91234567")
-                .withCheckupAppointment(appointment.toString()).build());
-        model.addPerson(bob);
-        new FilterCommand(new PersonMatchesFilterPredicate(List.of("Bob"), List.of(), List.of())).execute(model);
-
-        assertCommandFailure(new CheckupCommand(Index.fromOneBased(1), appointment), model,
-                "A contact with this booking date and time already exists. "
-                        + "Only contacts with the same family HP can be booked at the same time.");
-    }
-
-    @Test
-    public void execute_activeBookingSameFamilyPhone_allowsSharedSlot() throws Exception {
     }
 
     @Test

@@ -19,7 +19,7 @@ import seedu.address.model.person.Person;
 public class CheckupCommand extends Command {
     public static final String COMMAND_WORD = "checkup";
     public static final String MESSAGE_USAGE = "checkup INDEX dd/mm/yyyy HH:mm: Sets a checkup appointment.\n"
-            + "INDEX must be a positive displayed index. Use a valid 24-hour time and a date today or later.\n"
+            + "INDEX must be a positive displayed index. Use a valid date and 24-hour time that is not in the past.\n"
             + "Use checkup INDEX /delete to remove an appointment and its mark.\n"
             + "Example: checkup 1 25/12/2030 14:30";
     public static final String MESSAGE_SUCCESS = "Checkup appointment for %1$s: %2$s";
@@ -67,14 +67,32 @@ public class CheckupCommand extends Command {
             throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
         Person person = displayedPersons.get(targetIndex.getZeroBased());
-        boolean hasConflict = model.getAddressBook().getPersonList().stream()
-                .anyMatch(existing -> !existing.isArchived() && !existing.equals(person)
-                        && existing.getCheckupAppointment().filter(appointment::equals).isPresent()
-                        && !existing.getFamilyNo().equals(person.getFamilyNo()));
-        if (hasConflict) {
-            throw new CommandException(MESSAGE_BOOKING_CONFLICT);
+        final CheckupAppointment appointment;
+        if (appointmentValue == null) {
+            if (person.getCheckupAppointment().isEmpty()) {
+                throw new CommandException(MESSAGE_NO_APPOINTMENT);
+            }
+            appointment = null;
+        } else {
+            if (person.isArchived()) {
+                throw new CommandException(MESSAGE_ARCHIVED_CONTACT);
+            }
+            try {
+                appointment = new CheckupAppointment(appointmentValue);
+            } catch (IllegalArgumentException e) {
+                throw new CommandException(CheckupAppointment.MESSAGE_CONSTRAINTS + "\n" + MESSAGE_USAGE, e);
+            }
+            if (appointment.isBeforeNow()) {
+                throw new CommandException(CheckupAppointment.MESSAGE_PAST_DATE_TIME);
+            }
+            boolean hasConflict = model.getAddressBook().getPersonList().stream()
+                    .anyMatch(existing -> !existing.isArchived() && !existing.equals(person)
+                            && existing.getCheckupAppointment().filter(appointment::equals).isPresent()
+                            && !existing.getFamilyNo().equals(person.getFamilyNo()));
+            if (hasConflict) {
+                throw new CommandException(MESSAGE_BOOKING_CONFLICT);
+            }
         }
-
 
         boolean keepMarked = appointment != null && person.isCheckupMarked()
                 && person.getCheckupAppointment().filter(appointment::equals).isPresent();
