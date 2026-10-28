@@ -55,7 +55,9 @@ public class AddressBookParser {
 
         // These command words are case-insensitive.
         String commandWord = matcher.group("commandWord");
-        if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
+        if (commandWord.equalsIgnoreCase(AddCommand.COMMAND_WORD)) {
+            commandWord = AddCommand.COMMAND_WORD;
+        } else if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
             commandWord = DeleteCommand.COMMAND_WORD;
         } else if (commandWord.equalsIgnoreCase(ArchiveCommand.COMMAND_WORD)) {
             commandWord = ArchiveCommand.COMMAND_WORD;
