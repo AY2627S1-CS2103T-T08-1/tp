@@ -3,17 +3,17 @@
   title: ""
 ---
 
-# Carebook
+# CareBook
 
 [![CI Status](https://github.com/AY2627S1-CS2103T-T08-1/tp/actions/workflows/gradle.yml/badge.svg)](https://github.com/AY2627S1-CS2103T-T08-1/tp/actions/workflows/gradle.yml)
 [![codecov](https://codecov.io/gh/AY2627S1-CS2103T-T08-1/tp/branch/master/graph/badge.svg)](https://codecov.io/gh/AY2627S1-CS2103T-T08-1/tp)
 
 ![Ui](images/uiScreenshot.png)
 
-**Carebook is a desktop application for in-house caregivers and healthcare administrators to manage patient and family contact details.** While it has a GUI, most of the user interactions happen using a CLI (Command Line Interface).
+**CareBook is a desktop application for in-house caregivers and healthcare administrators to manage patient and family contact details.** While it has a GUI, most of the user interactions happen using a CLI (Command Line Interface).
 
-* If you are interested in using Carebook, head over to the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start).
-* If you are interested in developing Carebook, the [**Developer Guide**](DeveloperGuide.html) is a good place to start.
+* If you are interested in using CareBook, head over to the [_Quick Start_ section of the **User Guide**](UserGuide.html#quick-start).
+* If you are interested in developing CareBook, the [**Developer Guide**](DeveloperGuide.html) is a good place to start.
 
 
 **Acknowledgements**
