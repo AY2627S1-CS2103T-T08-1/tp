@@ -21,6 +21,7 @@ import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.MarkCommand;
 import seedu.address.logic.commands.RemarkCommand;
 import seedu.address.logic.commands.SortCommand;
+import seedu.address.logic.commands.UnmarkCommand;
 
 public class HelpWindowTest {
 
@@ -56,7 +57,7 @@ public class HelpWindowTest {
                         .map(usage -> usage.split("[ :]")[0].toLowerCase(Locale.ROOT))
                         .toList();
                 assertEquals(List.of("add", "edit", "delete", "archive", "unarchive", "find", "filter", "list",
-                        "sort", "view", "checkup", "mark", "remark", "clear", "help", "exit"), commandWords);
+                        "sort", "view", "checkup", "mark", "unmark", "remark", "clear", "help", "exit"), commandWords);
                 assertTrue(commandList.getText().contains("Example: archive 1"));
                 assertTrue(commandList.getText().contains("Example: unarchive 1"));
                 assertTrue(commandList.getText().contains("Example: list archive"));
@@ -67,6 +68,7 @@ public class HelpWindowTest {
                 assertTrue(commandList.getText().contains(FilterCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(CheckupCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(MarkCommand.MESSAGE_USAGE));
+                assertTrue(commandList.getText().contains(UnmarkCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(RemarkCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(SortCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(ClearCommand.MESSAGE_USAGE));
