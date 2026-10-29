@@ -29,6 +29,9 @@ import seedu.address.model.tag.Tag;
  */
 public class EditCommandParser implements Parser<EditCommand> {
 
+    public static final String MESSAGE_TEXT_AFTER_INDEX = "Unexpected text after the index: %2$s. "
+            + "Put each new value after its prefix, e.g. edit %1$s /name John Doe";
+
     private static final String INTEGER_REGEX = "-?\\d+";
 
     /**
@@ -96,7 +99,8 @@ public class EditCommandParser implements Parser<EditCommand> {
     /**
      * Parses {@code preamble} into the index of the person to edit.
      *
-     * @throws ParseException if {@code preamble} is not a positive integer, or is not a number at all.
+     * @throws ParseException if {@code preamble} is not a positive integer, is not a number at all,
+     *     or is a number followed by other text.
      */
     private static Index parseIndexForEdit(String preamble) throws ParseException {
         try {
@@ -105,6 +109,13 @@ public class EditCommandParser implements Parser<EditCommand> {
             // a number that is not a valid index, e.g. 0, is reported as such, as in remark, delete and archive
             if (preamble.trim().matches(INTEGER_REGEX)) {
                 throw pe;
+            }
+            // a value typed without its prefix, e.g. edit 1 John Doe, is left in the preamble after the index
+            String[] indexAndRest = preamble.trim().split("\\s+", 2);
+            if (indexAndRest.length == 2 && indexAndRest[0].matches(INTEGER_REGEX)) {
+                ParserUtil.parseDisplayedIndex(indexAndRest[0]); // an invalid index, e.g. 0, is reported first
+                throw new ParseException(String.format(MESSAGE_TEXT_AFTER_INDEX, indexAndRest[0], indexAndRest[1]),
+                        pe);
             }
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE), pe);
         }

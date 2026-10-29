@@ -338,6 +338,7 @@ Examples:
 | `edit 1` (no field) | `At least one field to edit must be provided.` | Add at least one field, e.g. `edit 1 /name John Doe`. |
 | `edit 1 /email john@example.com` | `/email is no longer supported. Use /pEmail for the patient's email or /fEmail for the family member's email.` | Use `/pEmail` for the patient's email or `/fEmail` for the family member's email. |
 | `edit 0 /name John Doe` | `Index must be a positive integer.` | Use an index of 1 or more. |
+| `edit 1 John Doe` (no prefix) | `Unexpected text after the index: John Doe. Put each new value after its prefix, e.g. edit 1 /name John Doe` | Put the prefix of the field before its new value, e.g. `edit 1 /name John Doe`. |
 | `edit 99 /name John Doe` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
 | `edit 1 /name John Doe` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
@@ -447,8 +448,9 @@ After `remark 1 /edit 3 Visits after 4pm only`, the person's card shows the numb
 | `remark 1 Allergic to penicillin` (the person already has this note as note 1) | `Alex Yeoh already has this note (note 1).` | Add a different note, or change the existing note with `remark 1 /edit 1 ...`. |
 | `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
 | `remark 1 /delete abc` | `Note number must be a positive integer.` | Use the number shown before the note, e.g. `remark 1 /delete 2`. |
-| `remark 1 /edit 2` (no new note) | `Invalid command format!` followed by the correct usage | Add the new note, e.g. `remark 1 /edit 2 Visits after 4pm`. |
-| `remark 1 /clear all` | `Invalid command format!` followed by the correct usage | Enter `remark 1 /clear` with nothing after it. |
+| `remark 1 /edit 2` (no new note) | `Give the number of the note to edit and its new text after /edit, e.g. remark 1 /edit 2 Visits after 4pm.` | Add the new note, e.g. `remark 1 /edit 2 Visits after 4pm`. |
+| `remark 1 /delete` (no note number) or `remark 1 /delete 2 3` | `Give only the number of the note to delete after /delete, e.g. remark 1 /delete 2.` | Give one note number, e.g. `remark 1 /delete 2`. |
+| `remark 1 /clear all` | `/clear takes nothing after it. To delete all of this contact's notes, enter: remark 1 /clear` | Enter `remark 1 /clear` with nothing after it. |
 | `remark 1 /clear` (the person has no notes) | `Alex Yeoh has no notes to clear.` | Nothing needs to be done. |
 | A note that takes the person's notes past 500 characters | `A contact's notes can be at most 500 characters in total. Use /delete to remove a note or /clear to remove them all.` | Shorten the note, or delete notes you no longer need. |
 
