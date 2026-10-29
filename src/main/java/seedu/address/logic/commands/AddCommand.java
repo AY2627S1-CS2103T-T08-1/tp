@@ -59,19 +59,30 @@ public class AddCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
 
-        List<Person> persons = model.getAddressBook().getPersonList();
-        Optional<Person> sameContactDetails = persons.stream().filter(toAdd::hasSamePatientContactDetails).findFirst();
+        requireNoDuplicate(toAdd, model.getAddressBook().getPersonList());
+        model.addPerson(toAdd);
+        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(toAdd)));
+    }
+
+    /**
+     * Checks that {@code person} is not the same person as any of {@code otherPersons}. Archived persons count too.
+     *
+     * @throws CommandException if a person in {@code otherPersons} has the same patient contact details as
+     *     {@code person}, or else the same name and address.
+     */
+    static void requireNoDuplicate(Person person, List<Person> otherPersons) throws CommandException {
+        Optional<Person> sameContactDetails = otherPersons.stream()
+                .filter(person::hasSamePatientContactDetails).findFirst();
         if (sameContactDetails.isPresent()) {
             throw new CommandException(Messages.withArchivedHint(MESSAGE_DUPLICATE_PERSON, sameContactDetails.get()));
         }
-        Optional<Person> sameNameAndAddress = persons.stream().filter(toAdd::hasSameNameAndAddress).findFirst();
+
+        Optional<Person> sameNameAndAddress = otherPersons.stream()
+                .filter(person::hasSameNameAndAddress).findFirst();
         if (sameNameAndAddress.isPresent()) {
             throw new CommandException(
                     Messages.withArchivedHint(Person.MESSAGE_NAME_ADDRESS_CONFLICT, sameNameAndAddress.get()));
         }
-
-        model.addPerson(toAdd);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(toAdd)));
     }
 
     @Override
