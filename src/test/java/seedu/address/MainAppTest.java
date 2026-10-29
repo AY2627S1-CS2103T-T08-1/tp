@@ -54,17 +54,20 @@ public class MainAppTest {
 
     @Test
     public void initModelManager_notJsonDataFile_startsEmptyWithMessage() {
-        Path dataFile = TEST_DATA_FOLDER.resolve("notJsonFormatAddressBook.json");
-
-        Model model = mainApp.initModelManager(createStorage(dataFile), new UserPrefs());
-
-        assertEquals(new AddressBook(), model.getAddressBook());
-        assertEquals(MainApp.MESSAGE_DATA_LOADING_FAILED, mainApp.getStartupMessage());
+        assertStartsEmptyWithMessage("notJsonFormatAddressBook.json");
     }
 
     @Test
     public void initModelManager_invalidContactInDataFile_startsEmptyWithMessage() {
-        Path dataFile = TEST_DATA_FOLDER.resolve("invalidAndValidPersonAddressBook.json");
+        assertStartsEmptyWithMessage("invalidAndValidPersonAddressBook.json");
+    }
+
+    /**
+     * Asserts that starting with {@code dataFileName} from the test data folder gives an empty address book and the
+     * data loading message.
+     */
+    private void assertStartsEmptyWithMessage(String dataFileName) {
+        Path dataFile = TEST_DATA_FOLDER.resolve(dataFileName);
 
         Model model = mainApp.initModelManager(createStorage(dataFile), new UserPrefs());
 

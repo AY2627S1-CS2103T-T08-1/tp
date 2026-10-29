@@ -44,17 +44,7 @@ public class EditCommandParser implements Parser<EditCommand> {
                         PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_LEGACY_EMAIL, PREFIX_ADDRESS,
                         PREFIX_TAG);
 
-        Index index;
-
-        try {
-            index = ParserUtil.parseDisplayedIndex(argMultimap.getPreamble());
-        } catch (ParseException pe) {
-            // a number that is not a valid index, e.g. 0, is reported as such, as in remark, delete and archive
-            if (argMultimap.getPreamble().trim().matches(INTEGER_REGEX)) {
-                throw pe;
-            }
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE), pe);
-        }
+        Index index = parseIndexForEdit(argMultimap.getPreamble());
 
         if (argMultimap.getValue(PREFIX_LEGACY_EMAIL).isPresent()) {
             throw new ParseException(MESSAGE_LEGACY_EMAIL_PREFIX);
@@ -63,6 +53,20 @@ public class EditCommandParser implements Parser<EditCommand> {
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE,
                 PREFIX_PATIENT_EMAIL, PREFIX_FAMILY_EMAIL, PREFIX_ADDRESS);
 
+        EditPersonDescriptor editPersonDescriptor = parseFieldsForEdit(argMultimap);
+        if (!editPersonDescriptor.isAnyFieldEdited()) {
+            throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);
+        }
+
+        return new EditCommand(index, editPersonDescriptor);
+    }
+
+    /**
+     * Returns a descriptor holding the field values given in {@code argMultimap}.
+     *
+     * @throws ParseException if a given field value is invalid.
+     */
+    private EditPersonDescriptor parseFieldsForEdit(ArgumentMultimap argMultimap) throws ParseException {
         EditPersonDescriptor editPersonDescriptor = new EditPersonDescriptor();
 
         if (argMultimap.getValue(PREFIX_NAME).isPresent()) {
@@ -86,12 +90,24 @@ public class EditCommandParser implements Parser<EditCommand> {
             editPersonDescriptor.setAddress(ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get()));
         }
         parseTagsForEdit(argMultimap.getAllValues(PREFIX_TAG)).ifPresent(editPersonDescriptor::setTags);
+        return editPersonDescriptor;
+    }
 
-        if (!editPersonDescriptor.isAnyFieldEdited()) {
-            throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);
+    /**
+     * Parses {@code preamble} into the index of the person to edit.
+     *
+     * @throws ParseException if {@code preamble} is not a positive integer, or is not a number at all.
+     */
+    private static Index parseIndexForEdit(String preamble) throws ParseException {
+        try {
+            return ParserUtil.parseDisplayedIndex(preamble);
+        } catch (ParseException pe) {
+            // a number that is not a valid index, e.g. 0, is reported as such, as in remark, delete and archive
+            if (preamble.trim().matches(INTEGER_REGEX)) {
+                throw pe;
+            }
+            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE), pe);
         }
-
-        return new EditCommand(index, editPersonDescriptor);
     }
 
     /**

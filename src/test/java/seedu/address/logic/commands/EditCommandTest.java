@@ -103,6 +103,44 @@ public class EditCommandTest {
         assertEquals("82222222", bookingModel.getFilteredPersonList().get(0).getFamilyNo().value);
     }
 
+    /**
+     * Asserts that editing the first displayed person of {@code startModel} with {@code descriptor} succeeds,
+     * replacing {@code personBefore} with {@code editedPerson}.
+     */
+    private static void assertEditSuccess(EditPersonDescriptor descriptor, Model startModel, Person personBefore,
+            Person editedPerson) {
+        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        Model expectedModel = new ModelManager(new AddressBook(startModel.getAddressBook()), new UserPrefs());
+        expectedModel.setPerson(personBefore, editedPerson);
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), startModel, expectedMessage,
+                expectedModel);
+    }
+
+    /** Returns a person with both a patient email and a family email. */
+    private static Person personWithBothEmails() {
+        return new PersonBuilder().withPatientEmail(VALID_EMAIL_AMY).withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
+    }
+
+    /** Returns a model that holds only {@code person}. */
+    private static Model modelWith(Person person) {
+        Model modelWithPerson = new ModelManager();
+        modelWithPerson.addPerson(person);
+        return modelWithPerson;
+    }
+
+    /**
+     * Returns a model with an active person and an archived person, showing the archive list if
+     * {@code isArchiveShown}.
+     */
+    private static Model modelWithActiveAndArchivedPerson(boolean isArchiveShown) {
+        Model archiveModel = new ModelManager();
+        archiveModel.addPerson(new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withPatientEmail(VALID_EMAIL_BOB).build());
+        archiveModel.addPerson(new PersonBuilder().build().copyWithArchivedStatus(true));
+        archiveModel.setArchiveScope(isArchiveShown);
+        return archiveModel;
+    }
+
     /** Returns a model with two persons who share a family HP and a checkup appointment. */
     private static Model modelWithSharedBooking() {
         Person first = new PersonBuilder().withName("Amy Bee").withPatientNo("91111111")
@@ -226,13 +264,8 @@ public class EditCommandTest {
 
     @Test
     public void execute_archivedPerson_keepsArchiveListShown() throws Exception {
-        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
-                .withPatientEmail(VALID_EMAIL_BOB).build();
-        Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
-        Model archiveModel = new ModelManager();
-        archiveModel.addPerson(active);
-        archiveModel.addPerson(archived);
-        archiveModel.setArchiveScope(true);
+        Model archiveModel = modelWithActiveAndArchivedPerson(true);
+        Person archived = archiveModel.getFilteredPersonList().get(0);
 
         new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
                 .execute(archiveModel);
@@ -244,13 +277,8 @@ public class EditCommandTest {
 
     @Test
     public void execute_activePerson_showsActiveList() throws Exception {
-        Person active = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
-                .withPatientEmail(VALID_EMAIL_BOB).build();
-        Person archived = new PersonBuilder().build().copyWithArchivedStatus(true);
-        Model archiveModel = new ModelManager();
-        archiveModel.addPerson(active);
-        archiveModel.addPerson(archived);
-        archiveModel.setArchiveScope(false);
+        Model archiveModel = modelWithActiveAndArchivedPerson(false);
+        Person active = archiveModel.getFilteredPersonList().get(0);
 
         new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
                 .execute(archiveModel);
@@ -291,15 +319,8 @@ public class EditCommandTest {
         model.setPerson(firstPerson, withRemark);
 
         Person editedPerson = new PersonBuilder(withRemark).withPhone(VALID_PHONE_BOB).build();
-        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
-        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
-
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
-
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(withRemark, editedPerson);
-
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertEditSuccess(new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build(), model, withRemark,
+                editedPerson);
     }
 
     @Test
@@ -325,56 +346,29 @@ public class EditCommandTest {
 
     @Test
     public void execute_nameOnly_keepsBothEmails() {
-        Person personWithEmails = new PersonBuilder().withPatientEmail(VALID_EMAIL_AMY)
-                .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
-        Model modelWithEmails = new ModelManager(new AddressBook(), new UserPrefs());
-        modelWithEmails.addPerson(personWithEmails);
-
+        Person personWithEmails = personWithBothEmails();
         Person editedPerson = new PersonBuilder(personWithEmails).withName(VALID_NAME_BOB).build();
-        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
-
-        Model expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
-        expectedModel.addPerson(editedPerson);
-
-        assertCommandSuccess(editCommand, modelWithEmails, expectedMessage, expectedModel);
+        assertEditSuccess(new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build(),
+                modelWith(personWithEmails), personWithEmails, editedPerson);
     }
 
     @Test
     public void execute_removePatientEmail_keepsFamilyEmail() {
-        Person personWithEmails = new PersonBuilder().withPatientEmail(VALID_EMAIL_AMY)
-                .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
-        Model modelWithEmails = new ModelManager(new AddressBook(), new UserPrefs());
-        modelWithEmails.addPerson(personWithEmails);
-
+        Person personWithEmails = personWithBothEmails();
         Person editedPerson = new PersonBuilder(personWithEmails).withoutEmail()
                 .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
-        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder().withoutPatientEmail().build());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
-
-        Model expectedModel = new ModelManager(new AddressBook(), new UserPrefs());
-        expectedModel.addPerson(editedPerson);
-
-        assertCommandSuccess(editCommand, modelWithEmails, expectedMessage, expectedModel);
+        assertEditSuccess(new EditPersonDescriptorBuilder().withoutPatientEmail().build(),
+                modelWith(personWithEmails), personWithEmails, editedPerson);
     }
 
     @Test
     public void execute_familyEmailOnly_success() {
         Person firstPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         Person editedPerson = new PersonBuilder(firstPerson).withFamilyEmail(VALID_FAMILY_EMAIL_BOB).build();
-        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON,
-                new EditPersonDescriptorBuilder().withFamilyEmail(VALID_FAMILY_EMAIL_BOB).build());
-
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
-
-        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
-        expectedModel.setPerson(firstPerson, editedPerson);
-
-        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+        assertEditSuccess(new EditPersonDescriptorBuilder().withFamilyEmail(VALID_FAMILY_EMAIL_BOB).build(), model,
+                firstPerson, editedPerson);
     }
 
     @Test
