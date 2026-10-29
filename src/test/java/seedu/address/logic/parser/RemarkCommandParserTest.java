@@ -4,6 +4,9 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
+import static seedu.address.logic.parser.RemarkCommandParser.MESSAGE_CLEAR_FORMAT;
+import static seedu.address.logic.parser.RemarkCommandParser.MESSAGE_DELETE_FORMAT;
+import static seedu.address.logic.parser.RemarkCommandParser.MESSAGE_EDIT_FORMAT;
 import static seedu.address.logic.parser.RemarkCommandParser.MESSAGE_INVALID_NOTE_NUMBER;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
@@ -79,18 +82,18 @@ public class RemarkCommandParserTest {
         assertParseFailure(parser, " 1   ", MESSAGE_INVALID_FORMAT);
 
         // no note number
-        assertParseFailure(parser, " 1 /delete", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 /edit", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 1 /delete", String.format(MESSAGE_DELETE_FORMAT, 1));
+        assertParseFailure(parser, " 3 /edit", String.format(MESSAGE_EDIT_FORMAT, 3));
 
         // no new note text
-        assertParseFailure(parser, " 1 /edit 2", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 /edit 2   ", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 1 /edit 2", String.format(MESSAGE_EDIT_FORMAT, 1));
+        assertParseFailure(parser, " 1 /edit 2   ", String.format(MESSAGE_EDIT_FORMAT, 1));
     }
 
     @Test
     public void parse_extraArguments_throwsParseException() {
-        assertParseFailure(parser, " 1 /clear all", MESSAGE_INVALID_FORMAT);
-        assertParseFailure(parser, " 1 /delete 2 3", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " 2 /clear all", String.format(MESSAGE_CLEAR_FORMAT, 2));
+        assertParseFailure(parser, " 1 /delete 2 3", String.format(MESSAGE_DELETE_FORMAT, 1));
     }
 
     @Test

@@ -98,7 +98,15 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1.5" + NAME_DESC_AMY, MESSAGE_INVALID_FORMAT);
 
         // invalid arguments being parsed as preamble
-        assertParseFailure(parser, "1 some random string", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 some random string",
+                String.format(EditCommandParser.MESSAGE_TEXT_AFTER_INDEX, "1", "some random string"));
+
+        // a value typed without its prefix, or a second index
+        assertParseFailure(parser, "2 John Doe /tag HIGH",
+                String.format(EditCommandParser.MESSAGE_TEXT_AFTER_INDEX, "2", "John Doe"));
+        assertParseFailure(parser, "1 1" + NAME_DESC_AMY,
+                String.format(EditCommandParser.MESSAGE_TEXT_AFTER_INDEX, "1", "1"));
+        assertParseFailure(parser, "0 John Doe", MESSAGE_INVALID_INDEX);
 
         // invalid prefix being parsed as preamble
         assertParseFailure(parser, "1 i/ string", MESSAGE_INVALID_FORMAT);
