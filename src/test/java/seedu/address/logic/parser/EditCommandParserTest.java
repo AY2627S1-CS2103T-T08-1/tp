@@ -169,11 +169,16 @@ public class EditCommandParserTest {
         descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_AMY).build();
         expectedCommand = new EditCommand(targetIndex, descriptor);
         assertParseSuccess(parser, userInput, expectedCommand);
+    }
+
+    @Test
+    public void parse_oneOtherFieldSpecified_success() {
+        Index targetIndex = INDEX_THIRD_PERSON;
 
         // email
-        userInput = targetIndex.getOneBased() + PATIENT_EMAIL_DESC_AMY;
-        descriptor = new EditPersonDescriptorBuilder().withPatientEmail(VALID_EMAIL_AMY).build();
-        expectedCommand = new EditCommand(targetIndex, descriptor);
+        String userInput = targetIndex.getOneBased() + PATIENT_EMAIL_DESC_AMY;
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPatientEmail(VALID_EMAIL_AMY).build();
+        EditCommand expectedCommand = new EditCommand(targetIndex, descriptor);
         assertParseSuccess(parser, userInput, expectedCommand);
 
         // family email
@@ -210,9 +215,14 @@ public class EditCommandParserTest {
         userInput = targetIndex.getOneBased() + PHONE_DESC_BOB + INVALID_PHONE_DESC;
 
         assertParseFailure(parser, userInput, Messages.getErrorMessageForDuplicatePrefixes(PREFIX_PATIENT_PHONE));
+    }
+
+    @Test
+    public void parse_severalFieldsRepeated_failure() {
+        Index targetIndex = INDEX_FIRST_PERSON;
 
         // multiple valid fields repeated
-        userInput = targetIndex.getOneBased() + PHONE_DESC_AMY + ADDRESS_DESC_AMY + PATIENT_EMAIL_DESC_AMY
+        String userInput = targetIndex.getOneBased() + PHONE_DESC_AMY + ADDRESS_DESC_AMY + PATIENT_EMAIL_DESC_AMY
                 + TAG_DESC_HIGH + PHONE_DESC_AMY + ADDRESS_DESC_AMY + PATIENT_EMAIL_DESC_AMY + TAG_DESC_HIGH
                 + PHONE_DESC_BOB + ADDRESS_DESC_BOB + PATIENT_EMAIL_DESC_BOB + TAG_DESC_LOW;
 
