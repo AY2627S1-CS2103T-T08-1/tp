@@ -19,7 +19,7 @@ public class Remark {
 
     public static final int MAX_TOTAL_LENGTH = 500;
 
-    public static final String MESSAGE_CONSTRAINTS = "Notes can take any values, and should not be blank";
+    public static final String MESSAGE_CONSTRAINTS = "Notes should not be blank or start with a space";
     public static final String MESSAGE_TOO_LONG = "A contact's notes can be at most " + MAX_TOTAL_LENGTH
             + " characters in total.";
 
@@ -101,6 +101,7 @@ public class Remark {
      * Returns the notes that would result from adding {@code note} after the last one.
      */
     public List<String> withNoteAdded(String note) {
+        requireNonNull(note);
         List<String> updatedNotes = new ArrayList<>(notes);
         updatedNotes.add(note);
         return updatedNotes;
@@ -110,6 +111,7 @@ public class Remark {
      * Returns the notes that would result from replacing the note at {@code noteIndex} with {@code note}.
      */
     public List<String> withNoteReplaced(Index noteIndex, String note) {
+        requireNonNull(note);
         assert hasNote(noteIndex);
         List<String> updatedNotes = new ArrayList<>(notes);
         updatedNotes.set(noteIndex.getZeroBased(), note);
