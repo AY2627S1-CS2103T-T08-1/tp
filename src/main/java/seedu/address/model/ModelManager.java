@@ -34,7 +34,7 @@ public class ModelManager implements Model {
     /** The predicate of the current list, search or filter. */
     private Predicate<? super Person> displayPredicate = PREDICATE_SHOW_ALL_PERSONS;
     /** Persons kept in the displayed list after a change, although they may not match {@link #displayPredicate}. */
-    private final Set<Person> keptDisplayed = new HashSet<>();
+    private final Set<Person> keptDisplayedPersons = new HashSet<>();
     /** The order chosen with {@code sort}, or {@code null} for the order the persons were added in. */
     private Comparator<? super Person> sortOrder;
     /**
@@ -87,9 +87,34 @@ public class ModelManager implements Model {
     @Override
     public void setAddressBook(ReadOnlyAddressBook addressBook) {
         applySortOrder();
-        keptDisplayed.clear();
+        keptDisplayedPersons.clear();
         this.addressBook.resetData(addressBook);
         selectedPerson.set(null);
+    }
+
+    @Override
+    public Runnable createRestorePoint() {
+        AddressBook savedAddressBook = new AddressBook(addressBook);
+        boolean savedArchiveScope = archiveScope;
+        Predicate<? super Person> savedDisplayPredicate = displayPredicate;
+        Set<Person> savedKeptDisplayedPersons = Set.copyOf(keptDisplayedPersons);
+        Comparator<? super Person> savedSortOrder = sortOrder;
+        Map<Person, Integer> savedKeptPositions = keptPositions == null ? null : Map.copyOf(keptPositions);
+        Comparator<? super Person> savedComparator = sortedPersons.getComparator();
+
+        return () -> {
+            archiveScope = savedArchiveScope;
+            displayPredicate = savedDisplayPredicate;
+            keptDisplayedPersons.clear();
+            keptDisplayedPersons.addAll(savedKeptDisplayedPersons);
+            sortOrder = savedSortOrder;
+            keptPositions = savedKeptPositions == null ? null : new HashMap<>(savedKeptPositions);
+            sortedPersons.setComparator(savedComparator);
+            addressBook.resetData(savedAddressBook);
+            // a new predicate object, so that the list is filtered again
+            filteredPersons.setPredicate(this::isDisplayed);
+            selectedPerson.set(null);
+        };
     }
 
     @Override
@@ -105,7 +130,7 @@ public class ModelManager implements Model {
 
     @Override
     public void deletePerson(Person target) {
-        keptDisplayed.remove(target);
+        keptDisplayedPersons.remove(target);
         addressBook.removePerson(target);
         if (target.equals(selectedPerson.get())) {
             selectedPerson.set(null);
@@ -123,8 +148,8 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         // a kept person stays shown after another change, unless the change moves it out of the list's scope
-        if (keptDisplayed.remove(target) && getScopePredicate().test(editedPerson)) {
-            keptDisplayed.add(editedPerson);
+        if (keptDisplayedPersons.remove(target) && getScopePredicate().test(editedPerson)) {
+            keptDisplayedPersons.add(editedPerson);
         }
         keepPositionInSortedList(target, editedPerson);
         addressBook.setPerson(target, editedPerson);
@@ -138,7 +163,7 @@ public class ModelManager implements Model {
         requireAllNonNull(target, editedPerson);
 
         if (filteredPersons.contains(target)) {
-            keptDisplayed.add(target);
+            keptDisplayedPersons.add(target);
         }
         setPerson(target, editedPerson);
     }
@@ -188,7 +213,7 @@ public class ModelManager implements Model {
     }
 
     private boolean isDisplayed(Person person) {
-        return keptDisplayed.contains(person) || displayPredicate.test(person);
+        return keptDisplayedPersons.contains(person) || displayPredicate.test(person);
     }
 
     //=========== Filtered Person List Accessors =============================================================
@@ -234,7 +259,7 @@ public class ModelManager implements Model {
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
         applySortOrder();
-        keptDisplayed.clear();
+        keptDisplayedPersons.clear();
         displayPredicate = predicate;
         // a new predicate object, so that the list is filtered again
         filteredPersons.setPredicate(this::isDisplayed);
