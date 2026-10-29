@@ -14,9 +14,7 @@ import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
-import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
 
@@ -57,11 +55,11 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
-        ReadOnlyAddressBook dataBeforeCommand = new AddressBook(model.getAddressBook());
+        Runnable undoCommand = model.createRestorePoint();
         commandResult = command.execute(model);
 
         if (command.modifiesData()) {
-            saveData(dataBeforeCommand);
+            saveData(undoCommand);
         } else {
             logger.info("Command does not modify data, skipping save.");
         }
@@ -74,18 +72,18 @@ public class LogicManager implements Logic {
     }
 
     /**
-     * Saves the address book to storage. If the data cannot be written, restores the address book to
-     * {@code dataBeforeCommand}, so the contacts shown always match the data file.
+     * Saves the address book to storage. If the data cannot be written, runs {@code undoCommand}, so the contacts
+     * shown always match the data file and the list looks as it did before the command.
      *
-     * @param dataBeforeCommand the address book as it was before the command was executed.
+     * @param undoCommand restores the address book and the displayed list to how they were before the command.
      * @throws CommandException if the data could not be written.
      */
-    private void saveData(ReadOnlyAddressBook dataBeforeCommand) throws CommandException {
+    private void saveData(Runnable undoCommand) throws CommandException {
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (IOException ioe) {
             logger.warning("Could not save data, so the command is undone: " + ioe);
-            model.setAddressBook(dataBeforeCommand);
+            undoCommand.run();
             throw toSaveFailure(ioe);
         }
     }
