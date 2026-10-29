@@ -59,6 +59,7 @@ public class RemarkCommand extends Command {
 
     private RemarkCommand(Index personIndex, Action action, Index noteIndex, String note) {
         requireNonNull(personIndex);
+        requireNonNull(action);
         this.personIndex = personIndex;
         this.action = action;
         this.noteIndex = noteIndex;

@@ -15,6 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -35,6 +36,8 @@ import seedu.address.testutil.PersonBuilder;
 
 /** Exercises the actual FXML panels and model listeners on the JavaFX application thread. */
 public class ContactDetailsUiTest {
+    private static final PseudoClass VIEWED = PseudoClass.getPseudoClass("viewed");
+
     @TempDir
     public Path temporaryFolder;
 
@@ -90,7 +93,9 @@ public class ContactDetailsUiTest {
             assertTrue(window.title().getText().contains(BENSON.getName().fullName));
             assertTrue(window.detailsText().getText().contains(BENSON.getPatientNo().value));
             assertTrue(window.feedback().getText().contains(BENSON.getName().fullName));
-            assertEquals(1, window.stage.getScene().getRoot().lookupAll(".list-cell:viewed").size());
+            // lookupAll ignores pseudo-classes, so each cell's state is checked directly.
+            assertEquals(1, window.stage.getScene().getRoot().lookupAll(".list-cell").stream()
+                    .filter(cell -> cell.getPseudoClassStates().contains(VIEWED)).count());
         });
     }
 
