@@ -193,6 +193,51 @@ public class ArchiveCommandTest {
     }
 
     @Test
+    public void execute_futureCheckup_removesAppointmentAndMark() throws Exception {
+        String tomorrow = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        for (boolean marked : List.of(false, true)) {
+            Person original = new PersonBuilder().withRemarks("Needs assistance")
+                    .withCheckupAppointment(tomorrow + " 00:00").build();
+            if (marked) {
+                original = original.withMarkedCheckup();
+            }
+            Model testModel = new ModelManager();
+            testModel.addPerson(original);
+
+            new ArchiveCommand(Index.fromOneBased(1)).execute(testModel);
+
+            Person expected = new PersonBuilder().withRemarks("Needs assistance").build()
+                    .copyWithArchivedStatus(true);
+            assertEquals(List.of(expected), testModel.getAddressBook().getPersonList());
+            assertTrue(testModel.getFilteredPersonList().isEmpty());
+        }
+    }
+
+    @Test
+    public void execute_todayOrPastCheckup_preservesAppointmentAndMark() throws Exception {
+        LocalDate today = LocalDate.now();
+        for (LocalDate date : List.of(today.minusDays(1), today)) {
+            for (String time : List.of("00:00", "23:59")) {
+                for (boolean marked : List.of(false, true)) {
+                    Person original = new PersonBuilder().withCheckupAppointment(
+                            date.format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " " + time).build();
+                    if (marked) {
+                        original = original.withMarkedCheckup();
+                    }
+                    Model testModel = new ModelManager();
+                    testModel.addPerson(original);
+
+                    new ArchiveCommand(Index.fromOneBased(1)).execute(testModel);
+
+                    assertEquals(List.of(original.copyWithArchivedStatus(true)),
+                            testModel.getAddressBook().getPersonList());
+                    assertTrue(testModel.getFilteredPersonList().isEmpty());
+                }
+            }
+        }
+    }
+
+    @Test
     public void execute_updateArchivedDetails_preservesArchivedStatus() throws Exception {
         CheckupAppointment appointment = new CheckupAppointment(
                 LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu")) + " 09:00");
@@ -210,7 +255,7 @@ public class ArchiveCommandTest {
         Person archived = model.getFilteredPersonList().get(0);
         assertTrue(archived.isArchived());
         assertEquals(remark, archived.getRemark());
-        assertEquals(appointment, archived.getCheckupAppointment().orElseThrow());
+        assertTrue(archived.getCheckupAppointment().isEmpty());
     }
 
     @Test
