@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -47,6 +48,16 @@ public class CheckupAppointment implements Comparable<CheckupAppointment> {
     /** Checks against a supplied clock so time boundaries can be tested deterministically. */
     boolean isBeforeNow(Clock clock) {
         return dateTime.isBefore(LocalDateTime.now(clock));
+    }
+
+    /** Returns whether the appointment falls after today in the system's local timezone. */
+    public boolean isAfterToday() {
+        return isAfterToday(Clock.systemDefaultZone());
+    }
+
+    /** Checks the calendar date against a supplied clock, ignoring the appointment time. */
+    boolean isAfterToday(Clock clock) {
+        return dateTime.toLocalDate().isAfter(LocalDate.now(clock));
     }
 
     @Override

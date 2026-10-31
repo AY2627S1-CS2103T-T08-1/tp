@@ -9,6 +9,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Person;
 
 /**
@@ -53,7 +54,14 @@ public class ArchiveCommand extends Command {
         if (personToArchive.isArchived()) {
             throw new CommandException(MESSAGE_ALREADY_ARCHIVED);
         }
-        model.setPerson(personToArchive, personToArchive.copyWithArchivedStatus(true));
+        Person archivedPerson = personToArchive.copyWithArchivedStatus(true);
+        if (personToArchive.getCheckupAppointment().filter(CheckupAppointment::isAfterToday).isPresent()) {
+            archivedPerson = new Person(personToArchive.getName(), personToArchive.getPatientNo(),
+                    personToArchive.getFamilyNo(), personToArchive.getPatientEmail().orElse(null),
+                    personToArchive.getFamilyEmail().orElse(null), personToArchive.getAddress(),
+                    personToArchive.getTags(), null, personToArchive.getRemark(), true, false);
+        }
+        model.setPerson(personToArchive, archivedPerson);
         return new CommandResult(String.format(MESSAGE_ARCHIVE_PERSON_SUCCESS, Messages.format(personToArchive)));
     }
 
