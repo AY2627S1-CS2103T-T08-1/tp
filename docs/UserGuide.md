@@ -162,8 +162,9 @@ The command word is case-insensitive: `archive 3`, `Archive 3`, and `ARCHIVE 3` 
 * `list archive` shows archived contacts. Use `list` to return to active contacts.
 * `find` searches active contacts. Archived contacts remain archived when edited.
 * Archiving an already archived contact reports an error without changing it.
-* Archiving removes a checkup scheduled after today, including its mark. Checkups scheduled for today or earlier
-  keep their date, time, and marked or unmarked status, even if today's appointment time has not yet arrived.
+* Archiving removes unmarked checkups scheduled after today. Marked checkups are kept regardless of their date.
+  Checkups scheduled for today or earlier keep their date, time, and marked or unmarked status,
+  even if today's appointment time has not yet arrived. Dates are compared at the time of archiving.
 * Archived status is saved automatically and survives restarting CareBook.
 * Archived contacts retain their identity, so adding a duplicate is still rejected.
 

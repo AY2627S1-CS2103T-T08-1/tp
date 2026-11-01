@@ -193,7 +193,7 @@ public class ArchiveCommandTest {
     }
 
     @Test
-    public void execute_futureCheckup_removesAppointmentAndMark() throws Exception {
+    public void execute_futureCheckup_keepsOnlyMarkedAppointments() throws Exception {
         String tomorrow = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
         for (boolean marked : List.of(false, true)) {
             Person original = new PersonBuilder().withRemarks("Needs assistance")
@@ -204,11 +204,20 @@ public class ArchiveCommandTest {
             Model testModel = new ModelManager();
             testModel.addPerson(original);
 
-            new ArchiveCommand(Index.fromOneBased(1)).execute(testModel);
+            CommandResult result = new ArchiveCommand(Index.fromOneBased(1)).execute(testModel);
 
             Person expected = new PersonBuilder().withRemarks("Needs assistance").build()
                     .copyWithArchivedStatus(true);
+            if (marked) {
+                expected = original.copyWithArchivedStatus(true);
+            }
             assertEquals(List.of(expected), testModel.getAddressBook().getPersonList());
+            String expectedMessage = String.format(ArchiveCommand.MESSAGE_ARCHIVE_PERSON_SUCCESS,
+                    Messages.format(expected));
+            if (!marked) {
+                expectedMessage += "\n" + ArchiveCommand.MESSAGE_CHECKUP_REMOVED;
+            }
+            assertEquals(expectedMessage, result.getFeedbackToUser());
             assertTrue(testModel.getFilteredPersonList().isEmpty());
         }
     }
@@ -227,10 +236,12 @@ public class ArchiveCommandTest {
                     Model testModel = new ModelManager();
                     testModel.addPerson(original);
 
-                    new ArchiveCommand(Index.fromOneBased(1)).execute(testModel);
+                    CommandResult result = new ArchiveCommand(Index.fromOneBased(1)).execute(testModel);
 
                     assertEquals(List.of(original.copyWithArchivedStatus(true)),
                             testModel.getAddressBook().getPersonList());
+                    assertEquals(String.format(ArchiveCommand.MESSAGE_ARCHIVE_PERSON_SUCCESS,
+                            Messages.format(original.copyWithArchivedStatus(true))), result.getFeedbackToUser());
                     assertTrue(testModel.getFilteredPersonList().isEmpty());
                 }
             }
