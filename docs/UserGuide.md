@@ -540,7 +540,11 @@ Shows only the persons in the current active or archived list who match all the 
 
 After `list`, `filter` excludes archived contacts. After `list archive`, it searches only archived contacts.
 Each `filter` replaces the previous filter criteria while keeping the same list, even when no contacts match.
-`find` keeps the same active or archive scope. Use `list` to return to active contacts.
+A later `find` also searches within the same list, so after `list archive` it searches only archived contacts.
+`filter` and `find` do not combine: each one searches the whole active or archived list again, not only the contacts
+currently shown. For example, after `filter /tag HIGH`, `find ali` shows every active contact whose name contains
+`ali`, including those not tagged `HIGH`. To search by name and tag together, use one `filter`, e.g.
+`filter /name ali /tag HIGH`.
 
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
@@ -613,7 +617,6 @@ Format: `clear`
 
 * The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
-* Type the command word in lowercase: `Clear` and `CLEAR` are not recognised.
 * Works even if the displayed list is already empty.
 * Use `list` to show all active contacts again, or `list archive` to show archived contacts.
   You can also use `find KEYWORD` to search within the current active or archive list.
@@ -691,7 +694,7 @@ Example:
 }
 ```
 
-Commands accept any letter case, but priority strings edited directly in the data file must match exactly, including uppercase letters and no surrounding spaces. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
+Priority values entered through commands accept any letter case, but priority strings edited directly in the data file must match exactly, including uppercase letters and no surrounding spaces. Command-word case sensitivity is stated in the relevant feature sections. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
 
 <box type="warning" seamless>
 
