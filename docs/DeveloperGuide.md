@@ -102,7 +102,11 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
+Every command is recognised in any letter case. Command words are case-insensitive; for example, `list`, `LIST` and `LiSt` are equivalent. Prefixes and arguments follow the case rules of their respective command parsers.
+
 How the parsing works:
+* `AddressBookParser#parseCommand()` separates the command word from its arguments and normalizes the word with `toLowerCase(Locale.ROOT)` before dispatching it. All 17 command words are case-insensitive: `add`, `archive`, `unarchive`, `checkup`, `edit`, `delete`, `clear`, `find`, `list`, `filter`, `sort`, `exit`, `help`, `view`, `remark`, `mark` and `unmark`. For example, `view 1`, `VIEW 1` and `vIeW 1` follow the same parsing and execution path.
+* `Locale.ROOT` makes command recognition independent of the system locale. Normalization applies only to the command word; arguments retain their original text and follow each command parser's own case and validation rules. New commands with lowercase `COMMAND_WORD` constants inherit this behavior when added to the dispatch switch.
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
@@ -300,10 +304,10 @@ details to the list without treating a changing list index as a permanent contac
 
 ### Clearing the display and exiting
 
-`AddressBookParser#parseCommand()` normalises the `clear` command word ignoring case, so `clear`,
-`Clear` and `CLEAR` create the same command. The `exit` command word is lowercase-only; `Exit`
-and `EXIT` are unknown commands. Both commands reject non-blank arguments before their command
-objects are created. A parse error leaves the display and stored contacts unchanged.
+`AddressBookParser#parseCommand()` recognises `clear` and `exit` in any letter case and
+rejects non-blank arguments before creating their command objects. For example, `CLEAR` clears the
+display and `Exit` closes the application, while `CLEAR 1` and `Exit 1` are rejected.
+A parse error leaves the display and stored contacts unchanged.
 
 `ClearCommand#execute()` calls `Model#updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS)`.
 The predicate hides every contact in the current display but does not remove any from the address
@@ -1634,14 +1638,17 @@ testers are expected to do more *exploratory* testing.
    Expected: The second displayed contact is highlighted and its full details appear above the list;
    both contact cards remain visible.
 1. Enter `view 3`, then `View 1`.<br>
-   Expected: The first command reports that 3 is outside the displayed range of 1 to 2; the second
-   is an unknown command. Neither changes the selected contact.
+   Expected: The first command reports that 3 is outside the displayed range of 1 to 2 and leaves
+   the selection unchanged. `View 1` selects the first contact and shows its full details.
 1. Enter `clear`, then `view 1`.<br>
    Expected: The list, highlight and details panel are hidden, but the contacts are not deleted.
    `view 1` reports that no contacts are currently displayed.
 1. Enter `list`, then `view 1` again.<br>
    Expected: Both contacts return and the first contact can be selected. `list` does not reselect
    the previously selected contact by itself.
+1. Enter `clear 1`, then `Clear`.<br>
+   Expected: The first command reports the `clear` usage and leaves the displayed contacts unchanged.
+   `Clear` hides the list, highlight and details panel without deleting contacts.
 1. Enter `clear 1`.<br>
    Expected: The command reports the `clear` usage. The displayed contacts and selection stay unchanged.
 1. Enter `Clear`, then `list`.<br>
@@ -1651,9 +1658,8 @@ testers are expected to do more *exploratory* testing.
    Expected: Uppercase `CLEAR` also hides the displayed contacts without deleting them;
    `list` restores both contacts.
 1. Enter `exit 1`, then `Exit`.<br>
-   Expected: The first reports that `exit` takes no arguments; the second is an unknown command.
-   The application stays open. Enter lowercase `exit` to close it, then relaunch CareBook and enter
-   `list`. The same two contacts are still saved.
+   Expected: The first reports that `exit` takes no arguments and leaves the application open.
+   `Exit` closes the application. Relaunch CareBook and enter `LIST`. The same two contacts are still saved.
 
 ### Adding a person
 

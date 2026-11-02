@@ -148,7 +148,7 @@ public class AddressBookParserTest {
 
     @Test
     public void parseCommand_exit() throws Exception {
-        for (String input : List.of("exit", "exit   ", "  exit  ", "\texit\t", "\nexit\r\n")) {
+        for (String input : List.of("exit", "exit   ", "  exit  ", "\texit\t", "\nexit\r\n", "EXIT", "Exit", "eXiT")) {
             assertTrue(parser.parseCommand(input) instanceof ExitCommand, input);
         }
     }
@@ -157,17 +157,18 @@ public class AddressBookParserTest {
     public void parseCommand_exitWithArguments_throwsParseException() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, ExitCommand.MESSAGE_USAGE);
         for (String input : List.of("exit 1", "exit Alice", "exit /name Alice", "exit --help",
-                "exit\tAlice", "  exit Alice  ", "exit Alice Bob", "exit !")) {
+                "exit\tAlice", "  exit Alice  ", "exit Alice Bob", "exit !", "EXIT 1", "eXiT Alice")) {
             assertThrows(ParseException.class, expectedMessage, () -> parser.parseCommand(input));
         }
     }
 
     @Test
     public void parseCommand_filter() throws Exception {
-        FilterCommand command = (FilterCommand) parser.parseCommand(
-                FilterCommand.COMMAND_WORD + " /tag medium");
-        assertEquals(new FilterCommand(
-                new PersonMatchesFilterPredicate(List.of(), List.of("MEDIUM"), List.of())), command);
+        for (String word : List.of("filter", "FILTER", "Filter", "fIlTeR")) {
+            assertEquals(new FilterCommand(
+                    new PersonMatchesFilterPredicate(List.of(), List.of("MEDIUM"), List.of())),
+                    parser.parseCommand(word + " /tag medium"));
+        }
     }
 
     @Test
@@ -227,7 +228,14 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_list_success() throws Exception {
         for (String input : List.of("list", "   list", "list   ", "   list   ", "\tlist\t",
-                " \t list \t ", "\nlist\r\n")) {
+                " \t list \t ", "\nlist\r\n", "LIST", "List", "lIsT")) {
+            assertTrue(parser.parseCommand(input) instanceof ListCommand, input);
+        }
+    }
+
+    @Test
+    public void parseCommand_listArchiveInDifferentCase_success() throws Exception {
+        for (String input : List.of("list archive", "LIST ARCHIVE", "List Archive", "lIsT aRcHiVe")) {
             assertTrue(parser.parseCommand(input) instanceof ListCommand, input);
         }
     }
@@ -241,17 +249,17 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_listWithWrongCaseOrSpelling_throwsUnknownCommand() {
-        for (String input : List.of("LIST", "List", "lIsT", "list3", "listabc", "lists")) {
+    public void parseCommand_listWithWrongSpelling_throwsUnknownCommand() {
+        for (String input : List.of("list3", "listabc", "lists")) {
             assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand(input));
         }
     }
 
     @Test
     public void parseCommand_view() throws Exception {
-        ViewCommand command = (ViewCommand) parser.parseCommand(
-                ViewCommand.COMMAND_WORD + " " + INDEX_FIRST_PERSON.getOneBased());
-        assertEquals(new ViewCommand(INDEX_FIRST_PERSON), command);
+        for (String word : List.of("view", "VIEW", "View", "vIeW")) {
+            assertEquals(new ViewCommand(INDEX_FIRST_PERSON), parser.parseCommand(word + " 1"));
+        }
     }
 
     @Test
