@@ -100,6 +100,7 @@ Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail
 * `add` is case-insensitive. `Add`, `ADD`, `ADd` and other variants are all accepted.
 * The email fields are optional and can be added later with `edit`.
 * `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
+* special characters such as '+' and spaces are not allowed for phone numbers
 
 The `/` character is reserved for valid prefixes and is **not allowed in any field value**, including names and addresses. Separate each prefix from its value with a space. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
 
