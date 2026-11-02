@@ -486,6 +486,7 @@ For `find /CRITERION INPUT`:
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
 * Contacts without an optional email or tag do not match searches on that absent field.
 * Searches consider all stored contacts, replacing the current display filter without changing stored data.
+  `find` does not search only the results of an earlier `find` or `filter`.
   Use `list` to display all contacts again. A search with no matches displays an empty list.
 * To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
 
@@ -505,6 +506,10 @@ Shows only the persons in the current active or archived list who match all the 
 After `list`, `filter` excludes archived contacts. After `list archive`, it searches only archived contacts.
 Each `filter` replaces the previous filter criteria while keeping the same list, even when no contacts match.
 A later `find` also searches within the same list, so after `list archive` it searches only archived contacts.
+`filter` and `find` do not combine: each one searches the whole active or archived list again, not only the contacts
+currently shown. For example, after `filter /tag HIGH`, `find ali` shows every active contact whose name contains
+`ali`, including those not tagged `HIGH`. To search by name and tag together, use one `filter`, e.g.
+`filter /name ali /tag HIGH`.
 
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
