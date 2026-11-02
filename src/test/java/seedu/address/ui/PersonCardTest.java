@@ -104,15 +104,20 @@ public class PersonCardTest {
             StackPane container = new StackPane(card.getRoot());
             new Scene(container, 300, 450);
             container.applyCss();
-            container.resize(300, 450);
-            container.layout();
             Label name = (Label) card.getRoot().lookup("#name");
             Label appointment = (Label) card.getRoot().lookup("#checkupAppointment");
+            // Measure this platform's unwrapped text rather than assuming a particular font width or height.
+            double wideWidth = appointment.prefWidth(-1) + 40;
+            container.resize(wideWidth, 450);
+            container.layout();
+            double singleLineHeight = appointment.getHeight();
+            container.resize(wideWidth / 2, 450);
+            container.layout();
             assertEquals(scheduled.getName().fullName, name.getText());
             assertEquals("Checkup appointment: 01/01/2030 09:05 (Marked)", appointment.getText());
             assertTrue(appointment.isWrapText());
             assertFalse(appointment.isTextTruncated());
-            assertTrue(appointment.getHeight() > appointment.getFont().getSize() * 1.5);
+            assertTrue(appointment.getHeight() > singleLineHeight);
         });
     }
 
