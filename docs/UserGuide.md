@@ -525,14 +525,14 @@ Supported criteria:
 | `/tag` | Priority tag |
 | `/remark` | Any individual care note |
 
-* Use exactly one criterion, spelled as shown above, and provide a non-empty input.
+* Use exactly one criterion, spelled as shown above, and provide a non-empty input. Criteria are case-insensitive.
 * An unknown criterion, such as `/phone`, shows `Unknown criterion: /phone`, followed by `Invalid command format!` and the correct find usage.
 * Phone searches require one sequence of at least **two digits**, with no spaces or other characters.
   The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
 * Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
 * Contacts without an optional email or tag do not match searches on that absent field.
-* Searches consider all stored contacts, replacing the current display filter without changing stored data.
+* Searches consider all active contacts, replacing the current display filter without changing stored data.
   Use `list` to display all contacts again. A search with no matches displays an empty list.
 * To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
 * When no contacts match, active searches append `Use 'list archive' to search through archived contacts`;
