@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ public class PersonDetailsFormatterTest {
         assertTrue(details.contains("Family email: Not provided"));
         assertTrue(details.contains("Priority: Not assigned"));
         assertTrue(details.contains("Checkup appointment: Not scheduled"));
+        assertFalse(details.contains("Checkup status:"));
         assertTrue(details.contains("Remark: None"));
     }
 
@@ -43,7 +45,26 @@ public class PersonDetailsFormatterTest {
                 .withRemarks("Allergic to penicillin", "Literal /tag HIGH belongs to this note").build();
         String details = PersonDetailsFormatter.format(person);
         assertTrue(details.contains("Checkup appointment: 25/12/2030 14:30"));
+        assertTrue(details.contains("\nCheckup status: Unmarked\n"));
         assertTrue(details.contains("Remark: \n1. Allergic to penicillin\n2. Literal /tag HIGH belongs to this note"));
+    }
+
+    @Test
+    public void format_markAndUnmark_showsCurrentStatus() {
+        Person scheduled = new PersonBuilder().withCheckupAppointment("25/12/2030 14:30").build();
+        String markedDetails = PersonDetailsFormatter.format(scheduled.withMarkedCheckup());
+        assertTrue(markedDetails.contains("Checkup appointment: 25/12/2030 14:30\nCheckup status: Marked\n"));
+        assertFalse(markedDetails.contains("Checkup status: Unmarked"));
+        String unmarkedDetails = PersonDetailsFormatter.format(scheduled.withMarkedCheckup().withUnmarkedCheckup());
+        assertTrue(unmarkedDetails.contains("\nCheckup status: Unmarked\n"));
+    }
+
+    @Test
+    public void format_renamedMarkedContact_preservesStatus() {
+        Person marked = new PersonBuilder().withCheckupAppointment("25/12/2030 14:30").build().withMarkedCheckup();
+        Person renamed = new PersonBuilder(marked).withName("Updated Patient Name").build();
+        assertEquals(PersonDetailsFormatter.format(marked), PersonDetailsFormatter.format(renamed));
+        assertTrue(PersonDetailsFormatter.format(renamed).contains("Checkup status: Marked"));
     }
 
     @Test

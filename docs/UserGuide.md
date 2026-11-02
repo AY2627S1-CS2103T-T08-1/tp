@@ -282,7 +282,8 @@ Format: `view INDEX`
   in window width restores automatic sizing. With no selection, the details panel is hidden entirely.
 * Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
 * The details panel also shows the checkup appointment (`Not scheduled` if absent) and all numbered
-  remarks (`None` if absent). After updating a contact, use `view INDEX` again to see its updated details.
+  remarks (`None` if absent). A scheduled appointment has a separate `Checkup status: Marked` or
+  `Checkup status: Unmarked` line. After updating a contact, use `view INDEX` again to see its updated details.
 * After filtering or sorting, use the index in the list currently on screen. For example,
   `filter /tag HIGH`, `sort name desc`, then `view 1` selects the first contact in those sorted results.
 * Any successful command other than `view` closes the details panel and removes the selected border.
@@ -353,7 +354,7 @@ Examples:
 
 Sets, replaces or removes the checkup appointment for the person at the specified displayed index.
 
-Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX delete`
+Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX /delete`
 
 * `INDEX` must be a positive index shown in the current person list, including a filtered or sorted list.
 * The command word is case-insensitive: `checkup`, `Checkup` and `CHECKUP` are accepted.
@@ -363,29 +364,31 @@ Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX delete`
 * Archived contacts cannot be given a new appointment or have an appointment rescheduled. Unarchive the contact first.
 * Two contacts can share the exact same appointment date and time **only if their family HP numbers match**.
   Booking checks include active contacts outside the displayed list. Archived contacts do not reserve a slot.
-* Scheduling a checkup shows the date and time on the person's card and adds `[ ]` beside their name.
-  Replacing the appointment clears an existing `[X]` mark. Setting the same appointment again preserves its mark.
-* `checkup INDEX delete` removes the appointment and its mark. The appointment row and the `[ ]` or `[X]`
-  indicator disappear entirely from the person card. `delete` is case-insensitive.
+* Scheduling a checkup shows the date and time followed by `(Unmarked)` on the person's card.
+  Marking it with `mark INDEX` changes the status to `(Marked)`; `unmark INDEX` restores `(Unmarked)`.
+  This row wraps independently of the name so long names do not hide the status.
+  Replacing the appointment resets its status to `Unmarked`. Setting the same appointment again preserves its status.
+* `checkup INDEX /delete` removes the appointment and its status. The appointment row disappears entirely
+  from the person card. `/delete` is case-insensitive.
 * Other contact details are preserved, and appointment changes are saved automatically.
 
 Examples:
 
 * `checkup 1 25/12/2030 14:30` schedules or replaces the first displayed person's checkup.
 * `CHECKUP 2   26/12/2030  09:00` schedules the second displayed person's checkup with extra spaces.
-* `checkup 1 delete` removes the first displayed person's appointment.
+* `checkup 1 /delete` removes the first displayed person's appointment.
 
 **Common errors:**
 
 | Incorrect input or situation | Error message | How to correct it |
 | --- | --- | --- |
-| `checkup`, a missing date/time, or a non-positive or non-numeric index | Invalid command format followed by usage | Give a displayed index and a date/time, or `delete`. |
+| `checkup`, a missing date/time, or a non-positive or non-numeric index | Invalid command format followed by usage | Give a displayed index and a date/time, or `/delete`. |
 | An index outside the displayed list | `The person index provided is invalid.` | Check the current list and use an index shown there. |
 | An archived contact is selected for scheduling | `Appointments cannot be made with archived contacts. Unarchive the contact to do so.` | Unarchive the contact first. This error takes priority over date/time errors for a valid contact index. |
 | An impossible date or time, such as `31/02/2030 14:30` or `25/12/2030 24:00` | `Checkup must be a valid date and time in dd/mm/yyyy HH:mm format (24-hour clock).` followed by usage | Use a real date and a time from `00:00` to `23:59`. |
 | An appointment earlier than now, including an earlier time today | `Checkup date and time must not be in the past.` | Choose a future date and time. |
 | Another contact has that date and time but a different family HP | `A contact with this booking date and time already exists. Only contacts with the same family HP can be booked at the same time.` | Choose another slot, unless the contacts share the same family HP. |
-| `checkup INDEX delete` when no appointment is scheduled | `This contact has no checkup appointment to delete.` | Select a contact with an appointment. |
+| `checkup INDEX /delete` when no appointment is scheduled | `This contact has no checkup appointment to delete.` | Select a contact with an appointment. |
 ### Removing a checkup appointment: `checkup INDEX /delete`
 
 Removes a contact's checkup appointment without deleting the contact.
@@ -693,7 +696,7 @@ Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
-**Checkup** | `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX delete`<br> e.g., `checkup 1 25/12/2030 14:30`, `checkup 1 delete`
+**Checkup** | `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX /delete`<br> e.g., `checkup 1 25/12/2030 14:30`, `checkup 1 /delete`
 **Remove checkup** | `checkup INDEX /delete`<br> e.g., `checkup 1 /delete`
 **Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY]`<br> e.g., `edit 2 /name James Lee /pEmail jameslee@example.com`
