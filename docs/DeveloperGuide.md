@@ -309,7 +309,9 @@ contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sort
 contact at model level rather than selecting whichever contact moves into its former row; the command
 processing policy then clears selection after a successful sort. `PersonDetailsFormatter`
 includes the optional checkup appointment, its `[X]` or `[ ]` status on a separate line, and
-every numbered remark. An absent appointment is shown as `Not scheduled` without a status line.
+every numbered remark. For an active contact without an appointment, the appointment field shows
+`Not scheduled` without a status line. For an archived contact without an appointment, both the
+appointment field and status line are omitted.
 Replacing the selected immutable `Person` through `setPerson()` refreshes these details without
 changing the current filter or sort.
 
@@ -1691,7 +1693,7 @@ testers are expected to do more *exploratory* testing.
    Expected: The second displayed contact is highlighted and its full details appear above the list;
    both contact cards remain visible.
 1. Enter `view 3`, then `View 1`.<br>
-   Expected: The first command reports that 3 is outside the displayed range of 1 to 2 and leaves
+   Expected: The first command reports `Invalid index.` and leaves
    the selection unchanged. `View 1` selects the first contact and shows its full details.
 1. Enter `clear`, then `view 1`.<br>
    Expected: The list, highlight and details panel are hidden, but the contacts are not deleted.
@@ -1956,8 +1958,9 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: A displayed contact at index 1 with an unmarked checkup appointment.
 
    1. Test case: `MaRk   1  `, then `UNMARK 1`.<br>
-      Expected: The name changes from `[ ]` to `[X]`, then back to `[ ]`. The appointment and other
-      contact details remain unchanged. Each command confirms the change.
+      Expected: The status indicator in the contact card's appointment row changes from `[ ]` to `[X]`,
+      then back to `[ ]`. The name, appointment date/time and other contact details remain unchanged.
+      Each command confirms the change.
 
    1. Test case: Mark the appointment, restart CareBook, then unmark it and restart again.<br>
       Expected: The marked and unmarked states each survive reloading.
