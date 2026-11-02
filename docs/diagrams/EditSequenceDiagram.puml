@@ -4,6 +4,7 @@ skinparam ArrowFontStyle plain
 
 box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
 participant ":EditCommandParser" as EditCommandParser LOGIC_COLOR
 participant "d:EditPersonDescriptor" as Descriptor LOGIC_COLOR
 participant "c:EditCommand" as EditCommand LOGIC_COLOR
@@ -16,9 +17,11 @@ end box
 [-> LogicManager : execute("edit 1 /pEmail")
 activate LogicManager
 
-LogicManager -> EditCommandParser : parse("1 /pEmail")
+LogicManager -> AddressBookParser : parseCommand("edit 1 /pEmail")
+activate AddressBookParser
+
+AddressBookParser -> EditCommandParser : parse("1 /pEmail")
 activate EditCommandParser
-note right of LogicManager : via AddressBookParser
 
 create Descriptor
 EditCommandParser -> Descriptor
@@ -34,8 +37,11 @@ activate EditCommand
 EditCommand --> EditCommandParser
 deactivate EditCommand
 
-EditCommandParser --> LogicManager : c
+EditCommandParser --> AddressBookParser : c
 deactivate EditCommandParser
+
+AddressBookParser --> LogicManager : c
+deactivate AddressBookParser
 
 LogicManager -> EditCommand : execute(m)
 activate EditCommand
@@ -47,7 +53,7 @@ deactivate Model
 
 EditCommand -> EditCommand : createEditedPerson()\nkeeps unchanged fields,\nremoves the patient email
 
-EditCommand -> EditCommand : check for duplicates
+EditCommand -> EditCommand : check for duplicates\nand booking clashes
 
 EditCommand -> Model : setPersonKeepingDisplayed(\nperson, editedPerson)
 activate Model
