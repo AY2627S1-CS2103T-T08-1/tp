@@ -285,8 +285,8 @@ No temporary deselection or stored-data change is needed to trigger the UI actio
 **Error handling:** Missing, non-numeric or non-positive indexes cause the parser to throw a `ParseException`
 with the command usage. During execution, `ViewCommand#validateTargetIndex()` distinguishes an empty
 displayed list from an index outside a non-empty list. An empty display produces recovery instructions
-to use `list` or `find KEYWORD`; an out-of-range index reports the supplied index, displayed count and valid
-range. Both cases throw a `CommandException` and never select from the full stored list as a fallback.
+to use `list` or `find KEYWORD`; an out-of-range index in a non-empty list reports `Invalid index.`
+Both cases throw a `CommandException` and never select from the full stored list as a fallback.
 These errors leave stored contacts, selection and the display filter unchanged.
 
 **Selection lifecycle:** `ModelManager` stores a transient contact reference, not its displayed index.
@@ -309,7 +309,8 @@ contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sort
 contact at model level rather than selecting whichever contact moves into its former row; the command
 processing policy then clears selection after a successful sort. `PersonDetailsFormatter`
 includes the optional checkup appointment, its `Marked` or `Unmarked` status on a separate line, and
-every numbered remark. An absent appointment is shown as `Not scheduled` without a status line.
+every numbered remark. An absent appointment is shown as `Not scheduled` without a status line for an active
+contact; an archived contact without an appointment omits the appointment field entirely.
 Replacing the selected immutable `Person` through `setPerson()` refreshes these details without
 changing the current filter or sort.
 
@@ -346,7 +347,7 @@ status.
 <puml src="diagrams/EditSequenceDiagram.puml" alt="Sequence of parsing and executing a successful edit 1 /pEmail command" />
 
 1. `EditCommandParser` splits the input with `ArgumentTokenizer#tokenizeStrict()`, which rejects unknown prefixes
-   and `/` inside a value. The preamble is the index.
+   and slashes that do not satisfy the short-part rule described under Add command. The preamble is the index.
 1. Each given field is parsed with `ParserUtil` and stored in an `EditPersonDescriptor`. A field that is not given
    stays empty in the descriptor, which means "keep the current value".
 1. `EditCommand#execute()` checks the index against the displayed list, then builds the edited contact in
@@ -519,8 +520,8 @@ against the current time or performs booking-conflict checks, since the booking 
 1. The command obtains `Model#getFilteredPersonList()` and retrieves the contact at the displayed index.
 1. After validation, `MarkCommand` calls `Person#withMarkedCheckup()`; `UnmarkCommand` calls
    `Person#withUnmarkedCheckup()`. These methods create immutable replacements while preserving other fields.
-1. The command calls `Model#setPerson(person, updatedPerson)`. `PersonCard` shows `[X]` for a marked
-   appointment and `[ ]` for an unmarked appointment; contacts without appointments have no indicator.
+1. The command calls `Model#setPerson(person, updatedPerson)`. `PersonCard` shows `(Marked)` for a marked
+   appointment and `(Unmarked)` for an unmarked appointment; contacts without appointments have no indicator.
 1. The command returns `Marked contact: NAME` or `Unmarked contact: NAME` in a `CommandResult`.
 1. Both commands inherit `modifiesData() == true`, so `LogicManager` saves the contact list through `Storage`.
    `JsonAdaptedPerson` stores `checkupMarked` alongside `checkupAppointment`. After a successful command,
@@ -741,11 +742,12 @@ calls and UI updates are omitted for clarity.
 1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises `filter`
    and creates a `FilterCommandParser`. It then calls `parse(" /tag HIGH")`.
 1. `FilterCommandParser#parse()` first replaces every run of whitespace (spaces, tabs and newlines) with a single
-   space, so a prefix is recognised after any whitespace and not only after a literal space. It then uses
-   `ArgumentTokenizer` with the `/name`, `/tag` and `/address` prefixes. Name values are split on whitespace into
-   keywords, while each `/tag` and `/address` value is kept whole, so repeating those prefixes supplies several
-   alternatives. It creates a `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds
-   this predicate.
+   space, so a prefix is recognised after any whitespace and not only after a literal space. It validates complete
+   prefix tokens, accepting `/name` and `/tag` in any letter case and `/address` in lowercase. Extended tokens such
+   as `/nameExtra` are rejected. It normalizes name prefixes to `/name`, then uses `ArgumentTokenizer` with the
+   three supported prefixes. All prefixes may be repeated. Name values are split on whitespace and accumulated
+   into one list of alternative keywords; each `/tag` and `/address` value is kept whole. It creates a
+   `PersonMatchesFilterPredicate` from the three lists, and a `FilterCommand` that holds this predicate.
 1. `PersonMatchesFilterPredicate#test()` treats an empty list as "criterion not applied". Within a criterion, matching
    any one value is enough (OR); a person must satisfy every criterion that was given (AND). Name, tag and address
    matching ignore case, and address matching also collapses each run of whitespace into a single space in both the
@@ -761,8 +763,9 @@ calls and UI updates are omitted for clarity.
 **Error handling:** `FilterCommandParser#parse()` throws a `ParseException` with the command usage if there is text
 before the first prefix, if no criterion is given, if any prefix has an empty value, if any other token starts with `/`
 but is not one of the three prefixes (for example `/patientNo`), or if any `/tag` value is not one of `HIGH`, `MEDIUM`
-or `LOW` (case-insensitive). If `/name` is given more than once, `ArgumentMultimap#verifyNoDuplicatePrefixesFor`
-throws a `ParseException` that lists the repeated prefix. A filter with no matches succeeds, displays an empty list,
+or `LOW` (case-insensitive). A prefix must be a complete whitespace-separated token, so `/nameExtra Alice`
+is invalid. Repeated name prefixes, including `/name alice /NAME bob`, are valid and match either name.
+A filter with no matches succeeds, displays an empty list,
 and reports `0 person(s) listed!`. Use `list` to display all active contacts again.
 
 
@@ -923,6 +926,30 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
+
+### \[Proposed\] Dynamic marking of future checkups
+
+This feature is not implemented yet. Currently, `mark INDEX` changes only the completion flag and keeps
+an appointment's scheduled date and time, even when the date is after today. Archiving retains marked
+appointments to preserve the recorded completion status. `unarchive` restores retained appointments
+without checking for booking conflicts, so restoring a contact can create a shared slot between active
+contacts with different family HP numbers.
+
+The proposed dynamic marking feature would record when a future-dated checkup was actually completed:
+
+* When `mark INDEX` marks a checkup whose calendar date is after today, it would update the appointment
+  to today's date and the time at which it was marked, and set its completion status to marked.
+* The comparison and completion time would use the system's local date and time at execution.
+* For appointments dated today or earlier, marking would keep the appointment date and time unchanged.
+* The updated appointment and completion status would be saved together and shown on the contact card
+  and in the details panel.
+
+For example, if a checkup scheduled for 10 November is marked on 2 November at 14:30, the proposed
+feature would record its appointment as 2 November at 14:30 and mark it as completed. Archiving would
+retain that completion record.
+
+This proposal changes marking behavior; it does not add conflict validation to `unarchive`. A policy for
+restoring appointments into an occupied slot remains separate work.
 
 ### \[Proposed\] Past checkup tracking
 
@@ -1102,7 +1129,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 **Extensions**
 
-* 2a. A required field is missing, a prefix is unknown or mistyped, a non-tag prefix is repeated, or a field value contains `/`.
+* 2a. A required field is missing, a prefix is unknown or mistyped, a non-tag prefix is repeated, or a slash in a field value violates the short-part rule described under Add command.
 
     * 2a1. CareBook shows an error message with the correct format and leaves the contact list unchanged.
 
@@ -1352,7 +1379,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3a. No archived contacts are stored in the address book.
 
-    * 3a1. CareBook displays an empty list and shows `CareBook is empty`.
+    * 3a1. CareBook displays an empty list and shows `No archived contacts`.
 
       Use case ends.
 
@@ -1390,7 +1417,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 3b. The index exceeds the number of contacts in the currently displayed list.
 
-    * 3b1. CareBook reports the entered index, displayed contact count and valid index range.
+    * 3b1. CareBook reports `Invalid index.`
 
       Use case ends.
 
@@ -1465,7 +1492,8 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 * 5a. No contacts match the search phrase in the selected scope.
 
     * 5a1. CareBook displays an empty list and reports `0 person(s) listed!` followed by
-      `Use 'list archive' to search through archived contacts`.
+      `Use 'list archive' to search through archived contacts` in the active scope, or
+      `Use 'list' to search through active contacts` in the archive scope.
 
       Use case ends.
 
@@ -1553,7 +1581,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 2. CareBook displays the requested contact list.
 3. User requests to mark or unmark a contact's checkup using its displayed index.
 4. CareBook validates the index, confirms that an appointment exists and checks the current mark.
-5. CareBook updates the indicator to `[X]` for mark or `[ ]` for unmark, preserves the appointment and
+5. CareBook updates the appointment status to `(Marked)` for mark or `(Unmarked)` for unmark, preserves the appointment and
    other contact details, and saves the updated contact list.
 6. CareBook displays a confirmation and closes any selected details panel.
 
@@ -1609,7 +1637,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 **MSS:**
 
-1.  User requests to sort the displayed contacts by a criterion (priority, name or recent) and an optional direction
+1.  User requests to sort the displayed contacts by a criterion (priority, name, checkup or recent) and an optional direction
 2.  CareBook validates the command
 3.  CareBook reorders the displayed contacts and shows a message describing the new order
 
@@ -1647,7 +1675,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 * **Recovery**: Patient is deemed to have reached their normal level of physical and physiological function
 * **Relevant contacts**: A patient's emergency contact, or other family contacts
 * **Active contact**: A contact that is not archived. `list` shows the active contacts
-* **Archived contact**: A contact moved out of the active list with `archive`, kept with all its details and shown by `list archive`
+* **Archived contact**: A contact moved out of the active list with `archive` and shown by `list archive`. Its details are retained except for unmarked checkups scheduled after today, which are removed at archiving.
 * **Displayed list**: The contacts currently shown, after any `list`, `find`, `filter` or `sort`. Indices refer to this list
 * **Index**: The number shown next to a contact in the displayed list, starting from 1
 * **Care note (note)**: One numbered piece of free text about a contact, such as an allergy, added with `remark`. A contact's notes together are its remark
@@ -1691,8 +1719,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The second displayed contact is highlighted and its full details appear above the list;
    both contact cards remain visible.
 1. Enter `view 3`, then `View 1`.<br>
-   Expected: The first command reports that 3 is outside the displayed range of 1 to 2 and leaves
-   the selection unchanged. `View 1` selects the first contact and shows its full details.
+   Expected: The first command reports `Invalid index.` and leaves the selection unchanged.
+   `View 1` selects the first contact and shows its full details.
 1. Enter `clear`, then `view 1`.<br>
    Expected: The list, highlight and details panel are hidden, but the contacts are not deleted.
    `view 1` reports that no contacts are currently displayed.
@@ -1812,6 +1840,13 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: `filter /name ali /tag HIGH`<br>
       Expected: Only persons whose name contains `ali` and who are tagged `HIGH` are shown.
+
+   1. Test case: `filter /name alice /NAME bob`<br>
+      Expected: Contacts whose names contain `alice` or `bob` are shown, ignoring case. Adding `/tag HIGH`
+      keeps only matches that also have the `HIGH` priority.
+
+   1. Test case: `filter /nameExtra Alice`<br>
+      Expected: `Invalid command format!` followed by filter usage. The displayed list is unchanged.
 
    1. Test case: `filter /address clementi ave`<br>
       Expected: Only persons whose address contains the text `clementi ave` are shown, ignoring case.
@@ -1956,8 +1991,8 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: A displayed contact at index 1 with an unmarked checkup appointment.
 
    1. Test case: `MaRk   1  `, then `UNMARK 1`.<br>
-      Expected: The name changes from `[ ]` to `[X]`, then back to `[ ]`. The appointment and other
-      contact details remain unchanged. Each command confirms the change.
+      Expected: The appointment status changes from `(Unmarked)` to `(Marked)`, then back to `(Unmarked)`.
+      The appointment date/time and other contact details remain unchanged. Each command confirms the change.
 
    1. Test case: Mark the appointment, restart CareBook, then unmark it and restart again.<br>
       Expected: The marked and unmarked states each survive reloading.

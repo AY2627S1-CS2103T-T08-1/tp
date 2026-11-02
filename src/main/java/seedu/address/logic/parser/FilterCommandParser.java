@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -28,11 +27,11 @@ public class FilterCommandParser implements Parser<FilterCommand> {
      * Parses the given {@code String} of arguments in the context of the FilterCommand
      * and returns a FilterCommand object for execution.
      * Any run of whitespace (spaces, tabs, newlines) is treated as a single space, so prefixes are recognized
-     * after any whitespace. Name keywords are separated by whitespace and {@code /name} may be given only once;
-     * tags and addresses are given by repeating their prefix.
+     * after any whitespace. Name keywords are separated by whitespace; name, tag and address prefixes may
+     * be repeated. Name and tag prefixes are case-insensitive; the address prefix is lowercase.
      *
      * @throws ParseException if no criterion is given, a value is empty, a tag is not a valid tag,
-     *     there is text before the first prefix, {@code /name} is repeated, or a prefix other than
+     *     there is text before the first prefix, or a prefix other than
      *     name, tag and address is given
      */
     public FilterCommand parse(String args) throws ParseException {
@@ -41,14 +40,14 @@ public class FilterCommandParser implements Parser<FilterCommand> {
             throw invalidFormat();
         }
 
+        normalizedArgs = normalizedArgs.replaceAll("(?i)(?<!\\S)/name(?=\\s|$)", "/name");
+
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(" " + normalizedArgs, PREFIX_NAME, PREFIX_TAG, PREFIX_ADDRESS);
 
         if (!argMultimap.getPreamble().isEmpty()) {
             throw invalidFormat();
         }
-
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME);
 
         List<String> nameKeywords = new ArrayList<>();
         for (String value : argMultimap.getAllValues(PREFIX_NAME)) {
@@ -84,9 +83,9 @@ public class FilterCommandParser implements Parser<FilterCommand> {
     private static boolean hasUnsupportedPrefix(String args) {
         return Arrays.stream(args.trim().split("\\s+"))
                 .filter(token -> token.startsWith("/"))
-                .anyMatch(token -> Stream.of(PREFIX_NAME, PREFIX_TAG, PREFIX_ADDRESS)
-                        .noneMatch(prefix -> token.regionMatches(true, 0, prefix.getPrefix(), 0,
-                                prefix.getPrefix().length())));
+                .anyMatch(token -> !token.equalsIgnoreCase(PREFIX_NAME.getPrefix())
+                        && !token.equalsIgnoreCase(PREFIX_TAG.getPrefix())
+                        && !token.equals(PREFIX_ADDRESS.getPrefix()));
     }
 
     private static boolean hasPrefixWithoutSpace(String value) {

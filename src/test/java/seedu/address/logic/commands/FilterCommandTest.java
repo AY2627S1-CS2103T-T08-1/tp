@@ -36,9 +36,21 @@ public class FilterCommandTest {
     @Test
     public void messageUsage_prefixesSeparatedFromValues() {
         assertTrue(FilterCommand.MESSAGE_USAGE.contains(
-                "[/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]..."));
+                "[/name NAME_KEYWORDS]... [/tag TAG]... [/address ADDRESS]..."));
         assertTrue(FilterCommand.MESSAGE_USAGE.contains(
                 "filter /name ali bob /tag HIGH /tag MEDIUM /address clementi"));
+    }
+
+    @Test
+    public void execute_repeatedNamePrefixes_matchesEitherNameAndOtherCriteria() throws Exception {
+        AddressBook original = new AddressBook(model.getAddressBook());
+        AddressBookParser parser = new AddressBookParser();
+        parser.parseCommand("filter /name alice /NAME benson").execute(model);
+        assertEquals(List.of(ALICE, BENSON), model.getFilteredPersonList());
+
+        parser.parseCommand("filter /NAME alice /name benson /tag HIGH").execute(model);
+        assertEquals(List.of(ALICE), model.getFilteredPersonList());
+        assertEquals(original, model.getAddressBook());
     }
 
     @Test

@@ -1,7 +1,6 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
@@ -9,7 +8,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.model.person.PersonMatchesFilterPredicate;
 
@@ -124,11 +122,22 @@ public class FilterCommandParserTest {
     }
 
     @Test
-    public void parse_repeatedName_throwsParseException() {
-        String expectedMessage = Messages.MESSAGE_DUPLICATE_FIELDS + PREFIX_NAME;
+    public void parse_repeatedName_accumulatesCaseInsensitivePrefixes() {
+        assertParseSuccess(parser, " /name alice /NAME bob",
+                command(List.of("alice", "bob"), List.of(), List.of()));
+        assertParseSuccess(parser, " /NaMe ali ann /tag HIGH /NAME bob",
+                command(List.of("ali", "ann", "bob"), List.of("HIGH"), List.of()));
+        assertParseFailure(parser, " /name alice /NAME", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name /NAME bob", MESSAGE_INVALID_FORMAT);
+    }
 
-        assertParseFailure(parser, " /name ali /name bob", expectedMessage);
-        assertParseFailure(parser, " /name ali /tag HIGH /name bob", expectedMessage);
+    @Test
+    public void parse_incompleteOrExtendedPrefix_throwsParseException() {
+        assertParseFailure(parser, " /nameExtra Alice", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name Alice /NAMEExtra Bob", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /tagHIGH", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /addressExtra Clementi", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name Alice /ADDRESS Clementi", MESSAGE_INVALID_FORMAT);
     }
 
     @Test
