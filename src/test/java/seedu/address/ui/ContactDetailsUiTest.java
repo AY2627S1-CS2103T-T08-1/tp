@@ -25,6 +25,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.ModelManager;
@@ -261,12 +262,12 @@ public class ContactDetailsUiTest {
             window.layout();
             assertEquals("Selected contact: " + longName, window.title().getText());
             assertTrue(window.title().isWrapText());
-            assertFalse(window.title().isTextTruncated());
+            assertTrue(showsFullText(window.title()));
             assertTrue(window.detailsText().getText().contains("\nCheckup status: Marked\n"));
             Label appointment = window.appointmentRow();
             assertEquals("Checkup appointment: 01/01/2099 09:30 (Marked)", appointment.getText());
             assertTrue(appointment.isWrapText());
-            assertFalse(appointment.isTextTruncated());
+            assertTrue(showsFullText(appointment));
             window.enter("unmark 1");
             window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("\nCheckup status: Unmarked\n"));
@@ -347,5 +348,14 @@ public class ContactDetailsUiTest {
             input.setText(command);
             input.getOnAction().handle(new ActionEvent());
         }
+    }
+
+    /**
+     * Returns true if {@code label} shows its whole text without an ellipsis.
+     * {@code Labeled#isTextTruncated()} would do this, but it needs JavaFX 23 and CareBook uses JavaFX 17.
+     */
+    private static boolean showsFullText(Label label) {
+        Text shownText = (Text) label.lookup(".text");
+        return shownText != null && shownText.getText().equals(label.getText());
     }
 }

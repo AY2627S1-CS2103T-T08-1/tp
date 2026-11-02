@@ -49,7 +49,7 @@ public class PersonDetailsFormatterTest {
         assertTrue(details.contains("Remark: \n1. Allergic to penicillin\n2. Literal /tag HIGH belongs to this note"));
     }
 
-        @Test
+    @Test
     public void format_markAndUnmark_showsCurrentStatus() {
         Person scheduled = new PersonBuilder()
                 .withCheckupAppointment("25/12/2030 14:30").build();
