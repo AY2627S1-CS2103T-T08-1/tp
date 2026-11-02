@@ -161,6 +161,9 @@ The command word is case-insensitive: `archive 3`, `Archive 3`, and `ARCHIVE 3` 
 * `list archive` shows archived contacts. Use `list` to return to active contacts.
 * `find` searches the current active or archive scope (see [Locating persons](#locating-persons-find)). Archived contacts remain archived when edited.
 * Archiving an already archived contact reports an error without changing it.
+* Archiving removes unmarked checkups scheduled after today. Marked checkups are kept regardless of their date.
+  Checkups scheduled for today or earlier keep their date, time, and marked or unmarked status,
+  even if today's appointment time has not yet arrived. Dates are compared at the time of archiving.
 * Archived status is saved automatically and survives restarting CareBook.
 * Archived contacts retain their identity, so adding a duplicate is still rejected.
 
@@ -218,7 +221,8 @@ Format: `list` or `list archive`
 The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word `list` remains lowercase. Leading and trailing spaces are allowed.
 If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
-If no contacts have been archived, `list archive` displays an empty list. `list` also clears any `sort`, so persons are 
+If no contacts have been archived, `list archive` displays an empty list and shows `No archived contacts`.
+`list` also clears any `sort`, so persons are
 shown in the order they were added.
 
 ### Sorting persons: `sort`

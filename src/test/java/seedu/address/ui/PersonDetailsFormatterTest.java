@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,19 @@ public class PersonDetailsFormatterTest {
         String details = PersonDetailsFormatter.format(person);
         assertTrue(details.contains("Checkup appointment: 25/12/2030 14:30"));
         assertTrue(details.contains("Remark: \n1. Allergic to penicillin\n2. Literal /tag HIGH belongs to this note"));
+    }
+
+    @Test
+    public void format_archivedContactWithoutCheckup_omitsAppointmentField() {
+        Person person = new PersonBuilder().build().copyWithArchivedStatus(true);
+        assertFalse(PersonDetailsFormatter.format(person).contains("Checkup appointment:"));
+    }
+
+    @Test
+    public void format_archivedContactWithCheckup_keepsAppointmentField() {
+        Person person = new PersonBuilder().withCheckupAppointment("25/12/2030 14:30").build()
+                .withMarkedCheckup().copyWithArchivedStatus(true);
+        assertTrue(PersonDetailsFormatter.format(person).contains("Checkup appointment: 25/12/2030 14:30"));
     }
 
     @Test

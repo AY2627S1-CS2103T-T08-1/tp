@@ -446,6 +446,21 @@ the date/time format, while the command enforces the not-in-the-past rule for ne
 model state and ensures the displayed index refers to the selected contact. Keeping parsing and storage
 formatting independent of regional settings makes saved appointments portable between computers.
 
+### Checkup retention when archiving
+
+`ArchiveCommand` removes a checkup only when it is unmarked and its calendar date is after today in the
+system's local timezone at execution. It uses `Person#withoutCheckup()` on the archived copy to clear
+the appointment and its mark while preserving all other contact details. The success message formats
+the updated contact and explicitly reports when a checkup was removed.
+
+Today's appointments are retained, including those later in the day, to avoid losing the contact's
+same-day schedule when they are archived. Past appointments retain their marked or unmarked status,
+and marked appointments are retained even when dated in the future to preserve the recorded completion
+status. Retention preserves a record; it does not reserve the appointment slot. Booking-conflict checks
+exclude archived contacts, so an active contact may still be booked at the same time as a retained
+archived appointment. This is a deliberate tradeoff between preserving the schedule record and allowing
+active contacts to use slots previously assigned to archived contacts.
+
 ### Marking and unmarking checkups
 
 `mark INDEX` and `unmark INDEX` change the `checkupMarked` flag of a contact with an appointment.

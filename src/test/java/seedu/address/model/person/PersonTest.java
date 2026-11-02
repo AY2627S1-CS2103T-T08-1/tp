@@ -38,6 +38,23 @@ public class PersonTest {
     }
 
     @Test
+    public void withoutCheckup_clearsAppointmentAndMarkPreservingOtherDetails() {
+        Person original = new PersonBuilder(ALICE).withFamilyEmail("family@example.com")
+                .withRemarks("Needs assistance").build();
+        for (boolean archived : new boolean[] {false, true}) {
+            Person expected = original.copyWithArchivedStatus(archived);
+            Person scheduled = new PersonBuilder(expected).withCheckupAppointment("01/01/2030 09:05").build();
+            Person marked = scheduled.withMarkedCheckup();
+
+            assertEquals(expected, scheduled.withoutCheckup());
+            assertEquals(expected, marked.withoutCheckup());
+            assertEquals(expected, expected.withoutCheckup());
+            assertTrue(marked.getCheckupAppointment().isPresent());
+            assertTrue(marked.isCheckupMarked());
+        }
+    }
+
+    @Test
     public void checkupAppointment_isOptionalAndAffectsDataEquality() {
         Person original = new PersonBuilder().build();
         Person scheduled = new PersonBuilder(original).withCheckupAppointment("01/01/2030 12:00").build();
