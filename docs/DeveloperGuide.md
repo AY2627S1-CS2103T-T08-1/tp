@@ -206,7 +206,8 @@ stop before the model is changed; their messages are described below.
 <puml src="diagrams/AddSequenceDiagram.puml" alt="Sequence of validating, adding and saving a new contact" />
 
 1. `AddCommandParser` creates the validated `Person` and an `AddCommand` containing it.
-1. `AddCommand` calls `requireNoDuplicate()` against the stored contacts to check for a duplicate. A duplicate patient phone or email
+1. `AddCommand` calls `requireNoDuplicate()` against the stored contacts to check for a duplicate.
+   A duplicate patient phone or email
    produces `AddCommand.MESSAGE_DUPLICATE_PERSON`: `Someone with this patient HP or email already exists in CareBook.`
 1. A same-name, same-address conflict without a duplicate patient phone or email instead produces
    `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.`
@@ -217,8 +218,8 @@ stop before the model is changed; their messages are described below.
 
 **Error handling:** Invalid prefixes, missing required fields, duplicate prefixes and invalid values cause a
 `ParseException`. Duplicate contacts cause a `CommandException`. Neither path adds a contact or saves a
-partial entry. Shared family phone numbers and family emails are allowed; patient contact details provide
-the uniqueness checks.
+partial entry. If the conflicting contact is archived, the duplicate error appends
+`The matching contact is archived. Use list archive to see it.` Shared family contact details are allowed.
 
 **Design consideration:** Normalizing names when constructing `Name` gives parsing, storage loading and
 duplicate checks the same representation. Checking the full address book prevents a hidden or archived
@@ -691,7 +692,7 @@ calls and UI updates are omitted for clarity.
 1. `FilterCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)`. This combines the predicate with the
    scope of the list currently shown (active contacts after `list`, archived contacts after `list archive`), so the
    filtered list only contains persons in that scope who match the criteria. The scope is kept even when nothing
-   matches, and `find` switches back to active contacts.
+   matches, and `find` keeps the same active or archive scope.
 1. The command calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult`
    with the "N person(s) listed!" message.
 1. `LogicManager` checks `FilterCommand#modifiesData()`, which returns `false`, and skips saving.
@@ -958,24 +959,6 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 2e1. CareBook allows the shared name. Shared family contact details are also allowed.
 
       Use case resumes at step 3.
-
-*2d. A prefix is unknown or mistyped, or a field value contains `/`.
-
-    *2d1. CareBook rejects the command and shows the correct format and slash restriction.
-
-        Use case resumes at step 1.
-
-*2e. Another active or archived contact has the same patient phone number or non-empty patient email.
-
-    *2e1. CareBook shows `Someone with this patient HP or email already exists in CareBook.` and does not add the contact.
-
-        Use case resumes at step 1.
-
-*2f. Another contact has the same normalized name and address, with distinct patient contact details.
-
-    *2f1. CareBook shows `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.`
-
-        Use case resumes at step 1.
 
 **Use case: Delete a person**
 
@@ -1304,8 +1287,8 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 4. CareBook accepts any command-word or `/delete` option case and ignores extra spaces between arguments. For scheduling, it checks archive status before
    date/time validity, then checks for a booking conflict among active contacts.
 5. CareBook updates or removes the appointment and its mark as appropriate, refreshes the contact card
-   and selected details, and saves the updated contact list.
-6. CareBook displays a confirmation.
+   and saves the updated contact list.
+6. CareBook displays a confirmation and closes any selected details panel.
 
     Use case ends.
 

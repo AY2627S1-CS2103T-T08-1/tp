@@ -113,6 +113,10 @@ LogicManager -> Storage : saveAddressBook(addressBook)
 activate Storage
 Storage --> LogicManager
 deactivate Storage
+LogicManager -> Model : selectPerson(null)
+activate Model
+Model --> LogicManager
+deactivate Model
 [<-- LogicManager : CommandResult
 deactivate LogicManager
 @enduml
