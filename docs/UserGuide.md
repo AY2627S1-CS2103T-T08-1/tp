@@ -289,8 +289,8 @@ Format: `view INDEX`
 * Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
 * The details panel also shows the checkup appointment and all numbered remarks (`None` if absent).
   An active contact without an appointment shows `Not scheduled`; an archived contact without one
-  omits the appointment field. A scheduled appointment has a separate `Checkup status: Marked` or
-  `Checkup status: Unmarked` line. After updating a contact, use `view INDEX` again to see its updated details.
+  omits the appointment field. A scheduled appointment has a separate `Checkup status: [X]` or
+  `Checkup status: [ ]` line. After updating a contact, use `view INDEX` again to see its updated details.
 * After filtering or sorting, use the index in the list currently on screen. For example,
   `filter /tag HIGH`, `sort name desc`, then `view 1` selects the first contact in those sorted results.
 * Any successful command other than `view` closes the details panel and removes the selected border.
@@ -371,10 +371,10 @@ Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX /delete`
 * Archived contacts cannot be given a new appointment or have an appointment rescheduled. Unarchive the contact first.
 * Two contacts can share the exact same appointment date and time **only if their family HP numbers match**.
   Booking checks include active contacts outside the displayed list. Archived contacts do not reserve a slot.
-* Scheduling a checkup shows the date and time followed by `(Unmarked)` on the person's card.
-  Marking it with `mark INDEX` changes the status to `(Marked)`; `unmark INDEX` restores `(Unmarked)`.
+* Scheduling a checkup shows the date and time followed by `[ ]` on the person's card.
+  Marking it with `mark INDEX` changes the status to `[X]`; `unmark INDEX` restores `[ ]`.
   This row wraps independently of the name so long names do not hide the status.
-  Replacing the appointment resets its status to `Unmarked`. Setting the same appointment again preserves its status.
+  Replacing the appointment resets its status to `[ ]`. Setting the same appointment again preserves its status.
 * `checkup INDEX /delete` removes the appointment and its status. The appointment row disappears entirely
   from the person card. `/delete` is case-insensitive.
 * Other contact details are preserved, and appointment changes are saved automatically.
@@ -407,7 +407,7 @@ Format: `mark INDEX`
 
 * The index refers to the index number shown in the displayed person list and **must be a positive integer**.
 * The contact must have a scheduled appointment and must not already be marked.
-* Changes the appointment status on the contact card from `(Unmarked)` to `(Marked)`.
+* Changes the appointment status on the contact card from `[ ]` to `[X]`.
 * The appointment date/time and other contact details stay unchanged. The mark is saved automatically.
 * The command is case-insensitive: `mark`, `Mark` and `MARK` work. Surrounding spaces are ignored.
 * Uses the current displayed list, including search results, filtered or sorted lists and `list archive`.
@@ -432,7 +432,7 @@ Format: `unmark INDEX`
 
 * The index refers to the index number shown in the displayed person list and **must be a positive integer**.
 * The contact must have a scheduled appointment that is currently marked.
-* Changes the appointment status on the contact card from `(Marked)` to `(Unmarked)`.
+* Changes the appointment status on the contact card from `[X]` to `[ ]`.
 * The appointment date/time and other contact details stay unchanged. The change is saved automatically.
 * The command is case-insensitive: `unmark`, `Unmark` and `UNMARK` work. Surrounding spaces are ignored.
 * Uses the current displayed list, including search results, filtered or sorted lists and `list archive`.
@@ -448,7 +448,7 @@ Example:
 | --- | --- | --- |
 | Missing, non-numeric, non-positive or out-of-range index, or extra arguments | `Invalid index.` | Give one positive index shown in the current list. |
 | The contact has no appointment | `Contacts with no checkup appointments cannot be unmarked.` | Select a contact with a marked appointment. |
-| The appointment is already unmarked | `Unmarked contact cannot be unmarked again.` | Select a contact whose appointment shows `(Marked)`. |
+| The appointment is already unmarked | `Unmarked contact cannot be unmarked again.` | Select a contact whose appointment shows `[X]`. |
 
 ### Keeping care notes on a person: `remark`
 

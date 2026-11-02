@@ -104,16 +104,16 @@ public class PersonCardTest {
     @Test
     public void getCheckupAppointmentText_formatsAppointmentAndOmitsAbsentAppointment() {
         assertEquals("", PersonCard.getCheckupAppointmentText(new PersonBuilder().build()));
-        assertEquals("Checkup appointment: 01/01/2030 09:05 (Unmarked)", PersonCard.getCheckupAppointmentText(
+        assertEquals("Checkup appointment: 01/01/2030 09:05 [ ]", PersonCard.getCheckupAppointmentText(
                 new PersonBuilder().withCheckupAppointment("01/01/2030 09:05").build()));
     }
 
     @Test
     public void getCheckupAppointmentText_markAndUnmark_showsCurrentStatus() {
         Person scheduled = new PersonBuilder().withCheckupAppointment("01/01/2030 09:05").build();
-        assertEquals("Checkup appointment: 01/01/2030 09:05 (Marked)",
+        assertEquals("Checkup appointment: 01/01/2030 09:05 [X]",
                 PersonCard.getCheckupAppointmentText(scheduled.withMarkedCheckup()));
-        assertEquals("Checkup appointment: 01/01/2030 09:05 (Unmarked)",
+        assertEquals("Checkup appointment: 01/01/2030 09:05 [ ]",
                 PersonCard.getCheckupAppointmentText(scheduled.withMarkedCheckup().withUnmarkedCheckup()));
     }
 
@@ -137,7 +137,7 @@ public class PersonCardTest {
             container.resize(wideWidth / 2, 450);
             container.layout();
             assertEquals(scheduled.getName().fullName, name.getText());
-            assertEquals("Checkup appointment: 01/01/2030 09:05 (Marked)", appointment.getText());
+            assertEquals("Checkup appointment: 01/01/2030 09:05 [X]", appointment.getText());
             assertTrue(appointment.isWrapText());
             assertTrue(showsFullText(appointment));
             assertTrue(appointment.getHeight() > singleLineHeight);

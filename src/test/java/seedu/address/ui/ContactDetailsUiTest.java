@@ -250,11 +250,11 @@ public class ContactDetailsUiTest {
         withWindow(window -> {
             window.enter("checkup 1 01/01/2099 09:30");
             window.enter("view 1");
-            assertTrue(window.detailsText().getText().contains("\nCheckup status: Unmarked\n"));
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: [ ]\n"));
             window.enter("mark 1");
             assertFalse(window.detailsPanel().isVisible());
             window.enter("view 1");
-            assertTrue(window.detailsText().getText().contains("\nCheckup status: Marked\n"));
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: [X]\n"));
             String longName = "Muhammad Abdul Rahman bin Abdullah Al Hakeem Al Mahmood";
             window.enter("edit 1 /name " + longName);
             window.enter("view 1");
@@ -263,14 +263,14 @@ public class ContactDetailsUiTest {
             assertEquals("Selected contact: " + longName, window.title().getText());
             assertTrue(window.title().isWrapText());
             assertTrue(showsFullText(window.title()));
-            assertTrue(window.detailsText().getText().contains("\nCheckup status: Marked\n"));
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: [X]\n"));
             Label appointment = window.appointmentRow();
-            assertEquals("Checkup appointment: 01/01/2099 09:30 (Marked)", appointment.getText());
+            assertEquals("Checkup appointment: 01/01/2099 09:30 [X]", appointment.getText());
             assertTrue(appointment.isWrapText());
             assertTrue(showsFullText(appointment));
             window.enter("unmark 1");
             window.enter("view 1");
-            assertTrue(window.detailsText().getText().contains("\nCheckup status: Unmarked\n"));
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: [ ]\n"));
             window.enter("checkup 1 /delete");
             window.enter("view 1");
             assertTrue(window.detailsText().getText().contains("Checkup appointment: Not scheduled"));

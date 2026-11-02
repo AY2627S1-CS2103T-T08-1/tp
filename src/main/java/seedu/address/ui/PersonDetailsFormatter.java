@@ -44,7 +44,7 @@ final class PersonDetailsFormatter {
      */
     private static String formatAppointment(Person person) {
         return person.getCheckupAppointment().map(appointment -> appointment
-                + "\nCheckup status: " + (person.isCheckupMarked() ? "Marked" : "Unmarked")).orElse("Not scheduled");
+                + "\nCheckup status: " + (person.isCheckupMarked() ? "[X]" : "[ ]")).orElse("Not scheduled");
     }
 
     /**
