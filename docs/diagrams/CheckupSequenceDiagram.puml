@@ -26,7 +26,7 @@ activate Parser
 
 note right of Parser
   Normalize whitespace and parse INDEX.
-  Recognise a date/time or delete.
+  Recognise a date/time or /delete.
   Missing arguments or invalid index syntax
   cause a ParseException.
 end note

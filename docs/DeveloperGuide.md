@@ -206,10 +206,10 @@ stop before the model is changed; their messages are described below.
 <puml src="diagrams/AddSequenceDiagram.puml" alt="Sequence of validating, adding and saving a new contact" />
 
 1. `AddCommandParser` creates the validated `Person` and an `AddCommand` containing it.
-1. `AddCommand` calls `Model#hasPerson()` to check for a duplicate. A duplicate patient phone or email
-   produces `AddCommand.MESSAGE_DUPLICATE_PERSON`: `This person already exists in CareBook.`
+1. `AddCommand` calls `requireNoDuplicate()` against the stored contacts to check for a duplicate. A duplicate patient phone or email
+   produces `AddCommand.MESSAGE_DUPLICATE_PERSON`: `Someone with this patient HP or email already exists in CareBook.`
 1. A same-name, same-address conflict without a duplicate patient phone or email instead produces
-   `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+   `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.`
 1. Otherwise, `Model#addPerson()` adds the contact and restores the active list. The command returns the
    new contact's details in a `CommandResult`.
 1. `AddCommand#modifiesData()` returns `true`, so `LogicManager` saves the updated address book through
@@ -378,7 +378,7 @@ For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edi
 ### Checkup appointments
 
 The `checkup INDEX dd/mm/yyyy HH:mm` command sets or replaces an appointment for a displayed contact.
-`checkup INDEX delete` removes it. The command word and `delete` keyword are case-insensitive.
+`checkup INDEX /delete` removes it. The command word and `/delete` option are case-insensitive.
 
 #### Parsing and validation
 
@@ -532,7 +532,7 @@ would be too long cause a `CommandException`. In each case the person is unchang
 
 The `find` command searches names using `find INPUT`, or one selected field using `find /CRITERION INPUT`.
 The command word and criterion are case-insensitive. Supported criteria are `/name`, `/patientNo`,
-`/familyNo`, `/address`, `/pEmail`, `/fEmail`, `/email` (either email) and `/tag`.
+`/familyNo`, `/address`, `/pEmail`, `/fEmail`, `/email` (either email), `/tag` and `/remark`.
 It changes the displayed contacts and returns the match count without modifying stored contacts.
 
 #### Parsing and phrase matching
@@ -547,11 +547,13 @@ not as separate alternative keywords. Text matching uses case-insensitive substr
 * `find alex david` does not return `Alex Yeoh` and `David Li` separately; the name must contain
   `alex david` together in that order.
 * Single substrings still work: `find dy` matches `Brandy`. `/name` uses the same phrase semantics.
+* `/remark` matches a phrase within any one care note, ignoring case and repeated whitespace. Separate
+  notes are not joined, and displayed note numbers are not searched.
 * Phone searches require one sequence of at least two digits and match consecutive digits:
   `87` matches `900087000`, but not `89700000`. Spaces within a phone number are rejected.
 
 `PersonContainsKeywordsPredicate#test()` selects the requested field before matching. Missing optional
-emails or tags do not match. Leading and trailing whitespace never creates an additional search term.
+emails, tags or remarks do not match. Leading and trailing whitespace never creates an additional search term.
 
 #### Search scope and execution
 
@@ -572,62 +574,26 @@ between active and archive scope. Helper calls and UI updates are omitted for cl
 1. `AddressBookParser#parseCommand()` recognises `find` and delegates to `FindCommandParser`.
 1. The parser validates one syntax, normalizes the search phrase and creates the corresponding predicate
    and `FindCommand`.
-1. `FindCommand#execute()` checks the model's list scope, selects the corresponding active or archived
-   base predicate, then calls `Model#filterPersonsInCurrentList()` with the search predicate.
-1. The model combines the scope and search predicates, updates the observable list and clears selection
-   if the selected contact no longer appears. The UI updates the contact cards.
+1. `FindCommand#execute()` calls `Model#filterPersonsInCurrentList()` with the search predicate.
+1. `ModelManager` uses its `archiveScope` boolean to combine the scope and search predicates, then updates
+   the observable list. List switches call `Model#setArchiveScope(boolean)` explicitly; scope is never
+   inferred from predicate identity. The UI updates the contact cards.
 1. The command uses `Model#getFilteredPersonList().size()` to format
    `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` in a `CommandResult`.
-1. `FindCommand#modifiesData()` returns `false`, so `LogicManager` skips saving.
+1. `FindCommand#modifiesData()` returns `false`, so `LogicManager` skips saving and clears the selected
+   contact through `Model#selectPerson(null)`, closing the details panel.
 
 **Error handling:** Empty input, missing criterion input, multiple criteria, invalid phone input and mixed
 syntax such as `find Alice /address A` cause a `ParseException`. Mixed syntax uses the same invalid-format
 response as bare `find`, including `Use either find KEYWORD or find /CRITERION INPUT.` and the supported
 criteria. An unknown criterion reports `Unknown criterion: /...`. Parsing errors leave stored contacts,
 selection and the current display unchanged. A valid search with no matches instead succeeds, displays
-an empty list and reports `0 person(s) listed!` without losing its active or archive scope.
+an empty list and reports `0 person(s) listed!` followed by
+`Use 'list archive' to search through archived contacts`, without losing its active or archive scope.
 
 **Design consideration:** Passing one normalized phrase to the existing predicate classes preserves partial
 matching while preventing multiword input from matching unrelated contacts one word at a time. Retaining
 scope in the model keeps archive searches reliable even when the current results are empty.
-
-The `find /CRITERION INPUT` command searches one selected contact field and returns the number of
-matches in the result box. Supported criteria are `/name`, `/patientNo`, `/familyNo`, `/address`,
-`/pEmail`, `/fEmail`, `/email` (either email), and `/tag`. Text searches match any whitespace-separated
-keyword as a case-insensitive substring. Phone searches require one sequence of at least two digits and
-match those digits consecutively: `87` matches `900087000`, but not `89700000`.
-It searches all stored contacts and changes the display filter without modifying stored contacts.
-
-The  `find KEYWORD [MORE_KEYWORDS]...` command only does name searches, of which any name matching
-the case-insensitive substring is given.
-
-The sequence diagram below shows a successful `find /patientNo 87` command. A successful search may
-return zero matches. It focuses on parsing and execution; helper calls and UI updates are omitted for clarity.
-
-<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find /patientNo 87 command" />
-
-1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises
-   `find` and creates a `FindCommandParser`.
-2. `FindCommandParser#parse()` extracts the slash-prefixed criterion and validates the input. It creates a
-   `PersonContainsKeywordsPredicate` containing the criterion and keywords, then a `FindCommand` using that
-   predicate. Legacy name searches continue to use `NameContainsKeywordsPredicate`.
-3. `FindCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)` to replace the search criteria
-   within the selected active or archive scope. `ModelManager` stores this scope as a boolean; list switches
-   call `Model#setArchiveScope(boolean)` explicitly, so filtering never infers scope from predicate identity.
-   `PersonContainsKeywordsPredicate#test()` selects the requested field and checks for matching substrings.
-   Absent optional emails or tags do not match. The UI observes the filtered list and updates the contact cards.
-4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
-   `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
-5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
-   `MainWindow` displays the returned feedback in `ResultDisplay`.
-
-**Error handling:** Missing or whitespace-only input, an unknown slash-prefixed criterion, multiple criteria,
-or phone input other than a single sequence of at least two digits causes `FindCommandParser#parse()` to
-throw a `ParseException` with the command usage. This leaves stored contacts and the display filter unchanged.
-A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
-Use `list` to display all active (unarchived) contacts again after a successful search.
-Use `list archive` to display all archived contacts.
-
 
 ### Delete command
 
@@ -944,14 +910,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 2c. An active or archived contact has the same patient phone number or non-empty patient email, ignoring email case.
 
-    * 2c1. CareBook shows `This person already exists in CareBook.` and does not add the person.
+    * 2c1. CareBook shows `Someone with this patient HP or email already exists in CareBook.` and does not add the person.
 
       Use case resumes at step 1.
 
 * 2d. Another contact has the same normalized name and address, but distinct patient contact details.
 
     * 2d1. CareBook compares the address ignoring case and whitespace, then shows
-      `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+      `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.`
 
       Use case resumes at step 1.
 
@@ -969,13 +935,13 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 *2e. Another active or archived contact has the same patient phone number or non-empty patient email.
 
-    *2e1. CareBook shows `This person already exists in CareBook.` and does not add the contact.
+    *2e1. CareBook shows `Someone with this patient HP or email already exists in CareBook.` and does not add the contact.
 
         Use case resumes at step 1.
 
 *2f. Another contact has the same normalized name and address, with distinct patient contact details.
 
-    *2f1. CareBook shows `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+    *2f1. CareBook shows `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.`
 
         Use case resumes at step 1.
 
@@ -1255,7 +1221,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 3. User requests to find contacts by a keyword or one criterion: name, patient phone,
    family phone, address, patient email, family email, either email, priority tag or remark.
 4. CareBook validates the command format and criterion ignoring case, trims surrounding
-   whitespace and truncates trailing spaces in text input.
+   whitespace and collapses repeated whitespace in text input.
 5. CareBook searches the selected list scope for a case-insensitive substring matching the whole input phrase.
    A remark search matches within an individual care note; phone input matches consecutive digits.
 6. CareBook displays matching contact cards and the match count without changing stored contacts.
@@ -1284,7 +1250,8 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 * 5a. No contacts match the search phrase in the selected scope.
 
-    * 5a1. CareBook displays an empty list and reports `0 person(s) listed!`.
+    * 5a1. CareBook displays an empty list and reports `0 person(s) listed!` followed by
+      `Use 'list archive' to search through archived contacts`.
 
       Use case ends.
 
@@ -1694,7 +1661,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Mark contact 1, then assign the same appointment again; next run `checkup 1 DATE 15:30`.<br>
       Expected: The identical appointment preserves `[X]`. The changed appointment resets it to `[ ]`.
 
-   1. Test case: `checkup 1 delete`, then repeat the command.<br>
+   1. Test case: `checkup 1 /delete`, then repeat the command.<br>
       Expected: The first command removes the appointment row and mark indicator entirely. The second
       reports `This contact has no checkup appointment to delete.` without changing the contact.
 
