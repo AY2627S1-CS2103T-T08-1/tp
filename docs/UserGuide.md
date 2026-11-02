@@ -64,6 +64,9 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
 * After `add`, `edit`, `archive`, `unarchive` and `delete`, the success message shows the contact's details, including the checkup appointment (if any) and the remark (if any).
 
+* All command words are case-insensitive: for example, `list`, `LIST` and `LiSt` work identically.
+  Prefixes and arguments follow the case rules described for each command.
+
 * The `help`, `clear`, and `exit` commands reject extra parameters; enter these commands on their own.<br>
   For example, `help 123` will be rejected. The `list` command accepts only the optional `archive` argument.
 
@@ -214,9 +217,8 @@ Format: `list` or `list archive`
 | --- | --- | --- |
 | `list 3` | `Invalid command format. List command format: list [archive]` | Remove the index. Use `list` to show all persons. |
 | `list Alice` or `list n/Alice` | `Invalid command format. List command format: list [archive]` | Use `find Alice` to search by name, or `list` to show all persons. |
-| `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
 
-The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word `list` remains lowercase. Leading and trailing spaces are allowed.
+The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word is also case-insensitive: `list`, `LIST` and `LiSt` all work, as does `LIST ARCHIVE`. Leading and trailing spaces are allowed.
 If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
 If no contacts have been archived, `list archive` displays an empty list. `list` also clears any `sort`, so persons are 
@@ -274,7 +276,7 @@ Format: `view INDEX`
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
-* Type the command word in lowercase: `View 1` is not recognised.
+* The command word is case-insensitive: `view 1`, `View 1` and `VIEW 1` all work.
 * Each successful `view INDEX` scrolls to its contact, even if that contact is already selected.
 * The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
   Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
@@ -515,7 +517,7 @@ Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases. Extra spaces are ignored, so `/address clementi ave` also finds an address saved as `5 Clementi  Ave 3`.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
-* The command word `filter` and the prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
+* The command word is case-insensitive: `filter`, `Filter` and `FILTER` all work. The prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
 * When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
@@ -579,7 +581,6 @@ Format: `clear`
 
 * The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
-* Type the command word in lowercase: `Clear` and `CLEAR` are not recognised.
 * Works even if the displayed list is already empty.
 * Use `list` to show all active contacts again, or `list archive` to show archived contacts.
   You can also use `find KEYWORD` to search within the current active or archive list.
@@ -602,7 +603,7 @@ Exits the program.
 
 Format: `exit`
 
-Type the command word in lowercase: `Exit` and `EXIT` are not recognised. Surrounding whitespace
+The command word is case-insensitive: `exit`, `Exit` and `EXIT` all work. Surrounding whitespace
 is allowed. Extra arguments are rejected to prevent accidental exits:
 `exit Alice` or `exit 1` leaves CareBook open without changing any contacts and shows:
 
