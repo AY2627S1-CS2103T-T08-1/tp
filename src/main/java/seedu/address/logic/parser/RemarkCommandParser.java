@@ -17,6 +17,12 @@ import seedu.address.model.person.Remark;
 public class RemarkCommandParser implements Parser<RemarkCommand> {
 
     public static final String MESSAGE_INVALID_NOTE_NUMBER = "Note number must be a positive integer.";
+    public static final String MESSAGE_EDIT_FORMAT = "Give the number of the note to edit and its new text "
+            + "after /edit, e.g. remark %1$d /edit 2 Visits after 4pm.";
+    public static final String MESSAGE_DELETE_FORMAT = "Give only the number of the note to delete after /delete, "
+            + "e.g. remark %1$d /delete 2.";
+    public static final String MESSAGE_CLEAR_FORMAT = "/clear takes nothing after it. To delete all of this "
+            + "contact's notes, enter: remark %1$d /clear";
 
     /** Matches a whole number with an optional minus sign, which is what an attempted index looks like. */
     private static final String INTEGER_REGEX = "-?\\d+";
@@ -54,22 +60,27 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     }
 
     private static RemarkCommand parseClear(Index personIndex, String rest) throws ParseException {
-        requireNothingAfter(rest);
+        if (!rest.isEmpty()) {
+            throw withPersonIndex(MESSAGE_CLEAR_FORMAT, personIndex);
+        }
         return RemarkCommand.clear(personIndex);
     }
 
     private static RemarkCommand parseDelete(Index personIndex, String rest) throws ParseException {
-        FirstWordAndRest noteNumberAndRest = splitFirstWord(rest);
-        requireNothingAfter(noteNumberAndRest.rest());
+        FirstWordAndRest noteNumberAndRest = splitOffFirstWord(rest);
+        if (noteNumberAndRest.firstWord().isEmpty() || !noteNumberAndRest.rest().isEmpty()) {
+            throw withPersonIndex(MESSAGE_DELETE_FORMAT, personIndex);
+        }
         return RemarkCommand.delete(personIndex, parseNoteIndex(noteNumberAndRest.firstWord()));
     }
 
     private static RemarkCommand parseEdit(Index personIndex, String rest) throws ParseException {
-        FirstWordAndRest noteNumberAndNote = splitFirstWord(rest);
-        Index noteIndex = parseNoteIndex(noteNumberAndNote.firstWord());
+        // an empty rest also has an empty note, so this covers a missing note number too
+        FirstWordAndRest noteNumberAndNote = splitOffFirstWord(rest);
         if (noteNumberAndNote.rest().isEmpty()) {
-            throw invalidFormat();
+            throw withPersonIndex(MESSAGE_EDIT_FORMAT, personIndex);
         }
+        Index noteIndex = parseNoteIndex(noteNumberAndNote.firstWord());
         return RemarkCommand.edit(personIndex, noteIndex, parseNote(noteNumberAndNote.rest()));
     }
 
@@ -78,17 +89,24 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
      * @throws ParseException if {@code text} has no words
      */
     private static FirstWordAndRest splitFirstWord(String text) throws ParseException {
-        String[] parts = text.strip().split("\\s+", 2);
-        if (parts[0].isEmpty()) {
+        FirstWordAndRest firstWordAndRest = splitOffFirstWord(text);
+        if (firstWordAndRest.firstWord().isEmpty()) {
             throw invalidFormat();
         }
+        return firstWordAndRest;
+    }
+
+    /**
+     * Returns {@code text} split into its first word and the rest, both empty if {@code text} has no words.
+     */
+    private static FirstWordAndRest splitOffFirstWord(String text) {
+        String[] parts = text.strip().split("\\s+", 2);
         return new FirstWordAndRest(parts[0], parts.length > 1 ? parts[1] : "");
     }
 
-    private static void requireNothingAfter(String rest) throws ParseException {
-        if (!rest.isEmpty()) {
-            throw invalidFormat();
-        }
+    /** Returns an exception with {@code message}, whose example uses the index the user typed. */
+    private static ParseException withPersonIndex(String message, Index personIndex) {
+        return new ParseException(String.format(message, personIndex.getOneBased()));
     }
 
     private static Index parseNoteIndex(String noteNumber) throws ParseException {

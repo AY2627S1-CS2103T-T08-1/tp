@@ -79,6 +79,12 @@ public class RemarkTest {
     }
 
     @Test
+    public void withNoteChanges_nullNote_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> TWO_NOTES.withNoteAdded(null));
+        assertThrows(NullPointerException.class, () -> TWO_NOTES.withNoteReplaced(Index.fromOneBased(1), null));
+    }
+
+    @Test
     public void getNumberedNotes() {
         assertEquals(List.of("1. Allergic to penicillin", "2. Visits after 3pm"), TWO_NOTES.getNumberedNotes());
         assertEquals(List.of(), Remark.EMPTY.getNumberedNotes());

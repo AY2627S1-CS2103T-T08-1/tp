@@ -226,6 +226,48 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_failedSaveOfAddInArchiveList_staysInArchiveList() {
+        model.setArchiveScope(true);
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        // a successful add shows the active list, so the failed add must switch back
+        assertThrows(CommandException.class, () -> logic.execute(PersonUtil.getAddCommand(AMY)));
+
+        assertTrue(model.isShowingArchiveList());
+        assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void execute_failedSaveAfterEditInSearch_keepsEditedPersonShown() throws Exception {
+        model.addPerson(AMY);
+        model.addPerson(BOB);
+        logic.execute("find Amy");
+        logic.execute("edit 1 /name Zulu");
+        List<Person> shownPersons = List.copyOf(model.getFilteredPersonList());
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        assertThrows(CommandException.class, () -> logic.execute("remark 1 Likes tea"));
+
+        // Zulu no longer matches the search, but stays shown as it was before the failed remark
+        assertEquals(shownPersons, model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_failedSaveAfterEditInSortedList_keepsIndices() throws Exception {
+        model.addPerson(AMY);
+        model.addPerson(BOB);
+        logic.execute("sort name");
+        logic.execute("edit 1 /name Zulu");
+        List<Person> shownPersons = List.copyOf(model.getFilteredPersonList());
+        logic = new LogicManager(model, createStorageThatFailsToSave());
+
+        assertThrows(CommandException.class, () -> logic.execute("remark 1 Likes tea"));
+
+        // Zulu sorts after Bob, but keeps index 1 as it did before the failed remark
+        assertEquals(shownPersons, model.getFilteredPersonList());
+    }
+
+    @Test
     public void execute_clear_doesNotCreateDataFile() throws Exception {
         model.addPerson(AMY);
 

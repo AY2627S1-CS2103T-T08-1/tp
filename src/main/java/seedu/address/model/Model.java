@@ -41,6 +41,12 @@ public interface Model {
      */
     void setAddressBook(ReadOnlyAddressBook addressBook);
 
+    /**
+     * Returns an action that puts the address book and the displayed list, including its scope, search and order,
+     * back to how they are now, and clears the selection.
+     */
+    Runnable createRestorePoint();
+
     /** Returns the AddressBook */
     ReadOnlyAddressBook getAddressBook();
 

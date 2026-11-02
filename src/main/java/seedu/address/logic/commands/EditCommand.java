@@ -118,20 +118,7 @@ public class EditCommand extends Command {
         List<Person> otherPersons = model.getAddressBook().getPersonList().stream()
                 .filter(person -> !person.equals(personToEdit)).toList();
 
-        Optional<Person> sameContactDetails = otherPersons.stream()
-                .filter(editedPerson::hasSamePatientContactDetails).findFirst();
-        if (sameContactDetails.isPresent()) {
-            logger.fine("Edit rejected: patient contact details already exist");
-            throw new CommandException(Messages.withArchivedHint(MESSAGE_DUPLICATE_PERSON, sameContactDetails.get()));
-        }
-
-        Optional<Person> sameNameAndAddress = otherPersons.stream()
-                .filter(editedPerson::hasSameNameAndAddress).findFirst();
-        if (sameNameAndAddress.isPresent()) {
-            logger.fine("Edit rejected: another contact has the same name and address");
-            throw new CommandException(
-                    Messages.withArchivedHint(Person.MESSAGE_NAME_ADDRESS_CONFLICT, sameNameAndAddress.get()));
-        }
+        AddCommand.requireNoDuplicate(editedPerson, otherPersons);
 
         if (!editedPerson.getFamilyNo().equals(personToEdit.getFamilyNo())
                 && hasBookingClash(editedPerson, otherPersons)) {
