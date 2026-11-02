@@ -668,17 +668,20 @@ parsing and execution; helper calls and UI updates are omitted for clarity.
 1. `LogicManager` checks `DeleteCommand#modifiesData()`, which returns whether the command was confirmed. Only a
    confirmed delete is saved to storage.
 
-**Error handling:** A missing, non-numeric or non-positive index, or any other extra argument, causes
-`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. An index larger than the displayed
-list causes `DeleteCommand#execute()` to throw a `CommandException`. Both leave the stored contacts unchanged.
+**Error handling:** A missing or non-numeric index, or any other extra argument, causes
+`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. A zero or negative index causes it
+to throw a `ParseException` with the message `Index must be a positive integer.` An empty displayed list, or an index
+larger than the displayed list, causes `DeleteCommand#execute()` to throw a `CommandException`. All of these leave the
+stored contacts unchanged.
 
 
 ### Filter command
 
 The `filter` command narrows the displayed list to contacts matching all of the given criteria: `/name`, `/tag` and
 `/address`. Within one criterion, matching any one of the values is enough, and a contact must satisfy every criterion
-that was given. Matching ignores case. A filter applies to the list currently shown, so it keeps the active or archived
-scope, and it does not modify the stored contacts.
+that was given. Matching ignores case. A filter keeps the active or archived scope currently shown, and it does not
+modify the stored contacts. It searches the whole scope, not only the contacts currently displayed, so it replaces an
+earlier `filter` or `find` instead of narrowing it.
 
 The sequence diagram below shows a successful `filter /tag HIGH` command. It focuses on parsing and execution; helper
 calls and UI updates are omitted for clarity.
@@ -700,7 +703,8 @@ calls and UI updates are omitted for clarity.
 1. `FilterCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)`. This combines the predicate with the
    scope of the list currently shown (active contacts after `list`, archived contacts after `list archive`), so the
    filtered list only contains persons in that scope who match the criteria. The scope is kept even when nothing
-   matches, and `find` switches back to active contacts.
+   matches, and a later `find` also stays in that scope. `filterPersonsInCurrentList` combines the new predicate
+   only with the scope predicate, not with the previous one, so a later `find` replaces the filter.
 1. The command calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult`
    with the "N person(s) listed!" message.
 1. `LogicManager` checks `FilterCommand#modifiesData()`, which returns `false`, and skips saving.
