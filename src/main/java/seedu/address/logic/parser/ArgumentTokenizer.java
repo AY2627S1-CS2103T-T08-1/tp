@@ -48,6 +48,13 @@ public class ArgumentTokenizer {
 
         for (int index = argsString.indexOf('/'); index >= 0; index = argsString.indexOf('/', index + 1)) {
             if (!validSlashPositions.contains(index)) {
+                if ((index == 0 || Character.isWhitespace(argsString.charAt(index - 1)))
+                        && index + 1 < argsString.length() && argsString.charAt(index + 1) != '/'
+                        && !Character.isWhitespace(argsString.charAt(index + 1))) {
+                    String prefix = argsString.substring(index).split("\\s+", 2)[0];
+                    throw new ParseException("Unknown criterion: " + prefix + "\n"
+                            + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
+                }
                 throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
             }
         }
