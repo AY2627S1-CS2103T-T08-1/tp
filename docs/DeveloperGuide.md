@@ -13,7 +13,13 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* CareBook is developed from [AddressBook-Level3](https://github.com/se-edu/addressbook-level3).
+* **AI assistance:** [@graceqian06](https://github.com/graceqian06) used
+  [OpenAI Codex](https://developers.openai.com/codex/) extensively for the `view`, `clear` and `exit`
+  features and their supporting UI. Assistance included generating and refining implementation code,
+  proposing and writing regression tests, debugging, refactoring, preliminary code reviews, and
+  drafting and revising the related User Guide, Developer Guide and PlantUML documentation.
+  This entry describes her use; other team members are responsible for declaring their own AI use.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -290,9 +296,10 @@ details to the list without treating a changing list index as a permanent contac
 
 ### Clearing the display and exiting
 
-`AddressBookParser#parseCommand()` recognises the lowercase `clear` and `exit` command words and
-rejects non-blank arguments before creating their command objects. Other letter-case variants are
-unknown commands. A parse error leaves the display and stored contacts unchanged.
+`AddressBookParser#parseCommand()` normalises the `clear` command word ignoring case, so `clear`,
+`Clear` and `CLEAR` create the same command. The `exit` command word is lowercase-only; `Exit`
+and `EXIT` are unknown commands. Both commands reject non-blank arguments before their command
+objects are created. A parse error leaves the display and stored contacts unchanged.
 
 `ClearCommand#execute()` calls `Model#updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS)`.
 The predicate hides every contact in the current display but does not remove any from the address
@@ -901,6 +908,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | user                                       | edit a contact's details | keep phone numbers, emails and addresses up to date when they change |
 | `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
+| `* *`    | caregiver                                  | temporarily hide displayed contact information | keep patient details out of sight without deleting saved records |
+| `* *`    | caregiver                                  | close CareBook with a typed command | finish a session without switching to the mouse |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
 | `* *`    | user                                       | filter contacts by name, tag and address | focus on the patients I need to look after right now |
 | `* *`    | user                                       | sort contacts by name, priority or when they were added | see the most urgent or most recent patients first |
@@ -1482,9 +1491,14 @@ testers are expected to do more *exploratory* testing.
 1. Enter `list`, then `view 1` again.<br>
    Expected: Both contacts return and the first contact can be selected. `list` does not reselect
    the previously selected contact by itself.
-1. Enter `clear 1`, then `Clear`.<br>
-   Expected: The first command reports the `clear` usage; the second is an unknown command.
-   The displayed contacts stay unchanged.
+1. Enter `clear 1`.<br>
+   Expected: The command reports the `clear` usage. The displayed contacts and selection stay unchanged.
+1. Enter `Clear`, then `list`.<br>
+   Expected: `Clear` hides the list, highlight and details panel without deleting contacts.
+   `list` restores both active contacts without selecting either one.
+1. Enter `CLEAR`, then `list`.<br>
+   Expected: Uppercase `CLEAR` also hides the displayed contacts without deleting them;
+   `list` restores both contacts.
 1. Enter `exit 1`, then `Exit`.<br>
    Expected: The first reports that `exit` takes no arguments; the second is an unknown command.
    The application stays open. Enter lowercase `exit` to close it, then relaunch CareBook and enter
