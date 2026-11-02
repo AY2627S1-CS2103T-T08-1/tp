@@ -78,8 +78,9 @@ public class AddCommandParserTest {
     @Test
     public void parse_malformedPrefixesOrEmbeddedSlashes_failure() {
         String fields = NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB + ADDRESS_DESC_BOB;
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
-        for (String suffix : List.of(" / phone 123", " /", " //")) {
+        String expectedMessage = ArgumentTokenizer.MESSAGE_LONE_SLASH + "\n"
+                + String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+        for (String suffix : List.of(" / phone 123", " /", " //", " / Lim")) {
             assertParseFailure(parser, fields + suffix, expectedMessage);
         }
     }
