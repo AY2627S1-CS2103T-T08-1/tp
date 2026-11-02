@@ -112,7 +112,7 @@ Unknown or mistyped prefixes cause an error and the contact is not added. For ex
 | --- | --- |
 | `NAME` | Must start with a letter or digit. Can contain letters (including accented letters), digits, spaces, hyphens (`-`), apostrophes (`'`), full stops (`.`) and commas (`,`), e.g. `Marie-Ann O'Brien` or `Ravi S. Kumar`. Repeated spaces are stored as one space. `/` is not allowed, so write `s/o` as `s o` or `son of`. |
 | `PATIENT_PHONE`, `FAMILY_PHONE` | Digits only, at least 3 digits, e.g. `91234567`. Spaces, `+` and `-` are not allowed. |
-| `PATIENT_EMAIL`, `FAMILY_EMAIL` | Optional. Must look like `name@example.com`: the part before `@` can contain letters, digits and `+ _ . -` (but cannot start or end with them), and the part after `@` must end with at least 2 letters or digits. |
+| `PATIENT_EMAIL`, `FAMILY_EMAIL` | Optional. Must look like `name@example.com`: the part before `@` can contain letters, digits and `+ _ . -` (but cannot start or end with them, or have two of them in a row), and the part after `@` must end with at least 2 letters or digits. |
 | `ADDRESS` | Any text except `/`, and cannot be blank. |
 | `PRIORITY` | `HIGH`, `MEDIUM` or `LOW`, in any letter case (see [Priority tags](#priority-tags)). |
 
@@ -316,7 +316,7 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * At least one of the optional fields must be provided.
 * Each field follows the [contact field rules](#adding-a-person-add), which also say when two contacts count as the same person.
 * The command word is case-insensitive: `edit`, `Edit` and `EDIT` are accepted. Prefixes must be typed exactly as shown, except `/tag`, which works in any letter case. For example, `/NAME` is not recognised.
-* You cannot change the family HP of a person with a checkup appointment if another active contact has a checkup at the same date and time, since only contacts with the same family HP can share a booking (see [Scheduling a checkup](#scheduling-or-removing-a-checkup-checkup)).
+* You cannot change the family HP of an active person with a checkup appointment if another active contact has a checkup at the same date and time, since only contacts with the same family HP can share a booking (see [Scheduling a checkup](#scheduling-or-removing-a-checkup-checkup)).
 * Existing values will be updated to the input values. Fields you leave out, including both emails, stay as they are.
 * To remove an email, supply `/pEmail` or `/fEmail` without a value.
 * The old `/email` prefix is not accepted. Use `/pEmail` for the patient's email and `/fEmail` for the family member's email.
@@ -457,10 +457,10 @@ Notes:
 
 * The index refers to the index number shown in the displayed person list. The index and note number **must be positive integers** 1, 2, 3, ...
 * The notes appear on the person's card under `Remark:`, numbered 1., 2., 3., ... A person with no notes shows no `Remark:` line.
-* Apart from spaces at the start and end, the note is saved as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note. A note cannot start with `/edit`, `/delete` or `/clear`, because those words straight after the index choose the action.
+* Apart from spaces at the start and end, the note is saved as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note. A note cannot start with the separate word `/edit`, `/delete` or `/clear`, because those words straight after the index choose the action. A note such as `/editing notes` is fine.
 * `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case. The command word `remark` is also case-insensitive.
 * `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
-* A person cannot have the same note twice. Notes that differ only in letter case count as the same note.
+* A person cannot have the same note twice. Notes that differ only in letter case count as the same note, but notes that differ in spacing count as different notes.
 * The list on screen stays as it is. After `find /remark`, the person stays in the results even if the note that matched is changed or deleted.
 * A person's notes can have at most 500 characters in total.
 * `edit` does not change a person's notes.
