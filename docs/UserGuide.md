@@ -579,7 +579,6 @@ Format: `clear`
 
 * The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
-* Type the command word in lowercase: `Clear` and `CLEAR` are not recognised.
 * Works even if the displayed list is already empty.
 * Use `list` to show all active contacts again, or `list archive` to show archived contacts.
   You can also use `find KEYWORD` to search within the current active or archive list.
@@ -657,7 +656,7 @@ Example:
 }
 ```
 
-Commands accept any letter case, but priority strings edited directly in the data file must match exactly, including uppercase letters and no surrounding spaces. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
+Priority values entered through commands accept any letter case, but priority strings edited directly in the data file must match exactly, including uppercase letters and no surrounding spaces. Command-word case sensitivity is stated in the relevant feature sections. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
 
 <box type="warning" seamless>
 
