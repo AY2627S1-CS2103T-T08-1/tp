@@ -222,7 +222,8 @@ Format: `list` or `list archive`
 The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word `list` remains lowercase. Leading and trailing spaces are allowed.
 If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
-If no contacts have been archived, `list archive` displays an empty list. `list` also clears any `sort`, so persons are 
+If no contacts have been archived, `list archive` displays an empty list and shows `No archived contacts`.
+`list` also clears any `sort`, so persons are
 shown in the order they were added.
 
 ### Sorting persons: `sort`
