@@ -586,6 +586,8 @@ response as bare `find`, including `Use either find KEYWORD or find /CRITERION I
 criteria. An unknown criterion reports `Unknown criterion: /...`. Parsing errors leave stored contacts,
 selection and the current display unchanged. A valid search with no matches instead succeeds, displays
 an empty list and reports `0 person(s) listed!` without losing its active or archive scope.
+The command appends `Use 'list archive' to search through archived contacts` in active scope, or
+`Use 'list' to search through active contacts` in archive scope, using `Model#isShowingArchiveList()`.
 
 **Design consideration:** Passing one normalized phrase to the existing predicate classes preserves partial
 matching while preventing multiword input from matching unrelated contacts one word at a time. Retaining

@@ -488,6 +488,8 @@ For `find /CRITERION INPUT`:
 * Searches consider all stored contacts, replacing the current display filter without changing stored data.
   Use `list` to display all contacts again. A search with no matches displays an empty list.
 * To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
+* When no contacts match, active searches append `Use 'list archive' to search through archived contacts`;
+  archive searches append `Use 'list' to search through active contacts`.
 
 
 Examples:
