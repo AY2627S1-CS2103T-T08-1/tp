@@ -119,7 +119,7 @@ Unknown or mistyped prefixes cause an error and the contact is not added. For ex
 | --- | --- |
 | `NAME` | Must start with a letter or digit. Can contain letters (including accented letters), digits, spaces, hyphens (`-`), apostrophes (`'`), full stops (`.`) and commas (`,`), e.g. `Marie-Ann O'Brien` or `Ravi S. Kumar`. Repeated spaces are stored as one space. `/` is not allowed, so write `s/o` as `s o` or `son of`. |
 | `PATIENT_PHONE`, `FAMILY_PHONE` | Digits only, at least 3 digits, e.g. `91234567`. Spaces, `+` and `-` are not allowed. |
-| `PATIENT_EMAIL`, `FAMILY_EMAIL` | Optional. Must look like `name@example.com`: the part before `@` can contain letters, digits and `+ _ . -` (but cannot start or end with them), and the part after `@` must end with at least 2 letters or digits. |
+| `PATIENT_EMAIL`, `FAMILY_EMAIL` | Optional. Must look like `name@example.com`: the part before `@` can contain letters, digits and `+ _ . -` (but cannot start or end with them, or have two of them in a row), and the part after `@` must end with at least 2 letters or digits. |
 | `ADDRESS` | Any text except `/`, and cannot be blank. |
 | `PRIORITY` | `HIGH`, `MEDIUM` or `LOW`, in any letter case (see [Priority tags](#priority-tags)). |
 

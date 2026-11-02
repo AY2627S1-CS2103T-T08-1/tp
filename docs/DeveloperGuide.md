@@ -154,12 +154,12 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 <puml src="diagrams/SaveSequenceDiagram.puml" alt="How LogicManager decides whether to save after a command" />
 
-1. `LogicManager` parses the command text into a `Command`, keeps a copy of the address book, and executes the command.
+1. `LogicManager` parses the command text into a `Command`, calls `Model#createRestorePoint()`, and executes the command. The restore point is a `Runnable` that puts the address book and the displayed list back as they were before the command.
 1. It then calls `modifiesData()` on the command.
-1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. If the save fails, `LogicManager` restores the copy with `Model#setAddressBook` and throws a `CommandException`. The user sees `Could not save data to file ...` (or a message about insufficient permissions), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
+1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. `FileUtil#writeToFile` writes the data to a temporary file in the same folder and then replaces the data file with it, so a write that fails partway leaves the old file unchanged. If the save fails, `LogicManager` runs the restore point and throws a `CommandException`. The user sees `Could not save data to file ...` (or a message about insufficient permissions), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
 1. Otherwise, `LogicManager` only logs that the save was skipped, and the data file is left as it is.
 
-**Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. Restoring the address book also clears the details panel, which is acceptable after an error.
+**Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. The restore point also puts back the displayed list, including the active or archive list, contacts kept shown after `find` or `filter`, and the sort order, so each index still points to the same contact. It clears the details panel, which is acceptable after an error.
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
 
