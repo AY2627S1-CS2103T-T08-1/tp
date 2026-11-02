@@ -8,6 +8,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import seedu.address.logic.commands.FilterCommand;
@@ -18,6 +19,10 @@ import seedu.address.model.person.PersonMatchesFilterPredicate;
  * Parses input arguments and creates a new FilterCommand object
  */
 public class FilterCommandParser implements Parser<FilterCommand> {
+
+    // A filter prefix stuck to the end of a word, e.g. "ali/tag", where the space before the prefix is missing.
+    private static final Pattern PREFIX_WITHOUT_SPACE = Pattern.compile(
+            "(?i)\\S(" + PREFIX_NAME + "|" + PREFIX_TAG + "|" + PREFIX_ADDRESS + ")(\\s|$)");
 
     /**
      * Parses the given {@code String} of arguments in the context of the FilterCommand
@@ -47,7 +52,7 @@ public class FilterCommandParser implements Parser<FilterCommand> {
 
         List<String> nameKeywords = new ArrayList<>();
         for (String value : argMultimap.getAllValues(PREFIX_NAME)) {
-            if (value.isEmpty()) {
+            if (value.isEmpty() || hasPrefixWithoutSpace(value)) {
                 throw invalidFormat();
             }
             nameKeywords.addAll(Arrays.asList(value.split("\\s+")));
@@ -61,7 +66,7 @@ public class FilterCommandParser implements Parser<FilterCommand> {
         }
 
         List<String> addressPhrases = argMultimap.getAllValues(PREFIX_ADDRESS);
-        if (addressPhrases.stream().anyMatch(String::isEmpty)) {
+        if (addressPhrases.stream().anyMatch(phrase -> phrase.isEmpty() || hasPrefixWithoutSpace(phrase))) {
             throw invalidFormat();
         }
 
@@ -82,6 +87,10 @@ public class FilterCommandParser implements Parser<FilterCommand> {
                 .anyMatch(token -> Stream.of(PREFIX_NAME, PREFIX_TAG, PREFIX_ADDRESS)
                         .noneMatch(prefix -> token.regionMatches(true, 0, prefix.getPrefix(), 0,
                                 prefix.getPrefix().length())));
+    }
+
+    private static boolean hasPrefixWithoutSpace(String value) {
+        return PREFIX_WITHOUT_SPACE.matcher(value).find();
     }
 
     private static ParseException invalidFormat() {
