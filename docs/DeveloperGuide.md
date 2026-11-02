@@ -13,7 +13,13 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* CareBook is developed from [AddressBook-Level3](https://github.com/se-edu/addressbook-level3).
+* **AI assistance:** [@graceqian06](https://github.com/graceqian06) used
+  [OpenAI Codex](https://developers.openai.com/codex/) extensively for the `view`, `clear` and `exit`
+  features and their supporting UI. Assistance included generating and refining implementation code,
+  proposing and writing regression tests, debugging, refactoring, preliminary code reviews, and
+  drafting and revising the related User Guide, Developer Guide and PlantUML documentation.
+  This entry describes her use; other team members are responsible for declaring their own AI use.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -293,9 +299,10 @@ details to the list without treating a changing list index as a permanent contac
 
 ### Clearing the display and exiting
 
-`AddressBookParser#parseCommand()` recognises the lowercase `clear` and `exit` command words and
-rejects non-blank arguments before creating their command objects. Other letter-case variants are
-unknown commands. A parse error leaves the display and stored contacts unchanged.
+`AddressBookParser#parseCommand()` normalises the `clear` command word ignoring case, so `clear`,
+`Clear` and `CLEAR` create the same command. The `exit` command word is lowercase-only; `Exit`
+and `EXIT` are unknown commands. Both commands reject non-blank arguments before their command
+objects are created. A parse error leaves the display and stored contacts unchanged.
 
 `ClearCommand#execute()` calls `Model#updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS)`.
 The predicate hides every contact in the current display but does not remove any from the address
@@ -665,17 +672,20 @@ parsing and execution; helper calls and UI updates are omitted for clarity.
 1. `LogicManager` checks `DeleteCommand#modifiesData()`, which returns whether the command was confirmed. Only a
    confirmed delete is saved to storage.
 
-**Error handling:** A missing, non-numeric or non-positive index, or any other extra argument, causes
-`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. An index larger than the displayed
-list causes `DeleteCommand#execute()` to throw a `CommandException`. Both leave the stored contacts unchanged.
+**Error handling:** A missing or non-numeric index, or any other extra argument, causes
+`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. A zero or negative index causes it
+to throw a `ParseException` with the message `Index must be a positive integer.` An empty displayed list, or an index
+larger than the displayed list, causes `DeleteCommand#execute()` to throw a `CommandException`. All of these leave the
+stored contacts unchanged.
 
 
 ### Filter command
 
 The `filter` command narrows the displayed list to contacts matching all of the given criteria: `/name`, `/tag` and
 `/address`. Within one criterion, matching any one of the values is enough, and a contact must satisfy every criterion
-that was given. Matching ignores case. A filter applies to the list currently shown, so it keeps the active or archived
-scope, and it does not modify the stored contacts.
+that was given. Matching ignores case. A filter keeps the active or archived scope currently shown, and it does not
+modify the stored contacts. It searches the whole scope, not only the contacts currently displayed, so it replaces an
+earlier `filter` or `find` instead of narrowing it.
 
 The sequence diagram below shows a successful `filter /tag HIGH` command. It focuses on parsing and execution; helper
 calls and UI updates are omitted for clarity.
@@ -697,7 +707,8 @@ calls and UI updates are omitted for clarity.
 1. `FilterCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)`. This combines the predicate with the
    scope of the list currently shown (active contacts after `list`, archived contacts after `list archive`), so the
    filtered list only contains persons in that scope who match the criteria. The scope is kept even when nothing
-   matches, and `find` switches back to active contacts.
+   matches, and a later `find` also stays in that scope. `filterPersonsInCurrentList` combines the new predicate
+   only with the scope predicate, not with the previous one, so a later `find` replaces the filter.
 1. The command calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult`
    with the "N person(s) listed!" message.
 1. `LogicManager` checks `FilterCommand#modifiesData()`, which returns `false`, and skips saving.
@@ -905,6 +916,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | user                                       | edit a contact's details | keep phone numbers, emails and addresses up to date when they change |
 | `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
+| `* *`    | caregiver                                  | temporarily hide displayed contact information | keep patient details out of sight without deleting saved records |
+| `* *`    | caregiver                                  | close CareBook with a typed command | finish a session without switching to the mouse |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
 | `* *`    | user                                       | filter contacts by name, tag and address | focus on the patients I need to look after right now |
 | `* *`    | user                                       | sort contacts by name, priority or when they were added | see the most urgent or most recent patients first |
@@ -1486,9 +1499,14 @@ testers are expected to do more *exploratory* testing.
 1. Enter `list`, then `view 1` again.<br>
    Expected: Both contacts return and the first contact can be selected. `list` does not reselect
    the previously selected contact by itself.
-1. Enter `clear 1`, then `Clear`.<br>
-   Expected: The first command reports the `clear` usage; the second is an unknown command.
-   The displayed contacts stay unchanged.
+1. Enter `clear 1`.<br>
+   Expected: The command reports the `clear` usage. The displayed contacts and selection stay unchanged.
+1. Enter `Clear`, then `list`.<br>
+   Expected: `Clear` hides the list, highlight and details panel without deleting contacts.
+   `list` restores both active contacts without selecting either one.
+1. Enter `CLEAR`, then `list`.<br>
+   Expected: Uppercase `CLEAR` also hides the displayed contacts without deleting them;
+   `list` restores both contacts.
 1. Enter `exit 1`, then `Exit`.<br>
    Expected: The first reports that `exit` takes no arguments; the second is an unknown command.
    The application stays open. Enter lowercase `exit` to close it, then relaunch CareBook and enter

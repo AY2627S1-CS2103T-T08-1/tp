@@ -488,6 +488,7 @@ For `find /CRITERION INPUT`:
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
 * Contacts without an optional email or tag do not match searches on that absent field.
 * Searches consider all stored contacts, replacing the current display filter without changing stored data.
+  `find` does not search only the results of an earlier `find` or `filter`.
   Use `list` to display all contacts again. A search with no matches displays an empty list.
 * To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
 
@@ -506,14 +507,16 @@ Shows only the persons in the current active or archived list who match all the 
 
 After `list`, `filter` excludes archived contacts. After `list archive`, it searches only archived contacts.
 Each `filter` replaces the previous filter criteria while keeping the same list, even when no contacts match.
-`find` switches back to searching active contacts.
+A later `find` also searches within the same list, so after `list archive` it searches only archived contacts.
+`filter` and `find` do not combine: each one searches the whole active or archived list again, not only the contacts
+currently shown. For example, after `filter /tag HIGH`, `find ali` shows every active contact whose name contains
+`ali`, including those not tagged `HIGH`. To search by name and tag together, use one `filter`, e.g.
+`filter /name ali /tag HIGH`.
 
 Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 
-* At least one of `/name`, `/tag` or `/address` must be given.
-* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`. `/name` can be given only once; put all the keywords after it.
 * At least one of `/name`, `/tag` or `/address` must be given. Any other prefix, such as `/patientNo` or `/email`, is not a filter criterion and is rejected.
-* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`.
+* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword. Matching is case-insensitive and partial matches are allowed, as in `find`. `/name` can be given only once; put all the keywords after it.
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases. Extra spaces are ignored, so `/address clementi ave` also finds an address saved as `5 Clementi  Ave 3`.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
@@ -581,7 +584,6 @@ Format: `clear`
 
 * The command word is case-insensitive: `clear`, `Clear` and `CLEAR` all work.
 * Takes no arguments. Surrounding whitespace is allowed.
-* Type the command word in lowercase: `Clear` and `CLEAR` are not recognised.
 * Works even if the displayed list is already empty.
 * Use `list` to show all active contacts again, or `list archive` to show archived contacts.
   You can also use `find KEYWORD` to search within the current active or archive list.
@@ -659,7 +661,7 @@ Example:
 }
 ```
 
-Commands accept any letter case, but priority strings edited directly in the data file must match exactly, including uppercase letters and no surrounding spaces. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
+Priority values entered through commands accept any letter case, but priority strings edited directly in the data file must match exactly, including uppercase letters and no surrounding spaces. Command-word case sensitivity is stated in the relevant feature sections. Older free-form tags such as `"friends"` are no longer valid and are not converted automatically. Before opening an older data file in this version, back it up and, with CareBook closed, keep only one appropriate priority per contact or clear the list to `[]`. Lists with multiple distinct priorities are invalid and prevent the data file from loading. Omitting the `tags` field also means no priority tags.
 
 <box type="warning" seamless>
 
