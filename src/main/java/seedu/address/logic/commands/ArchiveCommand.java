@@ -27,8 +27,7 @@ public class ArchiveCommand extends Command {
     public static final String MESSAGE_ARCHIVE_PERSON_SUCCESS = "Archived person: %1$s";
     public static final String MESSAGE_CHECKUP_REMOVED = "The future unmarked checkup appointment was removed.";
     public static final String MESSAGE_EMPTY_LIST = "There are no persons in the displayed list to archive.";
-    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "The index provided is out of range. "
-            + "The displayed list has %1$d person(s), so the index must be from 1 to %1$d.";
+    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "Invalid index.";
 
     public static final String MESSAGE_ALREADY_ARCHIVED = "This person is already archived.";
 
