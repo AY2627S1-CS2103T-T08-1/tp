@@ -724,9 +724,6 @@ Furthermore, certain edits can cause CareBook to behave in unexpected ways (e.g.
 <br>CareBook does not check every [contact field rule](#adding-a-person-add) when loading the file. In particular, it accepts an address with a `/` that does not join short parts, such as `4 St/phone 123`, and the same note twice in one contact, which the `add`, `edit` and `remark` commands do not allow. Follow the field rules when you edit the file, so that every contact can still be changed with the commands.
 </box>
 
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -734,6 +731,15 @@ _Details coming soon ..._
 
 **Q**: How do I transfer my data to another computer?<br>
 **A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous CareBook home folder.
+
+**Q**: Where is my data saved, and how do I back it up?<br>
+**A**: CareBook saves your contacts automatically to `data/contacts.json`, in the folder that contains the JAR file. To back them up, copy that file somewhere safe while CareBook is closed. See [Saving the data](#saving-the-data).
+
+**Q**: How do I get an archived contact back?<br>
+**A**: Enter `list archive` to show the archived contacts, then `unarchive INDEX` with the index shown there. See [Restoring an archived contact](#restoring-an-archived-contact-unarchive).
+
+**Q**: Why is a name or address with `/` rejected?<br>
+**A**: `/` starts a prefix, so inside a value it can only join short parts with no spaces around it, as in `s/o`, `a/l`, `c/o` or `4/5`. See [Adding a person](#adding-a-person-add) for the full rule.
 
 --------------------------------------------------------------------------------------------------------------------
 

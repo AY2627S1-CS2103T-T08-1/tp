@@ -14,12 +14,17 @@
 ## **Acknowledgements**
 
 * CareBook is developed from [AddressBook-Level3](https://github.com/se-edu/addressbook-level3).
-* **AI assistance:** [@graceqian06](https://github.com/graceqian06) used
-  [OpenAI Codex](https://developers.openai.com/codex/) extensively for the `view`, `clear` and `exit`
-  features and their supporting UI. Assistance included generating and refining implementation code,
-  proposing and writing regression tests, debugging, refactoring, preliminary code reviews, and
-  drafting and revising the related User Guide, Developer Guide and PlantUML documentation.
-  This entry describes her use; other team members are responsible for declaring their own AI use.
+* Libraries used: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for
+  reading and writing the JSON data file, and [JUnit 5](https://junit.org/junit5/) for testing.
+* The documentation website is built with [MarkBind](https://markbind.org/), and its diagrams are drawn with
+  [PlantUML](https://plantuml.com/).
+* Notable uses of AI:
+  * [OpenAI Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code)
+    were used to help implement features and their supporting UI, generate and refine code, write regression tests,
+    debug, refactor, and do preliminary reviews of pull requests.
+  * The same tools were used to draft and revise parts of the User Guide, the Developer Guide and the PlantUML
+    diagrams, and to check the guides against the product.
+  * All AI-assisted work was checked by team members and by the project's automated tests before it was merged.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -924,7 +929,6 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Pros: Will use less memory (e.g. for `delete`, just save the person being deleted).
   * Cons: We must ensure that the implementation of each individual command is correct.
 
-_{more aspects and alternatives to be added}_
 
 
 ### \[Proposed\] Dynamic marking of future checkups
@@ -1093,22 +1097,29 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | Priority | As a …                                    | I want to …             | So that I can…                                             |
 |----------|--------------------------------------------|-------------------------|------------------------------------------------------------|
 | `* * *`  | new user                                   | see usage instructions  | refer to instructions when I forget how to use the App     |
-| `* * *`  | user                                       | add a new patient       |                                                            |
-| `* * *`  | user                                       | delete a patient        | remove entries who have completed their recovery           |
+| `* * *`  | user                                       | add a new patient       | keep their details and their family's details in one place |
+| `* * *`  | user                                       | delete a patient        | remove patients who have completed their recovery          |
 | `* * *`  | user                                       | edit a contact's details | keep phone numbers, emails and addresses up to date when they change |
 | `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
-| `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
+| `* * *`  | user                                       | view a specific contact | see all of a contact's details quickly when the list gets long |
 | `* *`    | caregiver                                  | temporarily hide displayed contact information | keep patient details out of sight without deleting saved records |
 | `* *`    | caregiver                                  | close CareBook with a typed command | finish a session without switching to the mouse |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
 | `* *`    | user                                       | filter contacts by name, tag and address | focus on the patients I need to look after right now |
-| `* *`    | user                                       | sort contacts by name, priority or when they were added | see the most urgent or most recent patients first |
+| `* *`    | user                                       | sort contacts by name, priority, checkup date or when they were added | see the most urgent or most recent patients first |
 | `* * *`  | caregiver                                  | keep care notes on a contact | remember allergies, medication times and visiting rules |
 | `* *`    | caregiver                                  | edit or delete one care note | keep notes up to date without retyping the others |
-| `* *`    | caregiver                                  | add checkup appointment dates |  kepe track of future appointments                                                 |
+| `* *`    | caregiver                                  | add checkup appointment dates | keep track of future appointments |
+| `* *`    | caregiver                                  | remove a checkup appointment | free the slot when an appointment is cancelled |
+| `* *`    | caregiver                                  | mark a checkup as done, or unmark it | see which checkups have already taken place |
+| `* * *`  | caregiver                                  | give a contact a priority | see which patients need attention first |
+| `* * *`  | caregiver                                  | archive a contact I no longer look after | keep their details without crowding the active list |
+| `* *`    | caregiver                                  | see archived contacts and restore one | look after a patient again when they return to my care |
+| `* * *`  | user                                       | list all active contacts | return to the full list after a search, filter or archive view |
+| `* *`    | caregiver                                  | delete all of a contact's notes at once | start their notes again without deleting them one by one |
+| `* * *`  | user                                       | have my changes saved automatically | keep my data even if I forget to save or CareBook closes |
 
 
-*{More to be added}*
 
 ### Use cases
 
@@ -1666,7 +1677,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 5. If saving fails, the user should be told what went wrong and CareBook should keep running
 6. Should be able to handle empty or malformed commands without crashing
 7. Should run without a remote server
-8. Should be usable at all screen resolutions and scales
+8. The GUI should work well for standard screen resolutions of 1920x1080 and higher, and for screen scales of 100% and 125%. It should be usable, though not necessarily optimised, for resolutions of 1280x720 and higher and a screen scale of 150%
 
 
 ### Glossary
@@ -1682,6 +1693,12 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 * **Note number**: The number shown before a note on the contact's card, used by `remark INDEX /edit` and `/delete`
 * **Priority tag**: A contact's priority, `HIGH`, `MEDIUM` or `LOW`
 * **Data file**: `data/contacts.json`, where CareBook saves the contacts automatically
+* **Patient HP**: The patient's own phone number, given with `/patientNo`. No two contacts can have the same one
+* **Family HP**: The phone number of the patient's family contact, given with `/familyNo`. Contacts can share it
+* **Prefix**: The word starting with `/` that comes before a value in a command, such as `/name` or `/patientNo`
+* **Checkup appointment**: The date and time of a contact's next checkup, set with `checkup`
+* **Checkup status**: Whether a checkup is marked as done, shown as `[X]`, or not, shown as `[ ]`
+* **Shared checkup slot**: A checkup date and time that more than one active contact has. This is allowed only if their family HPs match
 
 
 --------------------------------------------------------------------------------------------------------------------
