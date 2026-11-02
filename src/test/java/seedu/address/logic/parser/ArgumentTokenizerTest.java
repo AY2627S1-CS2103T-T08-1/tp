@@ -4,8 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 
 import org.junit.jupiter.api.Test;
+
+import seedu.address.logic.parser.exceptions.ParseException;
 
 public class ArgumentTokenizerTest {
 
@@ -13,6 +17,15 @@ public class ArgumentTokenizerTest {
     private final Prefix pSlash = new Prefix("p/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
+
+    @Test
+    public void tokenizeStrict_slashJoiningShortParts_keptInValue() throws ParseException {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeStrict(
+                " /name Ravi s/o Kumar /address Blk 4/5 Main St #01/02 c/o 5/F N/A", "usage",
+                PREFIX_NAME, PREFIX_ADDRESS);
+        assertEquals("Ravi s/o Kumar", argMultimap.getValue(PREFIX_NAME).get());
+        assertEquals("Blk 4/5 Main St #01/02 c/o 5/F N/A", argMultimap.getValue(PREFIX_ADDRESS).get());
+    }
 
     @Test
     public void tokenize_emptyArgsString_noValues() {

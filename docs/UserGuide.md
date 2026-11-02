@@ -109,19 +109,19 @@ Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail
 * No special characters are allowed in the fields!
 Note: `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
 
-The `/` character is reserved for valid prefixes and is **not allowed in any field value**, including names and addresses. Separate each prefix from its value with a space. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
+The `/` character starts a prefix, so separate each prefix from its value with a space, and put a space before each prefix. Inside a name or address, `/` can only join short parts, as in `s/o`, `a/l`, `c/o`, `4/5` or `#01/02`: it must come straight after a letter or digit, be followed by a letter or digit, and not be followed by 3 or more letters. This stops a missing space, as in `/address 4 St/patientNo 91234567`, from saving the rest into the address. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
 
-Unknown or mistyped prefixes cause an error and the contact is not added. For example, `/address 4 St /phone 123` is rejected because `/phone` is not a valid prefix; use `/patientNo` or `/familyNo`. Addresses such as `4/5 Main St` are also rejected; write them without `/`. The same rule applies when editing contact fields with `edit`.
+Unknown or mistyped prefixes cause an error and the contact is not added. For example, `/address 4 St /phone 123` is rejected because `/phone` is not a valid prefix; use `/patientNo` or `/familyNo`. A `/` that breaks the rule above, e.g. in `/address 4 St/phone 123`, is rejected with a message naming the word, such as `Unexpected "/" in "St/phone"`. The same rule applies when editing contact fields with `edit`.
 For an unknown prefix, add and edit show `Unknown criterion: PREFIX`, followed by `Invalid command format!` and the correct command usage. Prefixes with incorrect letter case, such as `/Name` or `/NAME`, are also unknown; only `/tag` accepts any letter case.
 
 **Contact field rules** (these apply to both `add` and `edit`):
 
 | Field | Rules |
 | --- | --- |
-| `NAME` | Must start with a letter or digit. Can contain letters (including accented letters), digits, spaces, hyphens (`-`), apostrophes (`'`), full stops (`.`) and commas (`,`), e.g. `Marie-Ann O'Brien` or `Ravi S. Kumar`. Repeated spaces are stored as one space. `/` is not allowed, so write `s/o` as `s o` or `son of`. |
+| `NAME` | Must start with a letter or digit. Can contain letters (including accented letters), digits, spaces, hyphens (`-`), apostrophes (`'`), full stops (`.`) and commas (`,`), e.g. `Marie-Ann O'Brien` or `Ravi S. Kumar`. Repeated spaces are stored as one space. `/` can only join short parts, e.g. `Ravi s/o Kumar` or `Devi a/p Rajan`. |
 | `PATIENT_PHONE`, `FAMILY_PHONE` | Digits only, at least 3 digits, e.g. `91234567`. Spaces, `+` and `-` are not allowed. |
 | `PATIENT_EMAIL`, `FAMILY_EMAIL` | Optional. Must look like `name@example.com`: the part before `@` can contain letters, digits and `+ _ . -` (but cannot start or end with them), and the part after `@` must end with at least 2 letters or digits. |
-| `ADDRESS` | Any text except `/`, and cannot be blank. |
+| `ADDRESS` | Any text, and cannot be blank. `/` can only join short parts, e.g. `Blk 4/5 Main St #01/02`. |
 | `PRIORITY` | `HIGH`, `MEDIUM` or `LOW`, in any letter case (see [Priority tags](#priority-tags)). |
 
 Two contacts count as the same person, and the second is rejected, if they have the **same patient phone number**, the **same patient email** (ignoring letter case), or the **same name and address** (ignoring letter case and spaces). This includes archived contacts. Family phone numbers and emails can be shared, since family members often care for more than one patient.

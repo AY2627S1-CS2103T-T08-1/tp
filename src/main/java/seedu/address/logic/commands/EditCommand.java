@@ -49,7 +49,7 @@ public class EditCommand extends Command {
             + "[" + PREFIX_FAMILY_EMAIL + " FAMILY_EMAIL] "
             + "[" + PREFIX_ADDRESS + " ADDRESS] "
             + "[" + PREFIX_TAG + " PRIORITY]\n"
-            + "The '/' character is reserved for valid prefixes and is not allowed in any field value. "
+            + "The '/' character starts a prefix. Inside a value, it can only join short parts, e.g. s/o or 4/5. "
             + "Separate each prefix from its value with a space.\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PATIENT_PHONE + " 91234567 "

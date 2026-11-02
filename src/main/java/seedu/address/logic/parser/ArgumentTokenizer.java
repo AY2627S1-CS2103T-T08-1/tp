@@ -21,6 +21,12 @@ import seedu.address.logic.parser.exceptions.ParseException;
  */
 public class ArgumentTokenizer {
 
+    public static final String MESSAGE_SLASH_IN_VALUE = "Unexpected \"/\" in \"%1$s\". Put a space before each "
+            + "prefix. Inside a value, \"/\" can only join short parts, as in s/o, a/l, c/o or 4/5.";
+
+    // the shortest prefix name, tag in /tag, has 3 letters, so a slash followed by fewer letters is not a prefix
+    private static final int MIN_PREFIX_NAME_LENGTH = 3;
+
     /**
      * Tokenizes an arguments string and returns an {@code ArgumentMultimap} object that maps prefixes to their
      * respective argument values. Only the given prefixes will be recognized in the arguments string.
@@ -35,7 +41,8 @@ public class ArgumentTokenizer {
     }
 
     /**
-     * Tokenizes contact fields, rejecting every slash that is not part of a complete recognized prefix.
+     * Tokenizes contact fields, rejecting every slash that is neither part of a complete recognized prefix
+     * nor a slash joining short parts of a value, as in {@code s/o} or {@code 4/5}.
      * Prefixes must be separated from their values by whitespace. The supplied usage is shown on failure.
      */
     public static ArgumentMultimap tokenizeStrict(String argsString, String usage, Prefix... prefixes)
@@ -47,18 +54,55 @@ public class ArgumentTokenizer {
         }).map(PrefixPosition::getStartPosition).collect(Collectors.toSet());
 
         for (int index = argsString.indexOf('/'); index >= 0; index = argsString.indexOf('/', index + 1)) {
-            if (!validSlashPositions.contains(index)) {
-                if ((index == 0 || Character.isWhitespace(argsString.charAt(index - 1)))
-                        && index + 1 < argsString.length() && argsString.charAt(index + 1) != '/'
+            if (!validSlashPositions.contains(index) && !isSlashInValue(argsString, index)) {
+                boolean startsWord = index == 0 || Character.isWhitespace(argsString.charAt(index - 1));
+                if (startsWord && index + 1 < argsString.length() && argsString.charAt(index + 1) != '/'
                         && !Character.isWhitespace(argsString.charAt(index + 1))) {
                     String prefix = argsString.substring(index).split("\\s+", 2)[0];
                     throw new ParseException("Unknown criterion: " + prefix + "\n"
                             + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
                 }
+                if (!startsWord) {
+                    throw new ParseException(String.format(MESSAGE_SLASH_IN_VALUE, getWordAt(argsString, index))
+                            + "\n" + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
+                }
                 throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
             }
         }
         return extractArguments(argsString, positions);
+    }
+
+    /**
+     * Returns true if the slash at {@code index} joins short parts of a value, as in {@code s/o} or {@code 4/5}.
+     * Such a slash follows a non-whitespace character and is followed by a letter or digit, but not by
+     * {@link #MIN_PREFIX_NAME_LENGTH} or more letters, so a prefix typed without a space before it is rejected.
+     */
+    private static boolean isSlashInValue(String argsString, int index) {
+        if (index == 0 || Character.isWhitespace(argsString.charAt(index - 1))
+                || index + 1 == argsString.length() || !Character.isLetterOrDigit(argsString.charAt(index + 1))) {
+            return false;
+        }
+        int lettersAfter = 0;
+        while (index + 1 + lettersAfter < argsString.length()
+                && Character.isLetter(argsString.charAt(index + 1 + lettersAfter))) {
+            lettersAfter++;
+        }
+        return lettersAfter < MIN_PREFIX_NAME_LENGTH;
+    }
+
+    /**
+     * Returns the whitespace-separated word of {@code argsString} that contains the character at {@code index}.
+     */
+    private static String getWordAt(String argsString, int index) {
+        int start = index;
+        while (start > 0 && !Character.isWhitespace(argsString.charAt(start - 1))) {
+            start--;
+        }
+        int end = index;
+        while (end < argsString.length() && !Character.isWhitespace(argsString.charAt(end))) {
+            end++;
+        }
+        return argsString.substring(start, end);
     }
 
     /**

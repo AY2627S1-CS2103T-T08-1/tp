@@ -64,7 +64,7 @@ public class HelpWindowTest {
                 assertTrue(commandList.getText().contains("Run list archive first"));
                 assertTrue(commandList.getText().contains(AddCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(
-                        "The '/' character is reserved for valid prefixes and is not allowed in any field value."));
+                        "The '/' character starts a prefix. Inside a value, it can only join short parts"));
                 assertTrue(commandList.getText().contains(FilterCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(CheckupCommand.MESSAGE_USAGE));
                 assertTrue(commandList.getText().contains(MarkCommand.MESSAGE_USAGE));

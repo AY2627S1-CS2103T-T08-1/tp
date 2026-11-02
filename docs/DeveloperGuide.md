@@ -183,14 +183,18 @@ before constructing the field objects and a `Person`. Supported prefixes are `/n
 `/familyNo`, `/pEmail`, `/fEmail`, `/address` and `/tag`. Only the `/tag` prefix is case-insensitive.
 The legacy `/email` prefix is rejected with instructions to use `/pEmail` or `/fEmail`.
 
-Every `/` must start a complete recognised prefix, separated from its value by whitespace. A literal `/`
-cannot be stored in any field value. Strict tokenization therefore rejects `/address 4 St /phone 123`,
-`/addressExtra 4 St` and `/address 4/5 Main St` instead of silently storing the extra text as an address.
+Every `/` must start a complete recognised prefix, separated from its value by whitespace, unless it joins
+short parts of a value, as in `s/o`, `a/l` or `4/5`. `ArgumentTokenizer#isSlashInValue()` accepts a `/` that
+comes straight after a non-whitespace character and is followed by a letter or digit, but not by 3 or more
+letters. Every prefix name has at least 3 letters, so a prefix typed without a space before it, as in
+`/address 4 St/patientNo 123`, is rejected instead of being stored as part of the address. Strict
+tokenization also rejects `/address 4 St /phone 123` and `/addressExtra 4 St`. `Name` applies the same slash
+rule, so a data file cannot hold a name that could not be typed.
 The invalid-format response includes `AddCommand.MESSAGE_USAGE`, which also supplies the Add entry in
-the Help window and explains the slash restriction.
+the Help window and explains the slash rule.
 An unknown slash-prefixed token produces `Unknown criterion: PREFIX` before the invalid-format response
-and usage. This validation is shared with `EditCommandParser`; embedded literal slashes retain the
-existing invalid-format response.
+and usage. A rejected `/` inside a word produces `ArgumentTokenizer.MESSAGE_SLASH_IN_VALUE`, naming the
+word, before the same response. This validation is shared with `EditCommandParser`.
 
 `ParserUtil` validates individual fields and trims surrounding whitespace. `Name` also collapses repeated
 spaces, so `Kim    Lee   ` is stored as `Kim Lee` and cannot bypass duplicate detection through spacing.
@@ -978,9 +982,9 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 3.
 
-*2d. A prefix is unknown or mistyped, or a field value contains `/`.
+*2d. A prefix is unknown or mistyped, or a field value contains a `/` that does not join short parts.
 
-    *2d1. CareBook rejects the command and shows the correct format and slash restriction.
+    *2d1. CareBook rejects the command and shows the correct format and slash rule.
 
         Use case resumes at step 1.
 
@@ -1539,8 +1543,11 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `add /name Test Patient /patientNo 91001004 /familyNo 92002001 /address 4 St /phone 123`<br>
       Expected: Invalid command format. `/phone 123` is not saved into the address.
 
-   1. Other incorrect address arguments to try: `/addressExtra 4 St` and `/address 4/5 Main St`.<br>
-      Expected: No contact is added; the usage explains that `/` is reserved for valid prefixes.
+   1. Other incorrect address arguments to try: `/addressExtra 4 St` and `/address 4 St/patientNo 123`.<br>
+      Expected: No contact is added. The second shows `Unexpected "/" in "St/patientNo"` and the usage.
+
+   1. Test case: `add /name Ravi s/o Kumar /patientNo 91001005 /familyNo 92002001 /address Blk 4/5 Main St #01/02`<br>
+      Expected: The contact is added with the name and address as typed.
 
 ### Finding contacts
 

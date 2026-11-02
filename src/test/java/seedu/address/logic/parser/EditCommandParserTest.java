@@ -76,11 +76,30 @@ public class EditCommandParserTest {
     @Test
     public void parse_malformedPrefixesOrSlashInField_failure() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
-        for (String fields : List.of(" /address 4/5 Main St", " /address 4 St/name Alice", " /name Kim/Lee",
-                " /patientNo 9123/4567", " /familyNo 9123/4567", " /pEmail kim/lee@example.com",
-                " /fEmail kim/lee@example.com", " /tag HI/GH", " /", " / phone 123", " //")) {
+        for (String fields : List.of(" /", " / phone 123", " //")) {
             assertParseFailure(parser, "1" + fields, expectedMessage);
         }
+        for (List<String> fieldsAndWord : List.of(List.of(" /address 4 St/name Alice", "St/name"),
+                List.of(" /name Kim/Lee", "Kim/Lee"),
+                List.of(" /pEmail kim/lee@example.com", "kim/lee@example.com"),
+                List.of(" /fEmail kim/lee@example.com", "kim/lee@example.com"))) {
+            assertParseFailure(parser, "1" + fieldsAndWord.get(0),
+                    String.format(ArgumentTokenizer.MESSAGE_SLASH_IN_VALUE, fieldsAndWord.get(1))
+                    + "\n" + MESSAGE_INVALID_FORMAT);
+        }
+
+        // a slash joining short parts reaches the field rules
+        assertParseFailure(parser, "1 /patientNo 9123/4567", Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 /familyNo 9123/4567", Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, "1 /tag HI/GH", Tag.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_slashJoiningShortParts_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Ravi s/o Kumar")
+                .withAddress("Blk 4/5 Main St").build();
+        assertParseSuccess(parser, "1 /name Ravi s/o Kumar /address Blk 4/5 Main St",
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test
@@ -118,7 +137,8 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "0 John Doe", MESSAGE_INVALID_INDEX);
 
         // invalid prefix being parsed as preamble
-        assertParseFailure(parser, "1 i/ string", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "1 i/ string",
+                String.format(ArgumentTokenizer.MESSAGE_SLASH_IN_VALUE, "i/") + "\n" + MESSAGE_INVALID_FORMAT);
     }
 
     @Test
