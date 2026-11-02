@@ -166,12 +166,16 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 1. `LogicManager` parses the command text into a `Command`, calls `Model#createRestorePoint()`, and executes the command. The restore point is a `Runnable` that puts the address book and the displayed list back as they were before the command.
 1. It then calls `modifiesData()` on the command.
-1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. `FileUtil#writeToFile` writes the data to a temporary file in the same folder and then replaces the data file with it, so a write that fails partway leaves the old file unchanged. If the save fails, `LogicManager` runs the restore point and throws a `CommandException`. The user sees `Could not save data to file ...` (or a message about insufficient permissions), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
+1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. `FileUtil#writeToFile` writes the data to a temporary file in the same folder and then replaces the data file with it, so a write that fails partway leaves the old file unchanged. If the save fails, `LogicManager` runs the restore point and throws a `CommandException`. The user sees `Could not save data to file ...`, or a more specific message when the cause is insufficient permissions or a file in the place of the data folder (`... is a file, so the data folder cannot be created there`), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
 1. Otherwise, `LogicManager` only logs that the save was skipped, and the data file is left as it is.
 
 **Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. The restore point also puts back the displayed list, including the active or archive list, contacts kept shown after `find` or `filter`, and the sort order, so each index still points to the same contact. It clears the details panel, which is acceptable after an error.
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
+
+**Design consideration:** writing straight to the data file would be simpler, but if CareBook stopped or the disk filled up partway through, the file would be left half written and could not be loaded. Writing a temporary file first and then replacing the data file with it means the file is either the old version or the new one. If the file cannot be replaced, for example because another program has it open on Windows, `FileUtil` writes to the data file directly instead, so the save still succeeds.
+
+**Design consideration:** when `data/contacts.json` cannot be loaded, `MainApp` starts with an empty contact list and shows `Data file could not be loaded. Starting with an empty contact list.` The invalid file stays on disk until the next command that changes data, so the user can close CareBook and fix the file first. Refusing to start would leave a user with a broken file unable to use CareBook at all. Backing up the invalid file before it is overwritten would be safer, but it adds more file operations that can fail, so CareBook does not do it. Instead, the UG warns users to back up the file before editing it.
 
 ### Add command
 
@@ -199,6 +203,13 @@ the Help window and explains the slash rule.
 An unknown slash-prefixed token produces `Unknown criterion: PREFIX` before the invalid-format response
 and usage. A rejected `/` inside a word produces `ArgumentTokenizer.MESSAGE_SLASH_IN_VALUE`, naming the
 word, before the same response. This validation is shared with `EditCommandParser`.
+
+**Design consideration:** rejecting every `/` inside a value would be simpler, but real names such as
+`Ravi s/o Kumar` and addresses such as `Blk 4/5` or `#01/02` need it. Accepting every `/` that does not start a
+recognised prefix would allow these, but a mistyped prefix, as in `/address 4 St/phone 123`, would then be saved
+quietly as part of the address. An escape character such as `\/` would allow any text, but users would have to
+learn it and could easily forget it. The current rule accepts the short forms that real names and addresses use,
+and still catches a prefix typed in the wrong place, because no prefix name is shorter than 3 letters.
 
 `ParserUtil` validates individual fields and trims surrounding whitespace. `Name` also collapses repeated
 spaces, so `Kim    Lee   ` is stored as `Kim Lee` and cannot bypass duplicate detection through spacing.
@@ -340,9 +351,14 @@ status.
    stays empty in the descriptor, which means "keep the current value".
 1. `EditCommand#execute()` checks the index against the displayed list, then builds the edited contact in
    `createEditedPerson()` from the descriptor and the current contact.
+1. If the edited contact is the same as the current one, `EditCommand` returns `No changes made: ...` and leaves
+   the contact as it is.
 1. The edited contact is rejected if another contact has the same patient phone number or patient email
    (`Person#hasSamePatientContactDetails()`), or the same name and address (`Person#hasSameNameAndAddress()`).
    Archived contacts count too.
+1. If the family HP changed, the edited contact is also rejected when an active contact with a different family HP
+   has a checkup at the same date and time (`EditCommand#hasBookingClash()`). `checkup` lets contacts share a
+   booking only if their family HP numbers match, so `edit` keeps that rule.
 1. `Model#setPersonKeepingDisplayed()` replaces the contact. The displayed list (search results, archive list and
    sort order) stays as it is, and the edited contact stays in it even if it no longer matches the search, so the
    indices on screen do not change. `ModelManager` keeps a set of such contacts, and the filtered list shows a
@@ -354,7 +370,8 @@ status.
 `/pEmail` keeps the email, `/pEmail new@example.com` sets it, and an empty `/pEmail` removes it. An empty
 `Optional<Email>` alone cannot separate "keep" from "remove", so `EditPersonDescriptor` also records
 `isPatientEmailEdited` (and `isFamilyEmailEdited`). `EditCommand#chooseEmail()` uses the new email only when the
-flag is set. Tags work the same way: a single empty `/tag` clears the priority.
+flag is set. Tags need no flag: a missing `/tag` leaves the tags in the descriptor as `null`, while a single
+empty `/tag` gives an empty set, which clears the priority.
 
 #### Design considerations
 
@@ -563,8 +580,9 @@ The sequence diagram below shows a successful `remark 1 Diabetic` command.
 
 **Error handling:** `remark INDEX` without a note is an error rather than a way to clear the notes, so notes
 are never lost because of a missing argument. A missing or invalid index or note number causes a
-`ParseException`. An index outside the displayed list, a note number the person does not have, or notes that
-would be too long cause a `CommandException`. In each case the person is unchanged.
+`ParseException`. An index outside the displayed list, a note number the person does not have, a note the
+person already has, `/clear` for a person with no notes, or notes that would be too long cause a
+`CommandException`. In each case the person is unchanged.
 
 #### Design considerations
 
@@ -1197,6 +1215,20 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
       Use case resumes at step 4.
 
+* 3f. Every new value is the same as the person's current value.
+
+    * 3f1. CareBook shows a message saying that no changes were made.
+
+      Use case ends.
+
+* 3g. The person has a checkup at the same date and time as another active person, and the new family HP is
+  different from that person's.
+
+    * 3g1. CareBook shows an error message asking the user to change one of the checkups first, and leaves the
+      person unchanged.
+
+      Use case resumes at step 2.
+
 **Use case: Manage the care notes of a contact**
 
 **MSS:**
@@ -1249,6 +1281,18 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 3f1. CareBook deletes all of the person's notes and confirms it.
 
       Use case ends.
+
+* 3g. The user requests to delete all of the person's notes, but the person has none.
+
+    * 3g1. CareBook shows an error message saying that the person has no notes to clear.
+
+      Use case resumes at step 2.
+
+* 3h. The given note number is not a positive integer.
+
+    * 3h1. CareBook shows an error message saying that the note number must be a positive integer.
+
+      Use case resumes at step 2.
 
 **Use case: List all active contacts**
 
@@ -1368,13 +1412,13 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 **Extensions**
 
-*3a. The requested change is invalid.
+* 3a. The requested change is invalid.
 
-    *3a1. CareBook displays an error message and leaves the contact list unchanged.
-    
-    *3a2. User submits a corrected update request to the contact list.
-    
-        Use case resumes at step 4.
+    * 3a1. CareBook displays an error message and leaves the contact list unchanged.
+
+    * 3a2. User submits a corrected update request to the contact list.
+
+      Use case resumes at step 4.
 
 * 4a. CareBook cannot write the data file.
 
@@ -2046,10 +2090,10 @@ testers are expected to do more *exploratory* testing.
 
 1. Saving when the data file cannot be written
 
-   1. Prerequisites: Launch CareBook with at least one contact, then make `data/contacts.json` read-only (on Windows, tick *Read-only* in the file's properties).
+   1. Prerequisites: Launch CareBook with at least one contact, then make `data/contacts.json` read-only (on Windows, tick *Read-only* in the file's properties; on macOS or Linux, run `chmod 444 data/contacts.json`).
 
    1. Test case: `remark 1 Uses a wheelchair`<br>
       Expected: The result box shows `Could not save data to file ...` and `The command was undone, so your contacts are unchanged.` The first contact's card does not show the note.
 
-   1. Test case: make the file writable again, then enter `remark 1 Uses a wheelchair` again.<br>
+   1. Test case: make the file writable again (untick *Read-only*, or run `chmod 644 data/contacts.json`), then enter `remark 1 Uses a wheelchair` again.<br>
       Expected: The note is added and saved. It is still shown after restarting CareBook.

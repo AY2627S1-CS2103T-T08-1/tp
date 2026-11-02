@@ -53,10 +53,10 @@ alt isModifying
     LogicManager -> Storage : saveAddressBook(addressBook)
     activate Storage
 
-    Storage --> LogicManager : IOException if the write fails
+    Storage --> LogicManager
     deactivate Storage
 
-    break the save failed
+    break saveAddressBook throws IOException
         LogicManager -> Model : undoCommand.run()
         activate Model
 
