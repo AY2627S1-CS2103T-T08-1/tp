@@ -461,8 +461,9 @@ word accepts four formats:
 `Remark` is an immutable list of notes held by every `Person`. A person with no notes holds an empty `Remark`
 (equal to `Remark.EMPTY`), so `Person#getRemark()` never returns `null`. Each note must not be blank or start with
 a space, a person cannot have the same note twice, and the notes can have at most
-`Remark.MAX_TOTAL_LENGTH` (500) characters in total, which stops one contact's card from filling the list.
-The `Remark` constructor enforces both rules, so an invalid remark cannot exist in the model.
+`Remark.MAX_TOTAL_LENGTH` (500) characters in total.
+The `Remark` constructor enforces the blank-note and length rules, so a remark that breaks them cannot exist in the
+model. `RemarkCommand` rejects duplicate notes.
 
 The notes count towards `Person#equals()` but not `Person#isSamePerson()`, so notes never decide whether two
 contacts are the same person. `EditCommand` copies the remark unchanged into the edited person.
