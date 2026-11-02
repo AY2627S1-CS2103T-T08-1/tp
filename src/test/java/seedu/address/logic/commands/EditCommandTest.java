@@ -45,7 +45,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_familyNoBreaksSharedBooking_failure() throws Exception {
-        Model bookingModel = modelWithSharedBooking();
+        Model bookingModel = createModelWithSharedBooking();
 
         assertCommandFailure(new EditCommandParser().parse("1 /familyNo 89999999"), bookingModel,
                 EditCommand.MESSAGE_BOOKING_CLASH);
@@ -53,7 +53,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_familyNoWithBookingSharedOnlyByArchivedPerson_success() throws Exception {
-        Model bookingModel = modelWithSharedBooking();
+        Model bookingModel = createModelWithSharedBooking();
         Person second = bookingModel.getFilteredPersonList().get(1);
         bookingModel.setPerson(second, second.copyWithArchivedStatus(true));
 
@@ -63,7 +63,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_otherFieldOfPersonWithSharedBooking_success() throws Exception {
-        Model bookingModel = modelWithSharedBooking();
+        Model bookingModel = createModelWithSharedBooking();
 
         new EditCommandParser().parse("1 /address 3 New Road").execute(bookingModel);
         assertEquals("3 New Road", bookingModel.getFilteredPersonList().get(0).getAddress().value);
@@ -71,7 +71,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_familyNoOfArchivedPersonWithSharedBooking_success() throws Exception {
-        Model bookingModel = modelWithSharedBooking();
+        Model bookingModel = createModelWithSharedBooking();
         Person first = bookingModel.getFilteredPersonList().get(0);
         bookingModel.setPerson(first, first.copyWithArchivedStatus(true));
         bookingModel.setArchiveScope(true);
@@ -83,7 +83,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_familyNoWithBookingAtAnotherTime_success() throws Exception {
-        Model bookingModel = modelWithSharedBooking();
+        Model bookingModel = createModelWithSharedBooking();
         Person second = bookingModel.getFilteredPersonList().get(1);
         bookingModel.setPerson(second, new PersonBuilder(second).withCheckupAppointment("26/12/2030 09:00").build());
 
@@ -95,7 +95,7 @@ public class EditCommandTest {
     public void execute_familyNoMatchingTheOtherBooking_success() throws Exception {
         // e.g. after unarchiving, two bookings at the same time can have different family HPs;
         // changing one family HP to match the other is allowed, since it removes the clash
-        Model bookingModel = modelWithSharedBooking();
+        Model bookingModel = createModelWithSharedBooking();
         Person second = bookingModel.getFilteredPersonList().get(1);
         bookingModel.setPerson(second, new PersonBuilder(second).withFamilyNo("82222222").build());
 
@@ -117,12 +117,12 @@ public class EditCommandTest {
     }
 
     /** Returns a person with both a patient email and a family email. */
-    private static Person personWithBothEmails() {
+    private static Person createPersonWithBothEmails() {
         return new PersonBuilder().withPatientEmail(VALID_EMAIL_AMY).withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
     }
 
     /** Returns a model that holds only {@code person}. */
-    private static Model modelWith(Person person) {
+    private static Model createModelWith(Person person) {
         Model modelWithPerson = new ModelManager();
         modelWithPerson.addPerson(person);
         return modelWithPerson;
@@ -132,7 +132,7 @@ public class EditCommandTest {
      * Returns a model with an active person and an archived person, showing the archive list if
      * {@code isArchiveShown}.
      */
-    private static Model modelWithActiveAndArchivedPerson(boolean isArchiveShown) {
+    private static Model createModelWithActiveAndArchivedPerson(boolean isArchiveShown) {
         Model archiveModel = new ModelManager();
         archiveModel.addPerson(new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
                 .withPatientEmail(VALID_EMAIL_BOB).build());
@@ -142,7 +142,7 @@ public class EditCommandTest {
     }
 
     /** Returns a model with two persons who share a family HP and a checkup appointment. */
-    private static Model modelWithSharedBooking() {
+    private static Model createModelWithSharedBooking() {
         Person first = new PersonBuilder().withName("Amy Bee").withPatientNo("91111111")
                 .withPatientEmail("amy@example.com").withAddress("1 First Road").withFamilyNo("81111111")
                 .withCheckupAppointment("25/12/2030 14:30").build();
@@ -264,7 +264,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_archivedPerson_keepsArchiveListShown() throws Exception {
-        Model archiveModel = modelWithActiveAndArchivedPerson(true);
+        Model archiveModel = createModelWithActiveAndArchivedPerson(true);
         Person archived = archiveModel.getFilteredPersonList().get(0);
 
         new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
@@ -277,7 +277,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_activePerson_showsActiveList() throws Exception {
-        Model archiveModel = modelWithActiveAndArchivedPerson(false);
+        Model archiveModel = createModelWithActiveAndArchivedPerson(false);
         Person active = archiveModel.getFilteredPersonList().get(0);
 
         new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptorBuilder().withAddress(VALID_ADDRESS_BOB).build())
@@ -346,21 +346,21 @@ public class EditCommandTest {
 
     @Test
     public void execute_nameOnly_keepsBothEmails() {
-        Person personWithEmails = personWithBothEmails();
+        Person personWithEmails = createPersonWithBothEmails();
         Person editedPerson = new PersonBuilder(personWithEmails).withName(VALID_NAME_BOB).build();
 
         assertEditSuccess(new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build(),
-                modelWith(personWithEmails), personWithEmails, editedPerson);
+                createModelWith(personWithEmails), personWithEmails, editedPerson);
     }
 
     @Test
     public void execute_removePatientEmail_keepsFamilyEmail() {
-        Person personWithEmails = personWithBothEmails();
+        Person personWithEmails = createPersonWithBothEmails();
         Person editedPerson = new PersonBuilder(personWithEmails).withoutEmail()
                 .withFamilyEmail(VALID_FAMILY_EMAIL_AMY).build();
 
         assertEditSuccess(new EditPersonDescriptorBuilder().withoutPatientEmail().build(),
-                modelWith(personWithEmails), personWithEmails, editedPerson);
+                createModelWith(personWithEmails), personWithEmails, editedPerson);
     }
 
     @Test
@@ -442,7 +442,7 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(outOfBoundIndex, descriptor);
 
         assertCommandFailure(editCommand, model, Messages.getMessageForIndexNotDisplayed(
-                outOfBoundIndex.getOneBased(), model.getFilteredPersonList().size()));
+                model.getFilteredPersonList().size()));
     }
 
     @Test

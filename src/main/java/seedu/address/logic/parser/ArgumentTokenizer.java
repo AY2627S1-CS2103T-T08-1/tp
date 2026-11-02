@@ -57,19 +57,18 @@ public class ArgumentTokenizer {
 
         for (int index = argsString.indexOf('/'); index >= 0; index = argsString.indexOf('/', index + 1)) {
             if (!validSlashPositions.contains(index) && !isSlashInValue(argsString, index)) {
-                boolean startsWord = index == 0 || Character.isWhitespace(argsString.charAt(index - 1));
-                if (startsWord && index + 1 < argsString.length() && argsString.charAt(index + 1) != '/'
+                boolean isWordStart = index == 0 || Character.isWhitespace(argsString.charAt(index - 1));
+                if (isWordStart && index + 1 < argsString.length() && argsString.charAt(index + 1) != '/'
                         && !Character.isWhitespace(argsString.charAt(index + 1))) {
                     String prefix = argsString.substring(index).split("\\s+", 2)[0];
                     throw new ParseException("Unknown criterion: " + prefix + "\n"
                             + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
                 }
-                if (!startsWord) {
-                    throw new ParseException(String.format(MESSAGE_SLASH_IN_VALUE, getWordAt(argsString, index))
-                            + "\n" + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
+                if (!isWordStart) {
+                    throw createExceptionWithUsage(
+                            String.format(MESSAGE_SLASH_IN_VALUE, getWordAt(argsString, index)), usage);
                 }
-                throw new ParseException(MESSAGE_LONE_SLASH + "\n"
-                        + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
+                throw createExceptionWithUsage(MESSAGE_LONE_SLASH, usage);
             }
         }
         return extractArguments(argsString, positions);
@@ -81,8 +80,10 @@ public class ArgumentTokenizer {
      * {@link #MIN_PREFIX_NAME_LENGTH} or more letters, so a prefix typed without a space before it is rejected.
      */
     private static boolean isSlashInValue(String argsString, int index) {
-        if (index == 0 || Character.isWhitespace(argsString.charAt(index - 1))
-                || index + 1 == argsString.length() || !Character.isLetterOrDigit(argsString.charAt(index + 1))) {
+        boolean isAfterNonWhitespace = index > 0 && !Character.isWhitespace(argsString.charAt(index - 1));
+        boolean isBeforeLetterOrDigit = index + 1 < argsString.length()
+                && Character.isLetterOrDigit(argsString.charAt(index + 1));
+        if (!isAfterNonWhitespace || !isBeforeLetterOrDigit) {
             return false;
         }
         int lettersAfter = 0;
@@ -91,6 +92,13 @@ public class ArgumentTokenizer {
             lettersAfter++;
         }
         return lettersAfter < MIN_PREFIX_NAME_LENGTH;
+    }
+
+    /**
+     * Returns an exception with {@code message}, followed by the invalid-format message with {@code usage}.
+     */
+    private static ParseException createExceptionWithUsage(String message, String usage) {
+        return new ParseException(message + "\n" + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
     }
 
     /**
