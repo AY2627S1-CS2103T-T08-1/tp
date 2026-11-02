@@ -25,8 +25,7 @@ public class UnarchiveCommand extends Command {
 
     public static final String MESSAGE_UNARCHIVE_PERSON_SUCCESS = "Unarchived person: %1$s";
     public static final String MESSAGE_EMPTY_LIST = "There are no persons in the displayed list to unarchive.";
-    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "The index provided is out of range. "
-            + "The displayed list has %1$d person(s), so the index must be from 1 to %1$d.";
+    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "Invalid index.";
 
     public static final String MESSAGE_NOT_ARCHIVED =
             "This person is not archived. Use list archive to select an archived contact.";

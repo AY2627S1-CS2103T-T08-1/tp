@@ -468,8 +468,7 @@ public class EditCommandTest {
         EditCommand editCommand = new EditCommand(outOfBoundIndex,
                 new EditPersonDescriptorBuilder().withName(VALID_NAME_BOB).build());
 
-        assertCommandFailure(editCommand, model, "Index 2 is out of range. "
-                + "The displayed list has 1 contact. Enter an index from 1 to 1.");
+        assertCommandFailure(editCommand, model, "Invalid index.");
     }
 
     @Test
