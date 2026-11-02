@@ -166,14 +166,14 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 1. `LogicManager` parses the command text into a `Command`, calls `Model#createRestorePoint()`, and executes the command. The restore point is a `Runnable` that puts the address book and the displayed list back as they were before the command.
 1. It then calls `modifiesData()` on the command.
-1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. `FileUtil#writeToFile` writes the data to a temporary file in the same folder and then replaces the data file with it, so a write that fails partway leaves the old file unchanged. If the save fails, `LogicManager` runs the restore point and throws a `CommandException`. The user sees `Could not save data to file ...`, or a more specific message when the cause is insufficient permissions or a file in the place of the data folder (`... is a file, so the data folder cannot be created there`), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
+1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. `FileUtil#writeToFile` writes the data to a temporary file in the same folder and then replaces the data file with it in one step, so a write that fails partway leaves the old file unchanged. If the data file cannot be replaced, it is written directly instead, as explained in the design consideration below. If the save fails, `LogicManager` runs the restore point and throws a `CommandException`. The user sees `Could not save data to file ...`, or a more specific message when the cause is insufficient permissions or a file in the place of the data folder (`... is a file, so the data folder cannot be created there`), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
 1. Otherwise, `LogicManager` only logs that the save was skipped, and the data file is left as it is.
 
 **Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. The restore point also puts back the displayed list, including the active or archive list, contacts kept shown after `find` or `filter`, and the sort order, so each index still points to the same contact. It clears the details panel, which is acceptable after an error.
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
 
-**Design consideration:** writing straight to the data file would be simpler, but if CareBook stopped or the disk filled up partway through, the file would be left half written and could not be loaded. Writing a temporary file first and then replacing the data file with it means the file is either the old version or the new one. If the file cannot be replaced, for example because another program has it open on Windows, `FileUtil` writes to the data file directly instead, so the save still succeeds.
+**Design consideration:** writing straight to the data file would be simpler, but if CareBook stopped or the disk filled up partway through, the file would be left half written and could not be loaded. Writing a temporary file first and then replacing the data file with it in one step means the file is either the old version or the new one. If the file cannot be replaced, for example because another program has it open on Windows, `FileUtil` writes to the data file directly instead, so the save still succeeds. This fallback gives up the guarantee: if the direct write fails partway, for example because the disk is full, the data file can be left incomplete, even though the command is undone in the app. This needs both the replacement and the direct write to fail, so it is rare, and it is the same risk that every save had before the temporary file was added. Failing the save instead would always keep the old file, but saving would then fail whenever another program has the file open.
 
 **Design consideration:** when `data/contacts.json` cannot be loaded, `MainApp` starts with an empty contact list and shows `Data file could not be loaded. Starting with an empty contact list.` The invalid file stays on disk until the next command that changes data, so the user can close CareBook and fix the file first. Refusing to start would leave a user with a broken file unable to use CareBook at all. Backing up the invalid file before it is overwritten would be safer, but it adds more file operations that can fail, so CareBook does not do it. Instead, the UG warns users to back up the file before editing it.
 
@@ -462,7 +462,7 @@ other contact fields. Replacing an appointment clears `checkupMarked`; assigning
 preserves its mark. A deletion clears both the optional appointment and its mark, and fails with
 `This contact has no checkup appointment to delete.` if no appointment exists.
 
-`PersonCard` shows the appointment row with `(Marked)` or `(Unmarked)` only while an appointment is present.
+`PersonCard` shows the appointment row with `[X]` or `[ ]` only while an appointment is present.
 The row wraps independently of the name, so name truncation cannot hide the appointment's status.
 After deletion, the row is invisible and unmanaged, so it reserves no layout space. The details panel
 shows status on its own line only for a scheduled appointment. Both displays read `Person#isCheckupMarked()`;
@@ -1946,7 +1946,7 @@ testers are expected to do more *exploratory* testing.
       in `dd/mm/yyyy` format.
 
    1. Test case: `CHECKUP 1   DATE  14:30   `<br>
-      Expected: The first displayed contact has an appointment at `14:30`, followed by `(Unmarked)` on its card.
+      Expected: The first displayed contact has an appointment at `14:30`, followed by `[ ]` on its card.
       Extra spaces and command capitalization do not affect parsing.
 
    1. Test case: `checkup 2 DATE 14:30`, then `checkup 3 DATE 14:30`.<br>
@@ -1954,7 +1954,7 @@ testers are expected to do more *exploratory* testing.
       family HP matches contact 1. The check includes active contacts hidden by a filter, but excludes archived contacts.
 
    1. Test case: Mark contact 1, then assign the same appointment again; next run `checkup 1 DATE 15:30`.<br>
-      Expected: The identical appointment preserves `(Marked)`. The changed appointment resets it to `(Unmarked)`.
+      Expected: The identical appointment preserves `[X]`. The changed appointment resets it to `[ ]`.
 
    1. Test case: `checkup 1 /delete`, then repeat the command.<br>
       Expected: The first command removes the appointment row and status entirely. The second
@@ -1962,9 +1962,9 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Give contact 1 a long name, schedule an appointment, then run `mark 1` and `view 1`.
       Narrow the window to its minimum width.<br>
-      Expected: The card's appointment row wraps and retains `(Marked)`, independently of name truncation.
-      The details panel shows the full wrapping name and `Checkup status: Marked` on a separate line.
-      Editing the name preserves this status. Run `unmark 1`, then `view 1`; both displays now show `Unmarked`.
+      Expected: The card's appointment row wraps and retains `[X]`, independently of name truncation.
+      The details panel shows the full wrapping name and `Checkup status: [X]` on a separate line.
+      Editing the name preserves this status. Run `unmark 1`, then `view 1`; both displays now show `[ ]`.
       After `checkup 1 /delete` and `view 1`, the card has no appointment row and the details panel shows
       `Checkup appointment: Not scheduled` without a status line.
 

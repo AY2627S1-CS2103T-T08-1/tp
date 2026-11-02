@@ -64,7 +64,8 @@ end note
 Command -> Model : setPerson(person, updatedPerson)
 activate Model
 note right of Model
-  Refresh the contact card's mark indicator.
+  Show [X] on the contact card's appointment row.
+  A later view shows Checkup status: [X].
   Preserve the displayed list order and scope.
 end note
 Model --> Command

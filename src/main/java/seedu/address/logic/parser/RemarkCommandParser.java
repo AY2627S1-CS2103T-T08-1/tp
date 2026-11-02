@@ -36,7 +36,8 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     /**
      * Parses the given {@code String} of arguments in the context of the RemarkCommand
      * and returns a RemarkCommand object for execution.
-     * @throws ParseException if the user input does not conform to the expected format
+     *
+     * @throws ParseException if the user input does not conform to the expected format.
      */
     public RemarkCommand parse(String args) throws ParseException {
         requireNonNull(args);
@@ -89,7 +90,8 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
 
     /**
      * Returns {@code text} split into its first word and the rest.
-     * @throws ParseException if {@code text} has no words
+     *
+     * @throws ParseException if {@code text} has no words.
      */
     private static FirstWordAndRest requireFirstWord(String text) throws ParseException {
         FirstWordAndRest firstWordAndRest = splitOffFirstWord(text);
@@ -122,7 +124,8 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
 
     /**
      * Returns {@code note} if it is a valid note.
-     * @throws ParseException if {@code note} is blank, e.g. made only of non-breaking spaces
+     *
+     * @throws ParseException if {@code note} is blank, e.g. made only of non-breaking spaces.
      */
     private static String parseNote(String note) throws ParseException {
         if (!Remark.isValidNote(note)) {
