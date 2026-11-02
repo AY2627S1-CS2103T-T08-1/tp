@@ -55,9 +55,10 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Items in square brackets are optional.<br>
   For example, `/name NAME [/tag PRIORITY]` can be used as `/name John Doe /tag HIGH` or as `/name John Doe`.
 
-* Parameters can be in any order.<br>
+* Named contact-field prefixes in `add` and `edit` can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
-  The exception is `remark`, whose parts must be in the order shown, e.g. `remark INDEX /edit NOTE_NUMBER NOTE`.
+  Positional arguments must follow the order shown: for example, the index comes before the fields in `edit`,
+  `checkup` takes the index before the date and time, and `remark` uses `remark INDEX /edit NOTE_NUMBER NOTE`.
 
 * After `add`, `edit`, `archive`, `unarchive` and `delete`, the success message shows the contact's details, including the checkup appointment (if any) and the remark (if any).
 
@@ -85,7 +86,7 @@ Format: `help`
 * Whitespace before and after the command is allowed.
 * Additional text is rejected: `help 123`, `help me`, `abc help`, and `helpabc` are invalid.
 * You can also open the window using **Help > Help** in the menu or pressing **F1**.
-* If the Help window is already open, running `help` focuses that window.
+* If the Help window is already open, running `help` focuses that window and restores it if minimized.
 
 Examples:
 
@@ -105,7 +106,7 @@ Format: `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail
 * `FAMILY_PHONE` and `FAMILY_EMAIL` can refer to the patient's emergency contact or another specified family member. 
 * special characters such as '+' and spaces are not allowed for phone numbers
 
-The `/` character starts a prefix, so separate each prefix from its value with a space, and put a space before each prefix. Inside a name or address, `/` can only join short parts, as in `s/o`, `a/l`, `c/o`, `4/5` or `#01/02`: it must come straight after a letter or digit, be followed by a letter or digit, and not be followed by 3 or more letters. This stops a missing space, as in `/address 4 St/patientNo 91234567`, from saving the rest into the address. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
+The `/` character starts a prefix, so separate each prefix from its value with a space, and put a space before each prefix. Inside a name or address, `/` can join short parts, as in `s/o`, `a/l`, `c/o`, `4/5` or `#01/02`. In names, it must come straight after a letter or digit; in addresses, any non-whitespace character may precede it. In both fields, it must be followed by a letter or digit, and not by 3 or more consecutive letters. This stops a missing space, as in `/address 4 St/patientNo 91234567`, from saving the rest into the address. Valid prefixes are `/name`, `/patientNo`, `/familyNo`, `/pEmail`, `/fEmail`, `/address`, and `/tag` (case-insensitive for `/tag` only).
 
 Unknown or mistyped prefixes cause an error and the contact is not added. For example, `/address 4 St /phone 123` is rejected because `/phone` is not a valid prefix; use `/patientNo` or `/familyNo`. A `/` that breaks the rule above, e.g. in `/address 4 St/phone 123`, is rejected with a message naming the word, such as `Unexpected "/" in "St/phone"`. The same rule applies when editing contact fields with `edit`.
 For an unknown prefix, add and edit show `Unknown criterion: PREFIX`, followed by `Invalid command format!` and the correct command usage. Prefixes with incorrect letter case, such as `/Name` or `/NAME`, are also unknown; only `/tag` accepts any letter case. A `/` with a space after it, as in `/name Tan / Lim`, shows `Unexpected "/" on its own.`, followed by the same format message.
@@ -165,7 +166,8 @@ The command word is case-insensitive: `archive 3`, `Archive 3`, and `ARCHIVE 3` 
 * `list archive` shows archived contacts. Use `list` to return to active contacts.
 * `find` searches the current active or archive scope (see [Locating persons](#locating-persons-find)). Archived contacts remain archived when edited.
 * Archiving an already archived contact reports an error without changing it.
-* Archiving removes unmarked checkups scheduled after today. Marked checkups are kept regardless of their date.
+* Archiving removes unmarked checkups scheduled after today. Marked checkups are kept regardless of their date
+  to preserve the recorded completion status, even when the scheduled date is in the future.
   Checkups scheduled for today or earlier keep their date, time, and marked or unmarked status,
   even if today's appointment time has not yet arrived. Dates are compared at the time of archiving.
 * Archived status is saved automatically and survives restarting CareBook.
@@ -186,7 +188,7 @@ For example, after `find Alice`, `archive 1` archives the first contact in those
 | Incorrect input or situation | Result | How to correct it |
 | --- | --- | --- |
 | `archive`, `archive Alice`, or `archive 1 2` | Invalid command format; usage instructions are shown. | Enter exactly one index, such as `archive 3`. |
-| `archive 0` or `archive -1` | Invalid index. | Use a positive integer shown in the current list. |
+| `archive 0` or `archive -1` | `Index must be a positive integer.` | Use a positive integer shown in the current list. |
 | `archive 4` when only three contacts are displayed | `Invalid index.` | Check the displayed indices and select an existing contact. |
 | `archive 1` when the displayed list is empty | `There are no persons in the displayed list to archive.` | Use `list` to check for active contacts. |
 | Archiving a contact in `list archive` | `This person is already archived.` | Use `list` to select an active contact instead. |
@@ -203,6 +205,8 @@ Format: `unarchive INDEX`
 * Missing indices, zero, negative numbers, decimals, words, and extra arguments are rejected.
 * An active contact cannot be unarchived; an error is shown without changing it.
 * The restored contact disappears from the archive list. Enter `list` to see it in the active list.
+* Retained appointments are restored without checking for booking conflicts. If another active contact has
+  taken that slot, both appointments remain, even if the family HP numbers differ.
 * The change is saved automatically and survives restarting CareBook.
 
 Example: `list archive`, followed by `unarchive 3`, restores the third displayed archived contact.
@@ -369,7 +373,8 @@ Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX /delete`
   The format is fixed even if the computer uses a different regional date format or a 12-hour clock.
 * The appointment must not be earlier than the computer's current local date **and time**.
 * Archived contacts cannot be given a new appointment or have an appointment rescheduled. Unarchive the contact first.
-* Two contacts can share the exact same appointment date and time **only if their family HP numbers match**.
+* When scheduling with `checkup`, two active contacts can share the exact same appointment date and time
+  **only if their family HP numbers match**.
   Booking checks include active contacts outside the displayed list. Archived contacts do not reserve a slot.
 * Scheduling a checkup shows the date and time followed by `[ ]` on the person's card.
   Marking it with `mark INDEX` changes the status to `[X]`; `unmark INDEX` restores `[ ]`.
@@ -392,7 +397,7 @@ Examples:
 | Incorrect input or situation | Error message | How to correct it |
 | --- | --- | --- |
 | `checkup`, `checkup 1`, or a non-positive or non-numeric index | Invalid command format followed by usage | Give a displayed index and a date/time, or `/delete`. |
-| An index outside the displayed list | `The person index provided is invalid.` | Check the current list and use an index shown there. |
+| An index outside the displayed list | `Invalid index.` | Check the current list and use an index shown there. |
 | An archived contact is selected for scheduling | `Appointments cannot be made with archived contacts. Unarchive the contact to do so.` | Unarchive the contact first. This error takes priority over date/time errors for a valid contact index. |
 | An incomplete or impossible date/time, such as `checkup 1 25/12/2030`, `31/02/2030 14:30` or `25/12/2030 24:00` | `Checkup must be a valid date and time in dd/mm/yyyy HH:mm format (24-hour clock).` followed by usage | Use a real date and a time from `00:00` to `23:59`. |
 | An appointment earlier than now, including an earlier time today | `Checkup date and time must not be in the past.` | Choose a future date and time. |
@@ -532,8 +537,8 @@ Supported criteria:
 * Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
 * Contacts without an optional email or tag do not match searches on that absent field.
-* Searches consider all active contacts, replacing the current display filter without changing stored data.
-  Use `list` to display all contacts again. A search with no matches displays an empty list.
+* Searches consider all contacts in the current active or archived scope, replacing the current display filter without changing stored data.
+  Use `list` to display all active contacts again, or `list archive` to display all archived contacts. A search with no matches displays an empty list.
 * To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
 * When no contacts match, active searches append `Use 'list archive' to search through archived contacts`;
   archive searches append `Use 'list' to search through active contacts`.
@@ -560,20 +565,21 @@ currently shown. For example, after `filter /tag HIGH`, `find ali` shows every a
 `ali`, including those not tagged `HIGH`. To search by name and tag together, use one `filter`, e.g.
 `filter /name ali /tag HIGH`.
 
-Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
+Format: `filter [/name NAME_KEYWORDS]... [/tag TAG]... [/address ADDRESS]...`
 
 * At least one of `/name`, `/tag` or `/address` must be given. Any other prefix, such as `/patientNo` or `/email`, is not a filter criterion and is rejected.
-* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword, ignoring case and allowing partial matches. Give `/name` only once with all keywords. Unlike `find`, this treats separate words as alternatives.
+* **Name:** `NAME_KEYWORDS` are separated by spaces. A person matches if their name contains **any** keyword, ignoring case and allowing partial matches. Give several keywords after one `/name`, or repeat the prefix, e.g. `/name alice /NAME bob`. All name keywords are alternatives (OR). Unlike `find`, this treats separate words as alternatives.
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases. Extra spaces are ignored, so `/address clementi ave` also finds an address saved as `5 Clementi  Ave 3`.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
-* The command word is case-insensitive: `filter`, `Filter` and `FILTER` all work. The prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
+* The command word is case-insensitive: `filter`, `Filter` and `FILTER` all work. The `/name` and `/tag` prefixes and tag values are case-insensitive; `/address` must be lowercase. For example, `filter /name alice /NAME bob` and `filter /TAG high` work. Separate each prefix from its value with a space: `/nameExtra Alice` is invalid.
 * When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
 * `filter /tag MEDIUM` lists all persons tagged as `MEDIUM`.
 * `filter /tag HIGH /tag MEDIUM` lists all persons tagged as `HIGH` or `MEDIUM`.
 * `filter /name ali bob` lists all persons whose name contains `ali` or `bob`.
+* `filter /name alice /NAME bob` lists all persons whose name contains `alice` or `bob`.
 * `filter /address clementi ave /address jurong` lists all persons whose address contains `clementi ave` or `jurong`.
 * `filter /name meier /tag HIGH /address street` lists all persons whose name contains `meier`, who are tagged `HIGH`, and whose address contains `street`.
 
@@ -584,7 +590,7 @@ Examples:
 | `filter` (no criteria) | `Invalid command format!` followed by the correct usage | Give at least one criterion, e.g. `filter /tag MEDIUM`. |
 | `filter MEDIUM` (no prefix) | `Invalid command format!` followed by the correct usage | Start each criterion with its prefix, e.g. `filter /tag MEDIUM`. |
 | `filter /name` (empty value) | `Invalid command format!` followed by the correct usage | Put a value after each prefix, e.g. `filter /name ali`. |
-| `filter /name ali /name bob` (`/name` repeated) | `Multiple values specified for the following single-valued field(s): /name` | Give `/name` once with all keywords: `filter /name ali bob`. |
+| `filter /nameExtra Alice` (invalid prefix) | `Invalid command format!` followed by the correct usage | Separate the prefix and value: `filter /name Alice`. To search multiple names, use `filter /name Alice /NAME Bob`. |
 | `filter /tag URGENT` (not a valid tag) | `Invalid command format!` followed by the correct usage | Use one of `HIGH`, `MEDIUM` or `LOW`. |
 | `filter /tag HIGH LOW` (several tags in one prefix) | `Invalid command format!` followed by the correct usage | Repeat the prefix: `filter /tag HIGH /tag LOW`. |
 | `filter /name ali /patientNo 91234567` (unsupported prefix) | `Invalid command format!` followed by the correct usage | Use only `/name`, `/tag` and `/address`. |
@@ -734,7 +740,6 @@ _Details coming soon ..._
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -750,7 +755,7 @@ Action     | Format, Examples
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
 **Archive** | `archive INDEX`<br> e.g., `archive 3`
 **List**   | `list` or `list archive`
-**Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
+**Filter** | `filter [/name NAME_KEYWORDS]... [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br> `find KEYWORD`<br> e.g., `find James Jake`
 **Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]`, `sort checkup [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
 **Mark**   | `mark INDEX`<br> e.g., `mark 1`

@@ -26,11 +26,11 @@ public class FilterCommand extends Command {
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Lists all persons matching ALL of the given "
             + "criteria (case-insensitive).\n"
-            + "Parameters: [" + PREFIX_NAME + " NAME_KEYWORDS] [" + PREFIX_TAG + " TAG]... ["
+            + "Parameters: [" + PREFIX_NAME + " NAME_KEYWORDS]... [" + PREFIX_TAG + " TAG]... ["
             + PREFIX_ADDRESS + " ADDRESS]...\n"
             + "At least one criterion is required.\n"
             + PREFIX_NAME + " takes space-separated keywords; a name containing any of them matches (partial match "
-            + "allowed). It can be given only once.\n"
+            + "allowed). Repeat /name to supply more alternatives; /name is case-insensitive.\n"
             + PREFIX_TAG + " must be one of " + String.join(", ", VALID_TAGS) + "; repeat it to match any of "
             + "several tags.\n"
             + PREFIX_ADDRESS + " takes a phrase; repeat it to match any of several phrases (partial match "

@@ -33,9 +33,11 @@ activate FilterCommandParser
 
 note right of FilterCommandParser
   Throws ParseException if no criterion is given,
-  /name is repeated, a value is empty, another
+  a value is empty, an unsupported or incomplete
   prefix is used, or a tag is not one of
   HIGH, MEDIUM or LOW (case-insensitive).
+  Repeated /name prefixes are accepted in any case;
+  their keywords are combined as alternatives.
 end note
 
 create PersonMatchesFilterPredicate
