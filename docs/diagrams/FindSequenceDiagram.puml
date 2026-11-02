@@ -67,19 +67,9 @@ activate FindCommand
 
 FindCommand -> Model : filterPersonsInCurrentList(p)
 activate Model
-Model --> FindCommand : archiveScope
-deactivate Model
-
-alt archiveScope
-    FindCommand -> Model : updateFilteredPersonList(PREDICATE_SHOW_ARCHIVED_PERSONS)
-else active scope
-    FindCommand -> Model : updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS)
-end
-
-FindCommand -> Model : filterPersonsInCurrentList(p)
-activate Model
 note right of Model
-  Combine scope AND search predicate.
+  Model uses its archiveScope boolean to
+  combine scope AND search predicate.
   Match "D Est" as one substring,
   ignoring case.
   Replace prior search criteria;
@@ -96,7 +86,7 @@ Model --> FindCommand : filteredPersonsList
 deactivate Model
 
 create CommandResult
-FindCommand -> CommandResult : match count
+FindCommand -> CommandResult : match count and archive hint if zero
 activate CommandResult
 
 CommandResult --> FindCommand
@@ -110,6 +100,11 @@ activate FindCommand
 
 FindCommand --> LogicManager : false
 deactivate FindCommand
+
+LogicManager -> Model : selectPerson(null)
+activate Model
+Model --> LogicManager
+deactivate Model
 
 [<-- LogicManager : r
 deactivate LogicManager

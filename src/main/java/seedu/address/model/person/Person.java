@@ -164,6 +164,12 @@ public class Person {
                 remark, archived, false);
     }
 
+    /** Returns a copy without a checkup or its mark, preserving all other contact details. */
+    public Person withoutCheckup() {
+        return new Person(name, patientNo, familyNo, patientEmail, familyEmail, address, tags, null,
+                remark, archived, false);
+    }
+
     /**
      * Returns an immutable tag set, which throws {@code UnsupportedOperationException}
      * if modification is attempted.

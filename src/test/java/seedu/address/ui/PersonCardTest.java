@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.FxTestUtil.runOnFxThread;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.CheckupCommand;
 import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
@@ -35,6 +38,25 @@ public class PersonCardTest {
             assertFalse(appointment.isVisible());
             assertFalse(appointment.isManaged());
             assertEquals("Kim Lee", PersonCard.getNameText(cleared));
+        });
+    }
+
+    @Test
+    public void archivedFutureUnmarkedCheckup_hidesAppointmentAndMarkIndicator() throws Exception {
+        String tomorrow = LocalDate.now().plusDays(1).format(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        Person scheduled = new PersonBuilder().withName("Kim Lee")
+                .withCheckupAppointment(tomorrow + " 09:05").build();
+        ModelManager model = new ModelManager();
+        model.addPerson(scheduled);
+        new ArchiveCommand(Index.fromOneBased(1)).execute(model);
+        Person archived = model.getAddressBook().getPersonList().get(0);
+        runOnFxThread(() -> {
+            PersonCard card = new PersonCard(archived, 1);
+            Label appointment = (Label) card.getRoot().lookup("#checkupAppointment");
+            assertEquals("", appointment.getText());
+            assertFalse(appointment.isVisible());
+            assertFalse(appointment.isManaged());
+            assertEquals("Kim Lee", PersonCard.getNameText(archived));
         });
     }
 
