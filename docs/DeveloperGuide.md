@@ -661,9 +661,11 @@ parsing and execution; helper calls and UI updates are omitted for clarity.
 1. `LogicManager` checks `DeleteCommand#modifiesData()`, which returns whether the command was confirmed. Only a
    confirmed delete is saved to storage.
 
-**Error handling:** A missing, non-numeric or non-positive index, or any other extra argument, causes
-`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. An index larger than the displayed
-list causes `DeleteCommand#execute()` to throw a `CommandException`. Both leave the stored contacts unchanged.
+**Error handling:** A missing or non-numeric index, or any other extra argument, causes
+`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. A zero or negative index causes it
+to throw a `ParseException` with the message `Index must be a positive integer.` An empty displayed list, or an index
+larger than the displayed list, causes `DeleteCommand#execute()` to throw a `CommandException`. All of these leave the
+stored contacts unchanged.
 
 
 ### Filter command
@@ -693,7 +695,7 @@ calls and UI updates are omitted for clarity.
 1. `FilterCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)`. This combines the predicate with the
    scope of the list currently shown (active contacts after `list`, archived contacts after `list archive`), so the
    filtered list only contains persons in that scope who match the criteria. The scope is kept even when nothing
-   matches, and `find` switches back to active contacts.
+   matches, and a later `find` also stays in that scope.
 1. The command calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult`
    with the "N person(s) listed!" message.
 1. `LogicManager` checks `FilterCommand#modifiesData()`, which returns `false`, and skips saving.
