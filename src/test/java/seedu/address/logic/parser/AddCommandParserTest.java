@@ -79,19 +79,42 @@ public class AddCommandParserTest {
     public void parse_malformedPrefixesOrEmbeddedSlashes_failure() {
         String fields = NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB + ADDRESS_DESC_BOB;
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
-        for (String suffix : List.of(" / phone 123", " /", " //", " 4/5", "/name Alice")) {
+        for (String suffix : List.of(" / phone 123", " /", " //")) {
             assertParseFailure(parser, fields + suffix, expectedMessage);
         }
+    }
+
+    @Test
+    public void parse_slashInsideWord_reportsWord() {
+        String fields = NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB + ADDRESS_DESC_BOB;
+        // the address of BOB ends with "3", so a suffix without a leading space is glued to it
+        for (List<String> suffixAndWord : List.of(List.of(" St/phone 123", "St/phone"),
+                List.of("/name Alice", "3/name"), List.of(" a//b", "a//b"), List.of(" St/", "St/"),
+                List.of(" Kim/Lee", "Kim/Lee"))) {
+            String expectedMessage = String.format(ArgumentTokenizer.MESSAGE_SLASH_IN_VALUE, suffixAndWord.get(1))
+                    + "\n" + String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+            assertParseFailure(parser, fields + suffixAndWord.get(0), expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_slashJoiningShortParts_success() {
+        Person expectedPerson = new PersonBuilder(BOB).withName("Ravi s/o Kumar")
+                .withAddress("Blk 4/5 Main St #01/02 c/o Tan").withFamilyNo(VALID_FAMILY_PHONE_BOB).withTags()
+                .build();
+        assertParseSuccess(parser, " /name Ravi s/o Kumar" + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
+                + " /address Blk 4/5 Main St #01/02 c/o Tan", new AddCommand(expectedPerson));
     }
 
     @Test
     public void parse_slashInAnyField_failure() {
         String fields = NAME_DESC_BOB + PHONE_DESC_BOB + FAMILY_PHONE_DESC_BOB
                 + PATIENT_EMAIL_DESC_BOB + FAMILY_EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HIGH;
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
+        String expectedMessage = String.format(ArgumentTokenizer.MESSAGE_SLASH_IN_VALUE, "St/phone") + "\n"
+                + String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
         for (String prefix : List.of("/name", "/patientNo", "/familyNo", "/pEmail", "/fEmail",
                 "/address", "/tag")) {
-            assertParseFailure(parser, fields.replace(prefix + " ", prefix + " x/"), expectedMessage);
+            assertParseFailure(parser, fields.replace(prefix + " ", prefix + " St/phone "), expectedMessage);
         }
     }
 

@@ -10,13 +10,16 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS = "Names should start with a letter or digit, and should only "
-            + "contain letters, digits, spaces, hyphens (-), apostrophes ('), full stops (.) and commas (,)";
+            + "contain letters, digits, spaces, hyphens (-), apostrophes ('), full stops (.) and commas (,). "
+            + "A slash (/) can only join short parts, as in Ravi s/o Kumar";
 
     /*
      * The first character of the name must be a letter or digit,
      * otherwise " " (a blank string) or "-" becomes a valid input.
+     * A slash must be between letters or digits and not be followed by 3 or more letters, as in the tokenizer.
      */
-    public static final String VALIDATION_REGEX = "[\\p{L}\\p{N}][\\p{L}\\p{N} '\u2019.,-]*";
+    public static final String VALIDATION_REGEX = "[\\p{L}\\p{N}](?:[\\p{L}\\p{N} '\u2019.,-]"
+            + "|(?<=[\\p{L}\\p{N}])/(?=[\\p{L}\\p{N}])(?!\\p{L}{3}))*";
 
     public final String fullName;
 

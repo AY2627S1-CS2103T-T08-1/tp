@@ -4,8 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import org.junit.jupiter.api.Test;
+
+import seedu.address.logic.parser.exceptions.ParseException;
 
 public class ArgumentTokenizerTest {
 
@@ -13,6 +19,28 @@ public class ArgumentTokenizerTest {
     private final Prefix pSlash = new Prefix("p/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
+
+    @Test
+    public void tokenizeStrict_slashJoiningShortParts_keptInValue() throws ParseException {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeStrict(
+                " /name Ravi s/o Kumar /address Blk 4/5 Main St #01/02 c/o 5/F N/A", "usage",
+                PREFIX_NAME, PREFIX_ADDRESS);
+        assertEquals("Ravi s/o Kumar", argMultimap.getValue(PREFIX_NAME).get());
+        assertEquals("Blk 4/5 Main St #01/02 c/o 5/F N/A", argMultimap.getValue(PREFIX_ADDRESS).get());
+    }
+
+    @Test
+    public void tokenizeStrict_slashAtStartOfArguments_throwsParseException() {
+        // an unknown prefix at the very start
+        assertThrows(ParseException.class, "Unknown criterion: /x\n"
+                + String.format(MESSAGE_INVALID_COMMAND_FORMAT, "usage"), () ->
+                ArgumentTokenizer.tokenizeStrict("/x", "usage", PREFIX_NAME));
+
+        // a word at the very start that contains a slash
+        assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_SLASH_IN_VALUE, "St/phone")
+                + "\n" + String.format(MESSAGE_INVALID_COMMAND_FORMAT, "usage"), () ->
+                ArgumentTokenizer.tokenizeStrict("St/phone", "usage", PREFIX_NAME));
+    }
 
     @Test
     public void tokenize_emptyArgsString_noValues() {
