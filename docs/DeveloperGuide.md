@@ -297,7 +297,7 @@ This also handles archiving an active selected contact and restoring one from th
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
 contact at model level rather than selecting whichever contact moves into its former row; the command
 processing policy then clears selection after a successful sort. `PersonDetailsFormatter`
-includes the optional checkup appointment, its `Marked` or `Unmarked` status on a separate line, and
+includes the optional checkup appointment, its `[X]` or `[ ]` status on a separate line, and
 every numbered remark. An absent appointment is shown as `Not scheduled` without a status line.
 Replacing the selected immutable `Person` through `setPerson()` refreshes these details without
 changing the current filter or sort.
@@ -444,7 +444,7 @@ other contact fields. Replacing an appointment clears `checkupMarked`; assigning
 preserves its mark. A deletion clears both the optional appointment and its mark, and fails with
 `This contact has no checkup appointment to delete.` if no appointment exists.
 
-`PersonCard` shows the appointment row with `(Marked)` or `(Unmarked)` only while an appointment is present.
+`PersonCard` shows the appointment row with `[X]` or `[ ]` only while an appointment is present.
 The row wraps independently of the name, so name truncation cannot hide the appointment's status.
 After deletion, the row is invisible and unmanaged, so it reserves no layout space. The details panel
 shows status on its own line only for a scheduled appointment. Both displays read `Person#isCheckupMarked()`;
@@ -1867,7 +1867,7 @@ testers are expected to do more *exploratory* testing.
       in `dd/mm/yyyy` format.
 
    1. Test case: `CHECKUP 1   DATE  14:30   `<br>
-      Expected: The first displayed contact has an appointment at `14:30`, followed by `(Unmarked)` on its card.
+      Expected: The first displayed contact has an appointment at `14:30`, followed by `[ ]` on its card.
       Extra spaces and command capitalization do not affect parsing.
 
    1. Test case: `checkup 2 DATE 14:30`, then `checkup 3 DATE 14:30`.<br>
@@ -1875,7 +1875,7 @@ testers are expected to do more *exploratory* testing.
       family HP matches contact 1. The check includes active contacts hidden by a filter, but excludes archived contacts.
 
    1. Test case: Mark contact 1, then assign the same appointment again; next run `checkup 1 DATE 15:30`.<br>
-      Expected: The identical appointment preserves `(Marked)`. The changed appointment resets it to `(Unmarked)`.
+      Expected: The identical appointment preserves `[X]`. The changed appointment resets it to `[ ]`.
 
    1. Test case: `checkup 1 /delete`, then repeat the command.<br>
       Expected: The first command removes the appointment row and status entirely. The second
@@ -1883,9 +1883,9 @@ testers are expected to do more *exploratory* testing.
 
    1. Test case: Give contact 1 a long name, schedule an appointment, then run `mark 1` and `view 1`.
       Narrow the window to its minimum width.<br>
-      Expected: The card's appointment row wraps and retains `(Marked)`, independently of name truncation.
-      The details panel shows the full wrapping name and `Checkup status: Marked` on a separate line.
-      Editing the name preserves this status. Run `unmark 1`, then `view 1`; both displays now show `Unmarked`.
+      Expected: The card's appointment row wraps and retains `[X]`, independently of name truncation.
+      The details panel shows the full wrapping name and `Checkup status: [X]` on a separate line.
+      Editing the name preserves this status. Run `unmark 1`, then `view 1`; both displays now show `[ ]`.
       After `checkup 1 /delete` and `view 1`, the card has no appointment row and the details panel shows
       `Checkup appointment: Not scheduled` without a status line.
 

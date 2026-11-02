@@ -88,9 +88,9 @@ end
 Command -> Model : setPerson(person, updatedPerson)
 activate Model
 note right of Model
-  Refresh the selected contact and UI.
+  Show [X] or [ ] on the appointment row.
   Deletion hides the appointment row
-  and removes the mark indicator.
+  and its status indicator.
 end note
 Model --> Command
 deactivate Model
