@@ -64,12 +64,21 @@ public class EditCommandParserTest {
     private EditCommandParser parser = new EditCommandParser();
 
     @Test
-    public void parse_unknownPrefixOrSlashInField_failure() {
+    public void parse_unknownPrefixes_reportsCriterionAndFormat() {
+        for (String prefix : List.of("/phone", "/Name", "/NAME", "/addressExtra", "/tagged", "/123")) {
+            String expectedMessage = "Unknown criterion: " + prefix + "\n"
+                    + String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
+            assertParseFailure(parser, "1 " + prefix + " value", expectedMessage);
+            assertParseFailure(parser, "1 /address 4 St " + prefix + " value", expectedMessage);
+        }
+    }
+
+    @Test
+    public void parse_malformedPrefixesOrSlashInField_failure() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
-        for (String fields : List.of(" /address 4 St /phone 123", " /addressExtra 4 St",
-                " /address 4/5 Main St", " /address 4 St/name Alice", " /name Kim/Lee",
+        for (String fields : List.of(" /address 4/5 Main St", " /address 4 St/name Alice", " /name Kim/Lee",
                 " /patientNo 9123/4567", " /familyNo 9123/4567", " /pEmail kim/lee@example.com",
-                " /fEmail kim/lee@example.com", " /tag HI/GH", " /", " /tagged HIGH")) {
+                " /fEmail kim/lee@example.com", " /tag HI/GH", " /", " / phone 123", " //")) {
             assertParseFailure(parser, "1" + fields, expectedMessage);
         }
     }

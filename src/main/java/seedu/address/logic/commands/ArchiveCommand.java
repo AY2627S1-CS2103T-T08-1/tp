@@ -9,6 +9,7 @@ import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Person;
 
 /**
@@ -24,9 +25,9 @@ public class ArchiveCommand extends Command {
             + "Example: " + COMMAND_WORD + " 1";
 
     public static final String MESSAGE_ARCHIVE_PERSON_SUCCESS = "Archived person: %1$s";
+    public static final String MESSAGE_CHECKUP_REMOVED = "The future unmarked checkup appointment was removed.";
     public static final String MESSAGE_EMPTY_LIST = "There are no persons in the displayed list to archive.";
-    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "The index provided is out of range. "
-            + "The displayed list has %1$d person(s), so the index must be from 1 to %1$d.";
+    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "Invalid index.";
 
     public static final String MESSAGE_ALREADY_ARCHIVED = "This person is already archived.";
 
@@ -53,8 +54,15 @@ public class ArchiveCommand extends Command {
         if (personToArchive.isArchived()) {
             throw new CommandException(MESSAGE_ALREADY_ARCHIVED);
         }
-        model.setPerson(personToArchive, personToArchive.copyWithArchivedStatus(true));
-        return new CommandResult(String.format(MESSAGE_ARCHIVE_PERSON_SUCCESS, Messages.format(personToArchive)));
+        Person archivedPerson = personToArchive.copyWithArchivedStatus(true);
+        boolean removeCheckup = !personToArchive.isCheckupMarked()
+                && personToArchive.getCheckupAppointment().filter(CheckupAppointment::isAfterToday).isPresent();
+        if (removeCheckup) {
+            archivedPerson = archivedPerson.withoutCheckup();
+        }
+        model.setPerson(personToArchive, archivedPerson);
+        return new CommandResult(String.format(MESSAGE_ARCHIVE_PERSON_SUCCESS, Messages.format(archivedPerson))
+                + (removeCheckup ? "\n" + MESSAGE_CHECKUP_REMOVED : ""));
     }
 
     @Override

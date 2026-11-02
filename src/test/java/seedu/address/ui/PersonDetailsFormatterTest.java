@@ -49,22 +49,44 @@ public class PersonDetailsFormatterTest {
         assertTrue(details.contains("Remark: \n1. Allergic to penicillin\n2. Literal /tag HIGH belongs to this note"));
     }
 
-    @Test
+        @Test
     public void format_markAndUnmark_showsCurrentStatus() {
-        Person scheduled = new PersonBuilder().withCheckupAppointment("25/12/2030 14:30").build();
+        Person scheduled = new PersonBuilder()
+                .withCheckupAppointment("25/12/2030 14:30").build();
         String markedDetails = PersonDetailsFormatter.format(scheduled.withMarkedCheckup());
-        assertTrue(markedDetails.contains("Checkup appointment: 25/12/2030 14:30\nCheckup status: Marked\n"));
+        assertTrue(markedDetails.contains(
+                "Checkup appointment: 25/12/2030 14:30\nCheckup status: Marked\n"));
         assertFalse(markedDetails.contains("Checkup status: Unmarked"));
-        String unmarkedDetails = PersonDetailsFormatter.format(scheduled.withMarkedCheckup().withUnmarkedCheckup());
+        String unmarkedDetails = PersonDetailsFormatter.format(
+                scheduled.withMarkedCheckup().withUnmarkedCheckup());
         assertTrue(unmarkedDetails.contains("\nCheckup status: Unmarked\n"));
     }
 
     @Test
     public void format_renamedMarkedContact_preservesStatus() {
-        Person marked = new PersonBuilder().withCheckupAppointment("25/12/2030 14:30").build().withMarkedCheckup();
+        Person marked = new PersonBuilder()
+                .withCheckupAppointment("25/12/2030 14:30").build().withMarkedCheckup();
         Person renamed = new PersonBuilder(marked).withName("Updated Patient Name").build();
         assertEquals(PersonDetailsFormatter.format(marked), PersonDetailsFormatter.format(renamed));
         assertTrue(PersonDetailsFormatter.format(renamed).contains("Checkup status: Marked"));
+    }
+
+    @Test
+    public void format_archivedContactWithoutCheckup_omitsAppointmentField() {
+        Person person = new PersonBuilder().build().copyWithArchivedStatus(true);
+        String details = PersonDetailsFormatter.format(person);
+        assertFalse(details.contains("Checkup appointment:"));
+        assertFalse(details.contains("Checkup status:"));
+    }
+
+    @Test
+    public void format_archivedContactWithCheckup_keepsAppointmentField() {
+        Person person = new PersonBuilder()
+                .withCheckupAppointment("25/12/2030 14:30").build()
+                .withMarkedCheckup().copyWithArchivedStatus(true);
+        String details = PersonDetailsFormatter.format(person);
+        assertTrue(details.contains("Checkup appointment: 25/12/2030 14:30"));
+        assertTrue(details.contains("Checkup status: Marked"));
     }
 
     @Test

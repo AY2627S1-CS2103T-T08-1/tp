@@ -108,7 +108,7 @@ public class ViewCommandTest {
         ViewCommand viewCommand = new ViewCommand(INDEX_SECOND_PERSON);
 
         assertCommandFailure(viewCommand, model,
-                "Index 2 is out of range. The displayed list has 1 contact. Enter an index from 1 to 1.");
+                "Invalid index.");
     }
 
     @Test
@@ -116,7 +116,7 @@ public class ViewCommandTest {
         List<Person> displayed = List.copyOf(model.getFilteredPersonList().subList(0, 2));
         model.updateFilteredPersonList(displayed::contains);
         assertCommandFailure(new ViewCommand(Index.fromOneBased(3)), model,
-                "Index 3 is out of range. The displayed list has 2 contacts. Enter an index from 1 to 2.");
+                "Invalid index.");
         assertNull(model.selectedPersonProperty().get());
     }
 

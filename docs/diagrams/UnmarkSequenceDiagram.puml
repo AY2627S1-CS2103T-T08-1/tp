@@ -1,0 +1,94 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant ":AddressBookParser" as AddressBookParser LOGIC_COLOR
+participant ":UnmarkCommandParser" as Parser LOGIC_COLOR
+participant "c:UnmarkCommand" as Command LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "m:Model" as Model MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant ":Storage" as Storage STORAGE_COLOR
+end box
+
+[-> LogicManager : execute("unmark 1")
+activate LogicManager
+LogicManager -> AddressBookParser : parseCommand(commandText)
+activate AddressBookParser
+AddressBookParser -> Parser : parse(" 1")
+activate Parser
+
+note right of Parser
+  Parse one positive displayed index.
+  Invalid syntax throws ParseException
+  with "Invalid index."
+end note
+
+create Command
+Parser -> Command : index
+activate Command
+Command --> Parser : c
+deactivate Command
+Parser --> AddressBookParser : c
+deactivate Parser
+AddressBookParser --> LogicManager : c
+deactivate AddressBookParser
+
+LogicManager -> Command : execute(m)
+activate Command
+Command -> Model : getFilteredPersonList()
+activate Model
+Model --> Command : displayedPersons
+deactivate Model
+
+note over Command, Model
+  Validate index before retrieving the contact.
+  Require an appointment, then require the
+  current mark to differ from false.
+  Validation errors throw CommandException
+  before any model change or save.
+end note
+
+note right of Command
+  person.withUnmarkedCheckup() creates
+  an immutable copy with checkupMarked = false.
+  Appointment and other details are preserved.
+end note
+
+Command -> Model : setPerson(person, updatedPerson)
+activate Model
+note right of Model
+  Refresh the contact card's mark indicator.
+  Preserve the displayed list order and scope.
+end note
+Model --> Command
+deactivate Model
+Command --> LogicManager : CommandResult
+deactivate Command
+
+LogicManager -> Command : modifiesData()
+activate Command
+Command --> LogicManager : true
+deactivate Command
+LogicManager -> Model : getAddressBook()
+activate Model
+Model --> LogicManager : addressBook
+deactivate Model
+LogicManager -> Storage : saveAddressBook(addressBook)
+activate Storage
+Storage --> LogicManager
+deactivate Storage
+
+LogicManager -> Model : selectPerson(null)
+activate Model
+Model --> LogicManager
+deactivate Model
+[<-- LogicManager : CommandResult
+deactivate LogicManager
+@enduml

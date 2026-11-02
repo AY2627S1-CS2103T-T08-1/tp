@@ -142,7 +142,7 @@ public class ContactDetailsUiTest {
             assertFalse(window.detailsPanel().isVisible());
             window.enter("view 99");
             assertFalse(window.detailsPanel().isVisible());
-            assertEquals("Index 99 is out of range. The displayed list has 1 contact. Enter an index from 1 to 1.",
+            assertEquals("Invalid index.",
                     window.feedback().getText());
         });
     }

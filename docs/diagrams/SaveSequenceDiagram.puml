@@ -25,13 +25,11 @@ activate AddressBookParser
 AddressBookParser --> LogicManager : c
 deactivate AddressBookParser
 
-LogicManager -> Model : getAddressBook()
+LogicManager -> Model : createRestorePoint()
 activate Model
 
-Model --> LogicManager : addressBook
+Model --> LogicManager : undoCommand
 deactivate Model
-
-LogicManager -> LogicManager : keep a copy of addressBook
 
 LogicManager -> Command : execute(m)
 activate Command
@@ -59,7 +57,7 @@ alt isModifying
     deactivate Storage
 
     break the save failed
-        LogicManager -> Model : setAddressBook(copy)
+        LogicManager -> Model : undoCommand.run()
         activate Model
 
         Model --> LogicManager

@@ -149,10 +149,12 @@ public class FindCommandParserTest {
     }
 
     @Test
-    public void parse_unknownCriterion_reportsEnteredCriterion() {
+    public void parse_unknownCriterion_reportsEnteredCriterionAndFormat() {
         for (String criterion : List.of("/unknown", "/UNKNOWN", "/patientNumber", "/")) {
-            assertParseFailure(parser, criterion + " abc", "Unknown criterion: " + criterion);
-            assertParseFailure(parser, criterion, "Unknown criterion: " + criterion);
+            String expectedMessage = "Unknown criterion: " + criterion + "\n"
+                    + String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE);
+            assertParseFailure(parser, criterion + " abc", expectedMessage);
+            assertParseFailure(parser, criterion, expectedMessage);
         }
     }
 

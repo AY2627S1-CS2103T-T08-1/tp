@@ -8,7 +8,7 @@ import seedu.address.model.person.Person;
 import seedu.address.model.person.Remark;
 
 /**
- * Formats full contact details without abbreviating long values or omitting absent optional fields.
+ * Formats full contact details, omitting absent checkups for archived contacts.
  */
 final class PersonDetailsFormatter {
     private PersonDetailsFormatter() {
@@ -27,7 +27,8 @@ final class PersonDetailsFormatter {
                 + "\nFamily email: " + formatEmail(person.getFamilyEmail())
                 + "\nAddress: " + person.getAddress().value
                 + "\nPriority: " + formatPriority(person)
-                + "\nCheckup appointment: " + formatAppointment(person)
+                + (person.isArchived() && person.getCheckupAppointment().isEmpty() ? ""
+                        : "\nCheckup appointment: " + formatAppointment(person))
                 + "\nRemark: " + formatRemarks(person.getRemark());
     }
 
