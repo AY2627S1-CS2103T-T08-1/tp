@@ -61,6 +61,9 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
 * After `add`, `edit`, `archive`, `unarchive` and `delete`, the success message shows the contact's details, including the checkup appointment (if any) and the remark (if any).
 
+* All command words are case-insensitive: for example, `list`, `LIST` and `LiSt` work identically.
+  Prefixes and arguments follow the case rules described for each command.
+
 * The `help`, `clear`, and `exit` commands reject extra parameters; enter these commands on their own.<br>
   For example, `help 123` will be rejected. The `list` command accepts only the optional `archive` argument.
 
@@ -162,9 +165,6 @@ The command word is case-insensitive: `archive 3`, `Archive 3`, and `ARCHIVE 3` 
 * `list archive` shows archived contacts. Use `list` to return to active contacts.
 * `find` searches the current active or archive scope (see [Locating persons](#locating-persons-find)). Archived contacts remain archived when edited.
 * Archiving an already archived contact reports an error without changing it.
-* Archiving removes unmarked checkups scheduled after today. Marked checkups are kept regardless of their date.
-  Checkups scheduled for today or earlier keep their date, time, and marked or unmarked status,
-  even if today's appointment time has not yet arrived. Dates are compared at the time of archiving.
 * Archived status is saved automatically and survives restarting CareBook.
 * Archived contacts retain their identity, so adding a duplicate is still rejected.
 
@@ -184,7 +184,7 @@ For example, after `find Alice`, `archive 1` archives the first contact in those
 | --- | --- | --- |
 | `archive`, `archive Alice`, or `archive 1 2` | Invalid command format; usage instructions are shown. | Enter exactly one index, such as `archive 3`. |
 | `archive 0` or `archive -1` | Invalid index. | Use a positive integer shown in the current list. |
-| `archive 4` when only three contacts are displayed | `Invalid index.` | Check the displayed indices and select an existing contact. |
+| `archive 4` when only three contacts are displayed | The index is out of range. | Check the displayed indices and select an existing contact. |
 | `archive 1` when the displayed list is empty | `There are no persons in the displayed list to archive.` | Use `list` to check for active contacts. |
 | Archiving a contact in `list archive` | `This person is already archived.` | Use `list` to select an active contact instead. |
 
@@ -217,13 +217,11 @@ Format: `list` or `list archive`
 | --- | --- | --- |
 | `list 3` | `Invalid command format. List command format: list [archive]` | Remove the index. Use `list` to show all persons. |
 | `list Alice` or `list n/Alice` | `Invalid command format. List command format: list [archive]` | Use `find Alice` to search by name, or `list` to show all persons. |
-| `LIST` or `List` | `Unknown command.` | Use the lowercase command `list`. |
 
-The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word `list` remains lowercase. Leading and trailing spaces are allowed.
+The `list` command accepts only the optional `archive` argument, which is case-insensitive: `list Archive`, `list ARCHIVE`, and `list ARchive` all show archived contacts. The command word is also case-insensitive: `list`, `LIST` and `LiSt` all work, as does `LIST ARCHIVE`. Leading and trailing spaces are allowed.
 If all active persons are already displayed, `list` leaves the displayed list unchanged and shows `Listed all persons.`;
 this is normal behavior. After a `find` command or `list archive`, use `list` to display all active persons again.
-If no contacts have been archived, `list archive` displays an empty list and shows `No archived contacts`.
-`list` also clears any `sort`, so persons are
+If no contacts have been archived, `list archive` displays an empty list. `list` also clears any `sort`, so persons are 
 shown in the order they were added.
 
 ### Sorting persons: `sort`
@@ -278,15 +276,17 @@ Format: `view INDEX`
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ...
 * The selected contact has a coloured border in the list. Use another `view INDEX` to switch contacts.
-* Type the command word in lowercase: `View 1` is not recognised.
+* The command word is case-insensitive: `view 1`, `View 1` and `VIEW 1` all work.
 * Each successful `view INDEX` scrolls to its contact, even if that contact is already selected.
 * The feedback and details panels fit their contents, up to height limits of 160 and 260 pixels respectively.
   Longer text wraps and scrolls instead of taking over the contact list. Drag a panel's bottom handle to
   resize it within its limit; double-click the handle to fit its contents again. New content or a change
   in window width restores automatic sizing. With no selection, the details panel is hidden entirely.
 * Missing optional emails are shown as `Not provided`; a missing priority is shown as `Not assigned`.
-* The details panel also shows the checkup appointment (`Not scheduled` if absent) and all numbered
-  remarks (`None` if absent). After updating a contact, use `view INDEX` again to see its updated details.
+* The details panel also shows the checkup appointment and all numbered remarks (`None` if absent).
+  An active contact without an appointment shows `Not scheduled`; an archived contact without one
+  omits the appointment field. A scheduled appointment has a separate `Checkup status: Marked` or
+  `Checkup status: Unmarked` line. After updating a contact, use `view INDEX` again to see its updated details.
 * After filtering or sorting, use the index in the list currently on screen. For example,
   `filter /tag HIGH`, `sort name desc`, then `view 1` selects the first contact in those sorted results.
 * Any successful command other than `view` closes the details panel and removes the selected border.
@@ -301,7 +301,7 @@ Common errors:
 
 | Input | Error message shown | How to fix |
 | --- | --- | --- |
-| `view 3` when 2 contacts are displayed | `Invalid index.` | Use an index shown in the current list. |
+| `view 3` when 2 contacts are displayed | `Index 3 is out of range. The displayed list has 2 contacts. Enter an index from 1 to 2.` | Use an index shown in the current list. |
 | `view 1` when no contacts are displayed, including after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. If no contacts are saved, add one. |
 
 These errors leave contacts, the current list and selection unchanged. `view` never falls back to
@@ -317,7 +317,7 @@ Format: `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PH
 * At least one of the optional fields must be provided.
 * Each field follows the [contact field rules](#adding-a-person-add), which also say when two contacts count as the same person.
 * The command word is case-insensitive: `edit`, `Edit` and `EDIT` are accepted. Prefixes must be typed exactly as shown, except `/tag`, which works in any letter case. For example, `/NAME` is not recognised.
-* You cannot change the family HP of an active person with a checkup appointment if another active contact has a checkup at the same date and time, since only contacts with the same family HP can share a booking (see [Scheduling a checkup](#scheduling-or-removing-a-checkup-checkup)).
+* You cannot change the family HP of a person with a checkup appointment if another active contact has a checkup at the same date and time, since only contacts with the same family HP can share a booking (see [Scheduling a checkup](#scheduling-or-removing-a-checkup-checkup)).
 * Existing values will be updated to the input values. Fields you leave out, including both emails, stay as they are.
 * To remove an email, supply `/pEmail` or `/fEmail` without a value.
 * The old `/email` prefix is not accepted. Use `/pEmail` for the patient's email and `/fEmail` for the family member's email.
@@ -343,7 +343,7 @@ Examples:
 | `edit 1 /email john@example.com` | `/email is no longer supported. Use /pEmail for the patient's email or /fEmail for the family member's email.` | Use `/pEmail` for the patient's email or `/fEmail` for the family member's email. |
 | `edit 0 /name John Doe` | `Index must be a positive integer.` | Use an index of 1 or more. |
 | `edit 1 John Doe` (no prefix) | `Unexpected text after the index: John Doe. Put each new value after its prefix, e.g. edit 1 /name John Doe` | Put the prefix of the field before its new value, e.g. `edit 1 /name John Doe`. |
-| `edit 99 /name John Doe` when 7 contacts are displayed | `Invalid index.` | Use an index shown in the displayed list. |
+| `edit 99 /name John Doe` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
 | `edit 1 /name John Doe` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
 | `edit 2 /patientNo 87438807` (another person already has this patient phone number or email) | `Someone with this patient HP or email already exists in CareBook.` | Check that you are editing the right person, or use their own number or email. |
@@ -367,13 +367,15 @@ Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX /delete`
 * Archived contacts cannot be given a new appointment or have an appointment rescheduled. Unarchive the contact first.
 * Two contacts can share the exact same appointment date and time **only if their family HP numbers match**.
   Booking checks include active contacts outside the displayed list. Archived contacts do not reserve a slot.
-* Scheduling a checkup shows the date and time on the person's card and adds `[ ]` beside their name.
-  Replacing the appointment clears an existing `[X]` mark. Setting the same appointment again preserves its mark.
-* `checkup INDEX /delete` removes the appointment and its mark. The appointment row and the `[ ]` or `[X]`
-  indicator disappear entirely from the person card. `/delete` is case-insensitive.
+* Scheduling a checkup shows the date and time followed by `(Unmarked)` on the person's card.
+  Marking it with `mark INDEX` changes the status to `(Marked)`; `unmark INDEX` restores `(Unmarked)`.
+  This row wraps independently of the name so long names do not hide the status.
+  Replacing the appointment resets its status to `Unmarked`. Setting the same appointment again preserves its status.
+* `checkup INDEX /delete` removes the appointment and its status. The appointment row disappears entirely
+  from the person card. `/delete` is case-insensitive.
+* Other contact details are preserved, and appointment changes are saved automatically.
 * Appointments can also be removed from archived contacts after running `list archive`.
 * Leading and trailing spaces and extra spaces between arguments are ignored.
-* Other contact details are preserved, and appointment changes are saved automatically.
 
 Examples:
 
@@ -401,7 +403,7 @@ Format: `mark INDEX`
 
 * The index refers to the index number shown in the displayed person list and **must be a positive integer**.
 * The contact must have a scheduled appointment and must not already be marked.
-* Changes the indicator beside the name from `[ ]` to `[X]`, e.g. `1. Carlyn Goh [X]`.
+* Changes the appointment status on the contact card from `(Unmarked)` to `(Marked)`.
 * The appointment date/time and other contact details stay unchanged. The mark is saved automatically.
 * The command is case-insensitive: `mark`, `Mark` and `MARK` work. Surrounding spaces are ignored.
 * Uses the current displayed list, including search results, filtered or sorted lists and `list archive`.
@@ -426,7 +428,7 @@ Format: `unmark INDEX`
 
 * The index refers to the index number shown in the displayed person list and **must be a positive integer**.
 * The contact must have a scheduled appointment that is currently marked.
-* Changes the indicator beside the name from `[X]` to `[ ]`, e.g. `1. Carlyn Goh [ ]`.
+* Changes the appointment status on the contact card from `(Marked)` to `(Unmarked)`.
 * The appointment date/time and other contact details stay unchanged. The change is saved automatically.
 * The command is case-insensitive: `unmark`, `Unmark` and `UNMARK` work. Surrounding spaces are ignored.
 * Uses the current displayed list, including search results, filtered or sorted lists and `list archive`.
@@ -442,7 +444,7 @@ Example:
 | --- | --- | --- |
 | Missing, non-numeric, non-positive or out-of-range index, or extra arguments | `Invalid index.` | Give one positive index shown in the current list. |
 | The contact has no appointment | `Contacts with no checkup appointments cannot be unmarked.` | Select a contact with a marked appointment. |
-| The appointment is already unmarked | `Unmarked contact cannot be unmarked again.` | Select a contact whose appointment shows `[X]`. |
+| The appointment is already unmarked | `Unmarked contact cannot be unmarked again.` | Select a contact whose appointment shows `(Marked)`. |
 
 ### Keeping care notes on a person: `remark`
 
@@ -458,10 +460,10 @@ Notes:
 
 * The index refers to the index number shown in the displayed person list. The index and note number **must be positive integers** 1, 2, 3, ...
 * The notes appear on the person's card under `Remark:`, numbered 1., 2., 3., ... A person with no notes shows no `Remark:` line.
-* Apart from spaces at the start and end, the note is saved as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note. A note cannot start with the separate word `/edit`, `/delete` or `/clear`, because those words straight after the index choose the action. A note such as `/editing notes` is fine.
+* Apart from spaces at the start and end, the note is saved as you type it, including `/`, so a note such as `Takes /med at 9am` is saved as one note. A note cannot start with `/edit`, `/delete` or `/clear`, because those words straight after the index choose the action.
 * `/edit`, `/delete` and `/clear` are only recognised straight after the index, in any letter case. The command word `remark` is also case-insensitive.
 * `remark INDEX` without a note does nothing and shows the correct usage, so notes are never deleted by accident.
-* A person cannot have the same note twice. Notes that differ only in letter case count as the same note, but notes that differ in spacing count as different notes.
+* A person cannot have the same note twice. Notes that differ only in letter case count as the same note.
 * The list on screen stays as it is. After `find /remark`, the person stays in the results even if the note that matched is changed or deleted.
 * A person's notes can have at most 500 characters in total.
 * `edit` does not change a person's notes.
@@ -484,7 +486,7 @@ After `remark 1 /edit 3 Visits after 4pm only`, the person's card shows the numb
 | `remark 1` (no note) | `Invalid command format!` followed by the correct usage | Add a note, e.g. `remark 1 Allergic to penicillin`, or use `remark 1 /clear` to delete all notes. |
 | `remark /clear` or `remark Diabetic` (no index) | `Invalid command format!` followed by the correct usage | Put the person's index first, e.g. `remark 1 /clear` or `remark 1 Diabetic`. |
 | `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
-| `remark 99 Diabetic` when 7 contacts are displayed | `Invalid index.` | Use an index shown in the displayed list. |
+| `remark 99 Diabetic` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
 | `remark 1 Diabetic` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `remark 1 Allergic to penicillin` (the person already has this note as note 1) | `Alex Yeoh already has this note (note 1).` | Add a different note, or change the existing note with `remark 1 /edit 1 ...`. |
 | `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
@@ -520,16 +522,17 @@ Supported criteria:
 | `/remark` | Any individual care note |
 
 * Use exactly one criterion, spelled as shown above, and provide a non-empty input.
-* An unknown criterion, such as `/phone`, shows `Unknown criterion: /phone`, followed by `Invalid command format!` and the correct find usage.
 * Phone searches require one sequence of at least **two digits**, with no spaces or other characters.
   The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
 * Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
-* Contacts without an optional email, tag or remark do not match searches on that absent field.
-* Remark searches match a phrase within one care note, ignoring case and repeated spaces. They do not join separate notes or search note numbers.
-* Searches consider all contacts in the current active or archive scope, replacing previous search or filter criteria without changing stored data.
-* After `list archive`, searches return **archived contacts only**, even after another search, filter, sort or an empty result. Run `list` to return to active contacts.
-* A search with no matches displays an empty list and appends `Use 'list archive' to search through archived contacts` to the result message.
+* Contacts without an optional email or tag do not match searches on that absent field.
+* Searches consider all stored contacts, replacing the current display filter without changing stored data.
+  Use `list` to display all contacts again. A search with no matches displays an empty list.
+* To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
+* When no contacts match, active searches append `Use 'list archive' to search through archived contacts`;
+  archive searches append `Use 'list' to search through active contacts`.
+
 
 Examples:
 * `find /patientNo 87` finds patient numbers containing `87` consecutively.
@@ -559,7 +562,7 @@ Format: `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`
 * **Tag:** `TAG` must be one of `HIGH`, `MEDIUM` or `LOW` (case-insensitive). To match several tags, repeat `/tag`; a person matches if they have **any** of them.
 * **Address:** `ADDRESS` is matched as a phrase, case-insensitively, and partial matches are allowed. To match several addresses, repeat `/address`; a person matches if their address contains **any** of the phrases. Extra spaces are ignored, so `/address clementi ave` also finds an address saved as `5 Clementi  Ave 3`.
   * Unlike names, an address is **not** split into separate keywords: `/address clementi ave` only matches addresses containing the exact text `clementi ave`, whereas `/name ali bob` matches `ali` **or** `bob`. This is because addresses often contain common words such as `Ave`, `Blk` or `Street`, which would match almost every contact if each word were searched on its own.
-* The command word `filter` and the prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
+* The command word is case-insensitive: `filter`, `Filter` and `FILTER` all work. The prefixes `/name` and `/address` must be in lowercase. The `/tag` prefix and the tag values are case-insensitive, so `filter /TAG high` also works.
 * When you give more than one kind of criterion, a person must match **all** of them. For example, `/name ali /tag HIGH` returns only persons whose name contains `ali` **and** who are tagged `HIGH`.
 
 Examples:
@@ -611,7 +614,7 @@ Input | Error message shown | How to fix
 `delete 1 2` | `Invalid command format!` followed by the correct usage | Use a single index per command
 `delete 1 confirm` | `Invalid command format!` followed by the correct usage | Write the flag with the slash: `delete 1 /confirm`
 `delete 0` / `delete -1` | `Index must be a positive integer.` | Use an index of 1 or more
-`delete 99` (out of range) | `Invalid index.` | Use an index shown in the displayed list
+`delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list
 `delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first 
 
 ### Clearing the displayed contact list: `clear`
@@ -645,7 +648,7 @@ Exits the program.
 
 Format: `exit`
 
-Type the command word in lowercase: `Exit` and `EXIT` are not recognised. Surrounding whitespace
+The command word is case-insensitive: `exit`, `Exit` and `EXIT` all work. Surrounding whitespace
 is allowed. Extra arguments are rejected to prevent accidental exits:
 `exit Alice` or `exit 1` leaves CareBook open without changing any contacts and shows:
 

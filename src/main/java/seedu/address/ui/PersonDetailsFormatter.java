@@ -3,7 +3,6 @@ package seedu.address.ui;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import seedu.address.model.person.CheckupAppointment;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Remark;
@@ -29,7 +28,7 @@ final class PersonDetailsFormatter {
                 + "\nAddress: " + person.getAddress().value
                 + "\nPriority: " + formatPriority(person)
                 + (person.isArchived() && person.getCheckupAppointment().isEmpty() ? ""
-                        : "\nCheckup appointment: " + formatAppointment(person.getCheckupAppointment()))
+                        : "\nCheckup appointment: " + formatAppointment(person))
                 + "\nRemark: " + formatRemarks(person.getRemark());
     }
 
@@ -41,10 +40,11 @@ final class PersonDetailsFormatter {
     }
 
     /**
-     * Returns the scheduled date and time, or the placeholder for a contact without an appointment.
+     * Returns the scheduled date, time and status, or the placeholder for an absent appointment.
      */
-    private static String formatAppointment(Optional<CheckupAppointment> appointment) {
-        return appointment.map(CheckupAppointment::toString).orElse("Not scheduled");
+    private static String formatAppointment(Person person) {
+        return person.getCheckupAppointment().map(appointment -> appointment
+                + "\nCheckup status: " + (person.isCheckupMarked() ? "Marked" : "Unmarked")).orElse("Not scheduled");
     }
 
     /**

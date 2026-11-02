@@ -244,6 +244,39 @@ public class ContactDetailsUiTest {
         });
     }
 
+    @Test
+    public void checkupMarkUnmarkRenameAndDelete_viewShowsCurrentStatus() throws Exception {
+        withWindow(window -> {
+            window.enter("checkup 1 01/01/2099 09:30");
+            window.enter("view 1");
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: Unmarked\n"));
+            window.enter("mark 1");
+            assertFalse(window.detailsPanel().isVisible());
+            window.enter("view 1");
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: Marked\n"));
+            String longName = "Muhammad Abdul Rahman bin Abdullah Al Hakeem Al Mahmood";
+            window.enter("edit 1 /name " + longName);
+            window.enter("view 1");
+            window.stage.setWidth(450);
+            window.layout();
+            assertEquals("Selected contact: " + longName, window.title().getText());
+            assertTrue(window.title().isWrapText());
+            assertFalse(window.title().isTextTruncated());
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: Marked\n"));
+            Label appointment = window.appointmentRow();
+            assertEquals("Checkup appointment: 01/01/2099 09:30 (Marked)", appointment.getText());
+            assertTrue(appointment.isWrapText());
+            assertFalse(appointment.isTextTruncated());
+            window.enter("unmark 1");
+            window.enter("view 1");
+            assertTrue(window.detailsText().getText().contains("\nCheckup status: Unmarked\n"));
+            window.enter("checkup 1 /delete");
+            window.enter("view 1");
+            assertTrue(window.detailsText().getText().contains("Checkup appointment: Not scheduled"));
+            assertFalse(window.detailsText().getText().contains("Checkup status:"));
+        });
+    }
+
     /** Creates and closes an isolated window; all contacts remain in memory and no user files are opened. */
     private void withWindow(java.util.function.Consumer<TestWindow> assertions) throws Exception {
         runOnFxThread(() -> {
@@ -288,6 +321,13 @@ public class ContactDetailsUiTest {
 
         Label title() {
             return (Label) node("#title");
+        }
+
+        Label appointmentRow() {
+            return node("#personListView").lookupAll("#checkupAppointment").stream()
+                    .map(Label.class::cast)
+                    .filter(Label::isVisible)
+                    .findFirst().orElseThrow();
         }
 
         Label detailsText() {

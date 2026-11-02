@@ -70,14 +70,13 @@ public class PersonCard extends UiPart<Region> {
     }
 
     static String getNameText(Person person) {
-        if (person.getCheckupAppointment().isEmpty()) {
-            return person.getName().fullName;
-        }
-        return person.getName().fullName + (person.isCheckupMarked() ? " [X]" : " [ ]");
+        return person.getName().fullName;
     }
 
+    /** Returns a scheduled appointment with its status, independently of the patient's name. */
     static String getCheckupAppointmentText(Person person) {
-        return person.getCheckupAppointment().map(appointment -> "Checkup appointment: " + appointment).orElse("");
+        return person.getCheckupAppointment().map(appointment -> "Checkup appointment: " + appointment
+                + (person.isCheckupMarked() ? " (Marked)" : " (Unmarked)")).orElse("");
     }
 
     /**

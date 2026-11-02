@@ -48,6 +48,23 @@ public class FilterCommandParserTest {
     }
 
     @Test
+    public void parse_missingSpaceBeforePrefix_throwsParseException() {
+        assertParseFailure(parser, " /name ali/tag HIGH", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /name ali/address clementi", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /address Clementi/tag HIGH", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /address Clementi/name ali", MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, " /tag HIGH/name ali", MESSAGE_INVALID_FORMAT);
+    }
+
+    @Test
+    public void parse_slashInAddress_returnsFilterCommand() {
+        // a slash that does not start a filter prefix is part of the address
+        assertParseSuccess(parser, " /address Blk 12/3", command(List.of(), List.of(), List.of("Blk 12/3")));
+        assertParseSuccess(parser, " /address 12/Tagore Road",
+                command(List.of(), List.of(), List.of("12/Tagore Road")));
+    }
+
+    @Test
     public void parse_emptyValue_throwsParseException() {
         assertParseFailure(parser, " /name", MESSAGE_INVALID_FORMAT);
         assertParseFailure(parser, " /name   ", MESSAGE_INVALID_FORMAT);

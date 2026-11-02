@@ -102,7 +102,11 @@ Here are the other classes in `Logic` (omitted from the class diagram above) tha
 
 <puml src="diagrams/ParserClasses.puml" width="600"/>
 
+Every command is recognised in any letter case. Command words are case-insensitive; for example, `list`, `LIST` and `LiSt` are equivalent. Prefixes and arguments follow the case rules of their respective command parsers.
+
 How the parsing works:
+* `AddressBookParser#parseCommand()` separates the command word from its arguments and normalizes the word with `toLowerCase(Locale.ROOT)` before dispatching it. All 17 command words are case-insensitive: `add`, `archive`, `unarchive`, `checkup`, `edit`, `delete`, `clear`, `find`, `list`, `filter`, `sort`, `exit`, `help`, `view`, `remark`, `mark` and `unmark`. For example, `view 1`, `VIEW 1` and `vIeW 1` follow the same parsing and execution path.
+* `Locale.ROOT` makes command recognition independent of the system locale. Normalization applies only to the command word; arguments retain their original text and follow each command parser's own case and validation rules. New commands with lowercase `COMMAND_WORD` constants inherit this behavior when added to the dispatch switch.
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
@@ -293,8 +297,10 @@ This also handles archiving an active selected contact and restoring one from th
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
 contact at model level rather than selecting whichever contact moves into its former row; the command
 processing policy then clears selection after a successful sort. `PersonDetailsFormatter`
-includes the optional checkup appointment and every numbered remark. Replacing the selected immutable
-`Person` through `setPerson()` refreshes these details without changing the current filter or sort.
+includes the optional checkup appointment, its `Marked` or `Unmarked` status on a separate line, and
+every numbered remark. An absent appointment is shown as `Not scheduled` without a status line.
+Replacing the selected immutable `Person` through `setPerson()` refreshes these details without
+changing the current filter or sort.
 
 **Design rationale:** a separate details panel lets caregivers read complete contact information while
 retaining their position in a search or filtered list. Content-sized panels grow up to height caps, with
@@ -304,10 +310,10 @@ details to the list without treating a changing list index as a permanent contac
 
 ### Clearing the display and exiting
 
-`AddressBookParser#parseCommand()` normalises the `clear` command word ignoring case, so `clear`,
-`Clear` and `CLEAR` create the same command. The `exit` command word is lowercase-only; `Exit`
-and `EXIT` are unknown commands. Both commands reject non-blank arguments before their command
-objects are created. A parse error leaves the display and stored contacts unchanged.
+`AddressBookParser#parseCommand()` recognises `clear` and `exit` in any letter case and
+rejects non-blank arguments before creating their command objects. For example, `CLEAR` clears the
+display and `Exit` closes the application, while `CLEAR 1` and `Exit 1` are rejected.
+A parse error leaves the display and stored contacts unchanged.
 
 `ClearCommand#execute()` calls `Model#updateFilteredPersonList(PREDICATE_SHOW_NO_PERSONS)`.
 The predicate hides every contact in the current display but does not remove any from the address
@@ -393,7 +399,7 @@ For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edi
 ### Checkup appointments
 
 The `checkup INDEX dd/mm/yyyy HH:mm` command sets or replaces an appointment for a displayed contact.
-`checkup INDEX /delete` removes it. The command word and `/delete` option are case-insensitive.
+`checkup INDEX /delete` removes it. The command word and `/delete` keyword are case-insensitive.
 
 #### Parsing and validation
 
@@ -438,11 +444,13 @@ other contact fields. Replacing an appointment clears `checkupMarked`; assigning
 preserves its mark. A deletion clears both the optional appointment and its mark, and fails with
 `This contact has no checkup appointment to delete.` if no appointment exists.
 
-`PersonCard` shows the appointment row and a `[ ]` or `[X]` indicator only while an appointment is present.
-After deletion, the row is invisible and unmanaged, so it reserves no layout space, and the indicator is
-omitted. A successful checkup command closes the details panel. The command uses the displayed
-list index and preserves sorting and filtering; if a view predicate excludes the replacement because its
-fields changed, the display is refreshed to keep the updated contact visible.
+`PersonCard` shows the appointment row with `(Marked)` or `(Unmarked)` only while an appointment is present.
+The row wraps independently of the name, so name truncation cannot hide the appointment's status.
+After deletion, the row is invisible and unmanaged, so it reserves no layout space. The details panel
+shows status on its own line only for a scheduled appointment. Both displays read `Person#isCheckupMarked()`;
+formatting does not modify the contact. Updating a selected immutable contact refreshes the details panel.
+The command uses the displayed list index and preserves sorting and filtering; if a view predicate excludes
+the replacement because its fields changed, the display is refreshed to keep the updated contact visible.
 
 `CheckupCommand` modifies data, so `LogicManager` saves successful changes through `Storage`.
 `JsonAdaptedPerson` stores `checkupAppointment` and `checkupMarked`; absent appointments are represented
@@ -652,8 +660,9 @@ response as bare `find`, including `Use either find KEYWORD or find /CRITERION I
 criteria. An unknown criterion reports `Unknown criterion: /...`, followed by the invalid-format message
 and `FindCommand.MESSAGE_USAGE`. Parsing errors leave stored contacts,
 selection and the current display unchanged. A valid search with no matches instead succeeds, displays
-an empty list and reports `0 person(s) listed!` followed by
-`Use 'list archive' to search through archived contacts`, without losing its active or archive scope.
+an empty list and reports `0 person(s) listed!` without losing its active or archive scope.
+The command appends `Use 'list archive' to search through archived contacts` in active scope, or
+`Use 'list' to search through active contacts` in archive scope, using `Model#isShowingArchiveList()`.
 
 **Design consideration:** Passing one normalized phrase to the existing predicate classes preserves partial
 matching while preventing multiword input from matching unrelated contacts one word at a time. Retaining
@@ -895,6 +904,116 @@ The following activity diagram summarizes what happens when a user executes a ne
   * Cons: We must ensure that the implementation of each individual command is correct.
 
 _{more aspects and alternatives to be added}_
+
+
+### \[Proposed\] Past checkup tracking
+
+#### Proposed Implementation
+
+The proposed past-checkup feature would allow users to record a contact's previous checkups using
+`checkup INDEX /past dd/mm/yyyy HH:mm`. The full history would be available through `view INDEX`,
+separately from the contact's currently scheduled appointment.
+
+`CheckupCommandParser` would recognise `/past` after the displayed index and retain the date/time input
+for validation during execution. The command would first validate the displayed index, then require a
+valid date/time earlier than the current local date and time. It would use the same fixed
+`dd/MM/uuuu HH:mm` format and strict calendar validation as `CheckupAppointment`. Invalid input would
+leave the history unchanged.
+
+The proposal would extend `Person` with an immutable `pastCheckups` list and the following operations:
+
+* `Person#getPastCheckups()` -- Returns the recorded past checkups without allowing callers to modify the list.
+* `Person#withPastCheckup(appointment)` -- Returns a replacement contact with the entry added, preserving
+  the upcoming appointment, its mark and other contact details.
+
+Recording the same date/time twice for one contact would be rejected. Historical records would not
+reserve booking slots or participate in the conflict checks for upcoming appointments.
+
+`JsonAdaptedPerson` would store the history as an optional list of date/time strings. Older data files
+without the field would load with an empty history. Successful additions would be saved through the
+existing `LogicManager` and `Storage` flow.
+
+`PersonDetailsFormatter` would include a **Past checkups** section in the details shown by `view INDEX`.
+It would display every recorded entry, most recent first, or `None recorded` when the history is empty.
+The existing scrollable details panel would make the full history accessible. Archiving or restoring a
+contact would preserve its history, which would remain available through `view` in the archive list.
+
+Given below is an example usage scenario and how the past-checkup history would behave at each step.
+
+Step 1. The user executes `list` and identifies the contact at index 1. The contact may already have an
+upcoming appointment, which would remain separate from its history.
+
+Step 2. The user executes `checkup 1 /past 01/10/2026 10:00`, assuming that date/time is in the past.
+CareBook would add the entry to the contact's history and save the updated contact.
+
+Step 3. The user executes `checkup 1 /past 08/10/2026 14:30`, also for a past date/time. CareBook would
+retain the first entry and add the second.
+
+Step 4. The user executes `view 1`. The details panel would show both past checkups, with `08/10/2026 14:30`
+before `01/10/2026 10:00`, alongside any upcoming appointment.
+
+Step 5. The user restarts CareBook and executes `view 1` again. Both historical entries would still be
+available, since they were saved with the contact.
+
+#### Design considerations:
+
+**Aspect: How past checkups are stored:**
+
+* **Alternative 1 (proposed choice):** Keep a separate immutable list of historical checkups on each contact.
+  * Pros: Supports multiple past records while preserving the existing upcoming appointment and its
+    booking rules. The complete history can be displayed through `view`.
+  * Cons: Requires a new model field, storage mapping and details-panel formatting.
+
+* **Alternative 2:** Use one list for both historical and upcoming checkups.
+  * Pros: All checkups share one collection.
+  * Cons: Every scheduling, marking, deletion and booking-conflict operation would need to distinguish
+    historical entries from the current appointment.
+
+### \[Proposed\] Active and archive list headers
+
+#### Proposed Implementation
+
+The proposed list headers would identify whether the user is looking at active or archived contacts.
+A label above the contact list would display **Active contacts** or **Archived contacts**, including when
+a search or filter returns no matches.
+
+The header would follow the list scope stored in `ModelManager`, rather than infer the scope from the
+displayed contacts or the current filter predicate. The proposal would expose this state as a read-only
+observable property through `Model` and `Logic`, and bind the label in `PersonListPanel` to that property.
+
+* `ModelManager#setArchiveScope(boolean)` would update the observable scope when the user switches lists.
+* `PersonListPanel` would display the corresponding header above the existing `ListView`.
+* Searches, filters and sorting would retain the header for the current scope. Changing the displayed
+  results would not, by itself, change the header.
+* The header would be transient UI state derived from the model; no additional contact data would be saved.
+
+Given below is an example usage scenario and how the list header would behave at each step.
+
+Step 1. The user launches CareBook. The active list would be displayed, with the header **Active contacts**.
+
+Step 2. The user executes `list archive`. The model would switch to archive scope, and the header would
+change to **Archived contacts**.
+
+Step 3. The user executes `find NobodyMatchesThisName`. The list would become empty, but the header would
+remain **Archived contacts**, so the user could still identify the list being searched.
+
+Step 4. The user executes `list`. The model would switch back to active scope, and the header would
+change to **Active contacts**. Subsequent searches, filters and sorting would retain this header while
+that scope is active.
+
+#### Design considerations:
+
+**Aspect: How the header follows the displayed list:**
+
+* **Alternative 1 (proposed choice):** Bind the header to an observable list-scope property.
+  * Pros: One source of scope information keeps the header correct across list switches, searches, filters,
+    sorting and empty results.
+  * Cons: Requires a read-only observable property to be exposed through the model and logic interfaces.
+
+* **Alternative 2:** Set the header text separately in each command.
+  * Pros: Does not require an observable scope property.
+  * Cons: Commands must repeat UI update rules, and a missed update could leave the header inconsistent
+    with the list scope.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -1376,7 +1495,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 * 5b. The user deletes the appointment.
 
-    * 5b1. CareBook removes the appointment row and its `[ ]` or `[X]` indicator entirely from the contact card.
+    * 5b1. CareBook removes the appointment row and its status entirely from the contact card.
       The other contact details are preserved.
 
       Use case resumes at step 6.
@@ -1528,14 +1647,17 @@ testers are expected to do more *exploratory* testing.
    Expected: The second displayed contact is highlighted and its full details appear above the list;
    both contact cards remain visible.
 1. Enter `view 3`, then `View 1`.<br>
-   Expected: The first command reports that 3 is outside the displayed range of 1 to 2; the second
-   is an unknown command. Neither changes the selected contact.
+   Expected: The first command reports that 3 is outside the displayed range of 1 to 2 and leaves
+   the selection unchanged. `View 1` selects the first contact and shows its full details.
 1. Enter `clear`, then `view 1`.<br>
    Expected: The list, highlight and details panel are hidden, but the contacts are not deleted.
    `view 1` reports that no contacts are currently displayed.
 1. Enter `list`, then `view 1` again.<br>
    Expected: Both contacts return and the first contact can be selected. `list` does not reselect
    the previously selected contact by itself.
+1. Enter `clear 1`, then `Clear`.<br>
+   Expected: The first command reports the `clear` usage and leaves the displayed contacts unchanged.
+   `Clear` hides the list, highlight and details panel without deleting contacts.
 1. Enter `clear 1`.<br>
    Expected: The command reports the `clear` usage. The displayed contacts and selection stay unchanged.
 1. Enter `Clear`, then `list`.<br>
@@ -1545,9 +1667,8 @@ testers are expected to do more *exploratory* testing.
    Expected: Uppercase `CLEAR` also hides the displayed contacts without deleting them;
    `list` restores both contacts.
 1. Enter `exit 1`, then `Exit`.<br>
-   Expected: The first reports that `exit` takes no arguments; the second is an unknown command.
-   The application stays open. Enter lowercase `exit` to close it, then relaunch CareBook and enter
-   `list`. The same two contacts are still saved.
+   Expected: The first reports that `exit` takes no arguments and leaves the application open.
+   `Exit` closes the application. Relaunch CareBook and enter `LIST`. The same two contacts are still saved.
 
 ### Adding a person
 
@@ -1746,7 +1867,7 @@ testers are expected to do more *exploratory* testing.
       in `dd/mm/yyyy` format.
 
    1. Test case: `CHECKUP 1   DATE  14:30   `<br>
-      Expected: The first displayed contact has an appointment at `14:30`, with `[ ]` beside the name.
+      Expected: The first displayed contact has an appointment at `14:30`, followed by `(Unmarked)` on its card.
       Extra spaces and command capitalization do not affect parsing.
 
    1. Test case: `checkup 2 DATE 14:30`, then `checkup 3 DATE 14:30`.<br>
@@ -1754,11 +1875,19 @@ testers are expected to do more *exploratory* testing.
       family HP matches contact 1. The check includes active contacts hidden by a filter, but excludes archived contacts.
 
    1. Test case: Mark contact 1, then assign the same appointment again; next run `checkup 1 DATE 15:30`.<br>
-      Expected: The identical appointment preserves `[X]`. The changed appointment resets it to `[ ]`.
+      Expected: The identical appointment preserves `(Marked)`. The changed appointment resets it to `(Unmarked)`.
 
    1. Test case: `checkup 1 /delete`, then repeat the command.<br>
-      Expected: The first command removes the appointment row and mark indicator entirely. The second
+      Expected: The first command removes the appointment row and status entirely. The second
       reports `This contact has no checkup appointment to delete.` without changing the contact.
+
+   1. Test case: Give contact 1 a long name, schedule an appointment, then run `mark 1` and `view 1`.
+      Narrow the window to its minimum width.<br>
+      Expected: The card's appointment row wraps and retains `(Marked)`, independently of name truncation.
+      The details panel shows the full wrapping name and `Checkup status: Marked` on a separate line.
+      Editing the name preserves this status. Run `unmark 1`, then `view 1`; both displays now show `Unmarked`.
+      After `checkup 1 /delete` and `view 1`, the card has no appointment row and the details panel shows
+      `Checkup appointment: Not scheduled` without a status line.
 
    1. Test case: Schedule an appointment, close CareBook and relaunch it; then delete the appointment and relaunch again.<br>
       Expected: Each successful change survives reloading. Other contact details are unchanged.

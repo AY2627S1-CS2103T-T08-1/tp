@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.util.Locale;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,35 +54,8 @@ public class AddressBookParser {
         }
 
 
-        // These command words are case-insensitive.
-        String commandWord = matcher.group("commandWord");
-        if (commandWord.equalsIgnoreCase(AddCommand.COMMAND_WORD)) {
-            commandWord = AddCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(DeleteCommand.COMMAND_WORD)) {
-            commandWord = DeleteCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(ArchiveCommand.COMMAND_WORD)) {
-            commandWord = ArchiveCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(UnarchiveCommand.COMMAND_WORD)) {
-            commandWord = UnarchiveCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(HelpCommand.COMMAND_WORD)) {
-            commandWord = HelpCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(ClearCommand.COMMAND_WORD)) {
-            commandWord = ClearCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(MarkCommand.COMMAND_WORD)) {
-            commandWord = MarkCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(UnmarkCommand.COMMAND_WORD)) {
-            commandWord = UnmarkCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(SortCommand.COMMAND_WORD)) {
-            commandWord = SortCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(CheckupCommand.COMMAND_WORD)) {
-            commandWord = CheckupCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(FindCommand.COMMAND_WORD)) {
-            commandWord = FindCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(EditCommand.COMMAND_WORD)) {
-            commandWord = EditCommand.COMMAND_WORD;
-        } else if (commandWord.equalsIgnoreCase(RemarkCommand.COMMAND_WORD)) {
-            commandWord = RemarkCommand.COMMAND_WORD;
-        }
+        // Normalize only the command word; preserve the arguments as entered.
+        final String commandWord = matcher.group("commandWord").toLowerCase(Locale.ROOT);
         final String arguments = matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
