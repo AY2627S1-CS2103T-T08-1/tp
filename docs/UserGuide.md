@@ -721,7 +721,7 @@ Priority values entered through commands accept any letter case, but priority st
 **Caution:**
 If your changes make the data file invalid, CareBook shows the message "Data file could not be loaded. Starting with an empty contact list." and starts with an empty contact list. The invalid file remains on disk until you run a command that changes your contacts, which overwrites it. Still, we recommend backing up the file before editing it.<br>
 Furthermore, certain edits can cause CareBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
-<br>CareBook does not check every [contact field rule](#adding-a-person-add) when loading the file. In particular, it accepts an address containing `/` and the same note twice in one contact, which the `add`, `edit` and `remark` commands do not allow. Follow the field rules when you edit the file, so that every contact can still be changed with the commands.
+<br>CareBook does not check every [contact field rule](#adding-a-person-add) when loading the file. In particular, it accepts an address with a `/` that does not join short parts, such as `4 St/phone 123`, and the same note twice in one contact, which the `add`, `edit` and `remark` commands do not allow. Follow the field rules when you edit the file, so that every contact can still be changed with the commands.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
@@ -740,6 +740,12 @@ _Details coming soon ..._
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
+2. **An unknown prefix in `add` or `edit`** is reported as `Unknown criterion: PREFIX`, e.g. `Unknown criterion: /phone`. In `add` and `edit`, "criterion" means a prefix. Check the prefix against the command's format, which is shown below the error.
+3. **`delete INDEX /confirm` deletes the contact at that index when you enter it**, not necessarily the contact named in the earlier warning. If the list changes in between, e.g. after `sort`, `find` or `filter`, a different contact can be deleted. The remedy is to enter `delete INDEX` again after changing the list, check the warning, and only then enter `delete INDEX /confirm`.
+4. **In `add` and `edit`, only the `/tag` prefix ignores letter case.** Other prefixes must be typed exactly as shown, e.g. `/patientNo`, not `/PatientNo` or `/patientno`.
+5. **Accented letters are treated as different letters.** `sort name` places names starting with an accented letter, such as `Émile`, after `Z`, and `find Emile` does not find `Émile`. The remedy is to type the accent when searching, e.g. `find Émile`.
+6. **Nothing on screen shows whether the active list or the archive list is displayed** once the result message is replaced by the next command. The remedy is to enter `list` or `list archive` to be sure which list you are working in.
+7. **The family HP of a contact that shares a checkup slot cannot be changed.** Contacts can share a checkup date and time only if their family HP numbers match, so `edit` rejects a new family HP for such a contact. The remedy is to change or remove one of the checkups first, e.g. with `checkup INDEX /delete`, then edit the family HP.
 
 --------------------------------------------------------------------------------------------------------------------
 
