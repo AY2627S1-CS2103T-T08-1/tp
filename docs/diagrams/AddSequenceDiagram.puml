@@ -82,14 +82,14 @@ deactivate AddressBookParser
 LogicManager -> AddCommand : execute(m)
 activate AddCommand
 
-AddCommand -> Model : hasPerson(p)
+AddCommand -> Model : getAddressBook()
 activate Model
 
-Model --> AddCommand : false
+Model --> AddCommand : addressBook
 deactivate Model
 
 note right of AddCommand
-  hasPerson checks all stored contacts,
+  requireNoDuplicate checks all stored contacts,
   including archived contacts.
   A patient phone/email conflict throws
   the duplicate-contact error.
@@ -125,7 +125,7 @@ activate AddCommand
 AddCommand --> LogicManager : true
 deactivate AddCommand
 
-LogicManager -> LogicManager : saveData()
+LogicManager -> LogicManager : saveData(undoCommand)
 activate LogicManager
 
 LogicManager -> Model : getAddressBook()
@@ -142,6 +142,11 @@ deactivate Storage
 
 LogicManager --> LogicManager
 deactivate LogicManager
+
+LogicManager -> Model : selectPerson(null)
+activate Model
+Model --> LogicManager
+deactivate Model
 
 [<-- LogicManager : r
 deactivate LogicManager
