@@ -721,7 +721,7 @@ Priority values entered through commands accept any letter case, but priority st
 **Caution:**
 If your changes make the data file invalid, CareBook shows the message "Data file could not be loaded. Starting with an empty contact list." and starts with an empty contact list. The invalid file remains on disk until you run a command that changes your contacts, which overwrites it. Still, we recommend backing up the file before editing it.<br>
 Furthermore, certain edits can cause CareBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
-<br>CareBook does not check every [contact field rule](#adding-a-person-add) when loading the file. In particular, it accepts an address containing `/` and the same note twice in one contact, which the `add`, `edit` and `remark` commands do not allow. Follow the field rules when you edit the file, so that every contact can still be changed with the commands.
+<br>CareBook does not check every [contact field rule](#adding-a-person-add) when loading the file. In particular, it accepts an address with a `/` that does not join short parts, such as `4 St/phone 123`, and the same note twice in one contact, which the `add`, `edit` and `remark` commands do not allow. Follow the field rules when you edit the file, so that every contact can still be changed with the commands.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
