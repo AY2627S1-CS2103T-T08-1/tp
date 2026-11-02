@@ -188,6 +188,9 @@ cannot be stored in any field value. Strict tokenization therefore rejects `/add
 `/addressExtra 4 St` and `/address 4/5 Main St` instead of silently storing the extra text as an address.
 The invalid-format response includes `AddCommand.MESSAGE_USAGE`, which also supplies the Add entry in
 the Help window and explains the slash restriction.
+An unknown slash-prefixed token produces `Unknown criterion: PREFIX` before the invalid-format response
+and usage. This validation is shared with `EditCommandParser`; embedded literal slashes retain the
+existing invalid-format response.
 
 `ParserUtil` validates individual fields and trims surrounding whitespace. `Name` also collapses repeated
 spaces, so `Kim    Lee   ` is stored as `Kim Lee` and cannot bypass duplicate detection through spacing.
@@ -642,7 +645,8 @@ between active and archive scope. Helper calls and UI updates are omitted for cl
 **Error handling:** Empty input, missing criterion input, multiple criteria, invalid phone input and mixed
 syntax such as `find Alice /address A` cause a `ParseException`. Mixed syntax uses the same invalid-format
 response as bare `find`, including `Use either find KEYWORD or find /CRITERION INPUT.` and the supported
-criteria. An unknown criterion reports `Unknown criterion: /...`. Parsing errors leave stored contacts,
+criteria. An unknown criterion reports `Unknown criterion: /...`, followed by the invalid-format message
+and `FindCommand.MESSAGE_USAGE`. Parsing errors leave stored contacts,
 selection and the current display unchanged. A valid search with no matches instead succeeds, displays
 an empty list and reports `0 person(s) listed!` followed by
 `Use 'list archive' to search through archived contacts`, without losing its active or archive scope.
