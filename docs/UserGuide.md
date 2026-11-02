@@ -55,9 +55,6 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 * Items in square brackets are optional.<br>
   For example, `/name NAME [/tag PRIORITY]` can be used as `/name John Doe /tag HIGH` or as `/name John Doe`.
 
-* Items followed by `...` can appear zero or more times.<br>
-  For example, `find KEYWORD [MORE_KEYWORDS]...` can be written as `find John` or `find John Mary`.
-
 * Parameters can be in any order.<br>
   For example, if the command specifies `/name NAME /patientNo PATIENT_PHONE`, `/patientNo PATIENT_PHONE /name NAME` is also acceptable.
   The exception is `remark`, whose parts must be in the order shown, e.g. `remark INDEX /edit NOTE_NUMBER NOTE`.
@@ -736,7 +733,7 @@ Action     | Format, Examples
 **Archive** | `archive INDEX`<br> e.g., `archive 3`
 **List**   | `list` or `list archive`
 **Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
-**Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
+**Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br> `find KEYWORD`<br> e.g., `find James Jake`
 **Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]`, `sort checkup [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
 **Mark**   | `mark INDEX`<br> e.g., `mark 1`
 **Unmark** | `unmark INDEX`<br> e.g., `unmark 1`
