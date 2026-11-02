@@ -28,6 +28,7 @@ public class FindCommand extends Command {
 
     public static final String COMMAND_WORD = "find";
     public static final String MESSAGE_NO_MATCHES_HINT = "Use 'list archive' to search through archived contacts";
+    public static final String MESSAGE_NO_MATCHES_ACTIVE_HINT = "Use 'list' to search through active contacts";
 
     public static final String MESSAGE_CRITERIA = "Criteria: "
             + Stream.of(PREFIX_NAME, PREFIX_PATIENT_PHONE, PREFIX_FAMILY_PHONE, PREFIX_ADDRESS,
@@ -71,7 +72,9 @@ public class FindCommand extends Command {
         int matchCount = model.getFilteredPersonList().size();
         String feedback = String.format(Messages.MESSAGE_PERSONS_LISTED_OVERVIEW, matchCount);
         if (matchCount == 0) {
-            feedback += "\n" + MESSAGE_NO_MATCHES_HINT;
+            feedback += "\n" + (model.isShowingArchiveList()
+                    ? MESSAGE_NO_MATCHES_ACTIVE_HINT
+                    : MESSAGE_NO_MATCHES_HINT);
         }
         return new CommandResult(feedback);
     }

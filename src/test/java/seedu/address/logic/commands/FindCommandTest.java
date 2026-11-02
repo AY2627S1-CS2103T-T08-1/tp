@@ -14,6 +14,7 @@ import static seedu.address.testutil.TypicalPersons.FIONA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -235,13 +236,15 @@ public class FindCommandTest {
     }
 
     @Test
-    public void execute_noMatches_appendsArchiveHintInEitherScope() throws Exception {
+    public void execute_noMatches_appendsHintForOtherScope() throws Exception {
         AddressBookParser parser = new AddressBookParser();
-        String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0)
-                + "\nUse 'list archive' to search through archived contacts";
-        for (String listCommand : List.of("list", "list archive")) {
-            parser.parseCommand(listCommand).execute(model);
+        Map<String, String> expectedHints = Map.of(
+                "list", "Use 'list archive' to search through archived contacts",
+                "list archive", "Use 'list' to search through active contacts");
+        for (Map.Entry<String, String> entry : expectedHints.entrySet()) {
+            parser.parseCommand(entry.getKey()).execute(model);
             CommandResult result = parser.parseCommand("find NobodyMatchesThisName").execute(model);
+            String expectedMessage = String.format(MESSAGE_PERSONS_LISTED_OVERVIEW, 0) + "\n" + entry.getValue();
             assertEquals(expectedMessage, result.getFeedbackToUser());
             assertTrue(model.getFilteredPersonList().isEmpty());
         }

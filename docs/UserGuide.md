@@ -525,11 +525,13 @@ Supported criteria:
   The digits must occur consecutively: `find /patientNo 87` matches `900087000`, but not `89700000`.
 * Other fields use case-insensitive partial matches. For example, `find /name ha` matches `Hans`,
   `Johan` and `Anne Ha`; `find /address ain` matches `Main Street`.
-* Contacts without an optional email, tag or remark do not match searches on that absent field.
-* Remark searches match a phrase within one care note, ignoring case and repeated spaces. They do not join separate notes or search note numbers.
-* Searches consider all contacts in the current active or archive scope, replacing previous search or filter criteria without changing stored data.
-* After `list archive`, searches return **archived contacts only**, even after another search, filter, sort or an empty result. Run `list` to return to active contacts.
-* A search with no matches displays an empty list and appends `Use 'list archive' to search through archived contacts` to the result message.
+* Contacts without an optional email or tag do not match searches on that absent field.
+* Searches consider all stored contacts, replacing the current display filter without changing stored data.
+  Use `list` to display all contacts again. A search with no matches displays an empty list.
+* To search through **archived** contacts, go to `list archive` and enter any of the `find` commands.
+* When no contacts match, active searches append `Use 'list archive' to search through archived contacts`;
+  archive searches append `Use 'list' to search through active contacts`.
+
 
 Examples:
 * `find /patientNo 87` finds patient numbers containing `87` consecutively.
