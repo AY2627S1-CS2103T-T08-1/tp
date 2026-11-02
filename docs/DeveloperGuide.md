@@ -893,6 +893,116 @@ The following activity diagram summarizes what happens when a user executes a ne
 _{more aspects and alternatives to be added}_
 
 
+### \[Proposed\] Past checkup tracking
+
+#### Proposed Implementation
+
+The proposed past-checkup feature would allow users to record a contact's previous checkups using
+`checkup INDEX /past dd/mm/yyyy HH:mm`. The full history would be available through `view INDEX`,
+separately from the contact's currently scheduled appointment.
+
+`CheckupCommandParser` would recognise `/past` after the displayed index and retain the date/time input
+for validation during execution. The command would first validate the displayed index, then require a
+valid date/time earlier than the current local date and time. It would use the same fixed
+`dd/MM/uuuu HH:mm` format and strict calendar validation as `CheckupAppointment`. Invalid input would
+leave the history unchanged.
+
+The proposal would extend `Person` with an immutable `pastCheckups` list and the following operations:
+
+* `Person#getPastCheckups()` -- Returns the recorded past checkups without allowing callers to modify the list.
+* `Person#withPastCheckup(appointment)` -- Returns a replacement contact with the entry added, preserving
+  the upcoming appointment, its mark and other contact details.
+
+Recording the same date/time twice for one contact would be rejected. Historical records would not
+reserve booking slots or participate in the conflict checks for upcoming appointments.
+
+`JsonAdaptedPerson` would store the history as an optional list of date/time strings. Older data files
+without the field would load with an empty history. Successful additions would be saved through the
+existing `LogicManager` and `Storage` flow.
+
+`PersonDetailsFormatter` would include a **Past checkups** section in the details shown by `view INDEX`.
+It would display every recorded entry, most recent first, or `None recorded` when the history is empty.
+The existing scrollable details panel would make the full history accessible. Archiving or restoring a
+contact would preserve its history, which would remain available through `view` in the archive list.
+
+Given below is an example usage scenario and how the past-checkup history would behave at each step.
+
+Step 1. The user executes `list` and identifies the contact at index 1. The contact may already have an
+upcoming appointment, which would remain separate from its history.
+
+Step 2. The user executes `checkup 1 /past 01/10/2026 10:00`, assuming that date/time is in the past.
+CareBook would add the entry to the contact's history and save the updated contact.
+
+Step 3. The user executes `checkup 1 /past 08/10/2026 14:30`, also for a past date/time. CareBook would
+retain the first entry and add the second.
+
+Step 4. The user executes `view 1`. The details panel would show both past checkups, with `08/10/2026 14:30`
+before `01/10/2026 10:00`, alongside any upcoming appointment.
+
+Step 5. The user restarts CareBook and executes `view 1` again. Both historical entries would still be
+available, since they were saved with the contact.
+
+#### Design considerations:
+
+**Aspect: How past checkups are stored:**
+
+* **Alternative 1 (proposed choice):** Keep a separate immutable list of historical checkups on each contact.
+  * Pros: Supports multiple past records while preserving the existing upcoming appointment and its
+    booking rules. The complete history can be displayed through `view`.
+  * Cons: Requires a new model field, storage mapping and details-panel formatting.
+
+* **Alternative 2:** Use one list for both historical and upcoming checkups.
+  * Pros: All checkups share one collection.
+  * Cons: Every scheduling, marking, deletion and booking-conflict operation would need to distinguish
+    historical entries from the current appointment.
+
+### \[Proposed\] Active and archive list headers
+
+#### Proposed Implementation
+
+The proposed list headers would identify whether the user is looking at active or archived contacts.
+A label above the contact list would display **Active contacts** or **Archived contacts**, including when
+a search or filter returns no matches.
+
+The header would follow the list scope stored in `ModelManager`, rather than infer the scope from the
+displayed contacts or the current filter predicate. The proposal would expose this state as a read-only
+observable property through `Model` and `Logic`, and bind the label in `PersonListPanel` to that property.
+
+* `ModelManager#setArchiveScope(boolean)` would update the observable scope when the user switches lists.
+* `PersonListPanel` would display the corresponding header above the existing `ListView`.
+* Searches, filters and sorting would retain the header for the current scope. Changing the displayed
+  results would not, by itself, change the header.
+* The header would be transient UI state derived from the model; no additional contact data would be saved.
+
+Given below is an example usage scenario and how the list header would behave at each step.
+
+Step 1. The user launches CareBook. The active list would be displayed, with the header **Active contacts**.
+
+Step 2. The user executes `list archive`. The model would switch to archive scope, and the header would
+change to **Archived contacts**.
+
+Step 3. The user executes `find NobodyMatchesThisName`. The list would become empty, but the header would
+remain **Archived contacts**, so the user could still identify the list being searched.
+
+Step 4. The user executes `list`. The model would switch back to active scope, and the header would
+change to **Active contacts**. Subsequent searches, filters and sorting would retain this header while
+that scope is active.
+
+#### Design considerations:
+
+**Aspect: How the header follows the displayed list:**
+
+* **Alternative 1 (proposed choice):** Bind the header to an observable list-scope property.
+  * Pros: One source of scope information keeps the header correct across list switches, searches, filters,
+    sorting and empty results.
+  * Cons: Requires a read-only observable property to be exposed through the model and logic interfaces.
+
+* **Alternative 2:** Set the header text separately in each command.
+  * Pros: Does not require an observable scope property.
+  * Cons: Commands must repeat UI update rules, and a missed update could leave the header inconsistent
+    with the list scope.
+
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## **Documentation, logging, testing, dev-ops**
