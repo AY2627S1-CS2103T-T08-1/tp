@@ -74,7 +74,7 @@ CareBook is a **desktop application for in-house caregivers and healthcare admin
 
 Opens a resizable, scrollable Help window listing the available commands, their usage, and examples.
 The command list includes `add`, `edit`, `delete`, `find`, `filter`, `list`, `sort`, `view`,
-`checkup`, `remark`, `clear`, `help`, and `exit`. It covers search criteria, sorting by name,
+`checkup`, `mark`, `unmark`, `remark`, `clear`, `help`, and `exit`. It covers search criteria, sorting by name,
 priority, checkup date or recency, scheduling checkups, and adding, editing, deleting or clearing patient notes.
 
 The window also provides the user guide URL and a **Copy URL** button.
@@ -366,6 +366,9 @@ Format: `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX /delete`
   Replacing the appointment clears an existing `[X]` mark. Setting the same appointment again preserves its mark.
 * `checkup INDEX /delete` removes the appointment and its mark. The appointment row and the `[ ]` or `[X]`
   indicator disappear entirely from the person card. `/delete` is case-insensitive.
+* Appointments can also be removed from archived contacts after running `list archive`.
+* Use `/delete` with the slash; `checkup INDEX delete` is not accepted.
+* Leading and trailing spaces and extra spaces between arguments are ignored.
 * Other contact details are preserved, and appointment changes are saved automatically.
 
 Examples:
@@ -385,22 +388,57 @@ Examples:
 | An appointment earlier than now, including an earlier time today | `Checkup date and time must not be in the past.` | Choose a future date and time. |
 | Another contact has that date and time but a different family HP | `A contact with this booking date and time already exists. Only contacts with the same family HP can be booked at the same time.` | Choose another slot, unless the contacts share the same family HP. |
 | `checkup INDEX /delete` when no appointment is scheduled | `This contact has no checkup appointment to delete.` | Select a contact with an appointment. |
-### Removing a checkup appointment: `checkup INDEX /delete`
 
-Removes a contact's checkup appointment without deleting the contact.
+### Marking a checkup as done: `mark`
 
-Format: `checkup INDEX /delete`
+Marks an existing checkup appointment as done.
+
+Format: `mark INDEX`
 
 * The index refers to the index number shown in the displayed person list and **must be a positive integer**.
-* The command and `/delete` option accept any letter case. Extra spaces between arguments and at the ends are ignored.
-* Removes the appointment field and its mark indicator from the contact card. Other contact details stay unchanged.
-* Appointments can also be removed from archived contacts after running `list archive`.
-* If the contact has no appointment, CareBook shows `This contact has no checkup appointment to delete.`
-* Use `/delete` with the slash; `checkup INDEX delete` is not accepted.
+* The contact must have a scheduled appointment and must not already be marked.
+* Changes the indicator beside the name from `[ ]` to `[X]`, e.g. `1. Carlyn Goh [X]`.
+* The appointment date/time and other contact details stay unchanged. The mark is saved automatically.
+* The command is case-insensitive: `mark`, `Mark` and `MARK` work. Surrounding spaces are ignored.
+* Uses the current displayed list, including search results, filtered or sorted lists and `list archive`.
 
 Example:
 
-* `checkup 1 /delete` removes the appointment of the 1st contact in the displayed list.
+* `mark 1` marks the first displayed contact's appointment and shows `Marked contact: Carlyn Goh` if the contact is Carlyn Goh.
+
+**Common errors:**
+
+| Incorrect input or situation | Error message | How to correct it |
+| --- | --- | --- |
+| Missing, non-numeric, non-positive or out-of-range index, or extra arguments | `Invalid index.` | Give one positive index shown in the current list. |
+| The contact has no appointment | `Contacts with no checkup appointments cannot be marked.` | Schedule an appointment first. |
+| The appointment is already marked | `Marked contact cannot be marked again.` | Use `unmark INDEX` to clear the mark. |
+
+### Unmarking a checkup: `unmark`
+
+Clears the done mark without removing the checkup appointment.
+
+Format: `unmark INDEX`
+
+* The index refers to the index number shown in the displayed person list and **must be a positive integer**.
+* The contact must have a scheduled appointment that is currently marked.
+* Changes the indicator beside the name from `[X]` to `[ ]`, e.g. `1. Carlyn Goh [ ]`.
+* The appointment date/time and other contact details stay unchanged. The change is saved automatically.
+* The command is case-insensitive: `unmark`, `Unmark` and `UNMARK` work. Surrounding spaces are ignored.
+* Uses the current displayed list, including search results, filtered or sorted lists and `list archive`.
+* To remove the appointment entirely, use `checkup INDEX /delete` instead.
+
+Example:
+
+* `unmark 1` clears the first displayed contact's mark and shows `Unmarked contact: Carlyn Goh` if the contact is Carlyn Goh.
+
+**Common errors:**
+
+| Incorrect input or situation | Error message | How to correct it |
+| --- | --- | --- |
+| Missing, non-numeric, non-positive or out-of-range index, or extra arguments | `Invalid index.` | Give one positive index shown in the current list. |
+| The contact has no appointment | `Contacts with no checkup appointments cannot be unmarked.` | Select a contact with a marked appointment. |
+| The appointment is already unmarked | `Unmarked contact cannot be unmarked again.` | Select a contact whose appointment shows `[X]`. |
 
 ### Keeping care notes on a person: `remark`
 
@@ -697,7 +735,6 @@ Action     | Format, Examples
 **Add**    | `add /name NAME /patientNo PATIENT_PHONE /familyNo FAMILY_PHONE [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] /address ADDRESS [/tag PRIORITY] ` <br> e.g., `add /name James Ho /patientNo 22224444 /familyNo 93334444 /pEmail jamesho@example.com /fEmail jamesfamily@example.com /address 123, Clementi Rd, 1234665 /tag HIGH`
 **Clear**  | `clear`
 **Checkup** | `checkup INDEX dd/mm/yyyy HH:mm` or `checkup INDEX /delete`<br> e.g., `checkup 1 25/12/2030 14:30`, `checkup 1 /delete`
-**Remove checkup** | `checkup INDEX /delete`<br> e.g., `checkup 1 /delete`
 **Delete** | `delete INDEX [/confirm]`<br> e.g., `delete 3`, then `delete 3 /confirm`
 **Edit**   | `edit INDEX [/name NAME] [/patientNo PATIENT_PHONE] [/familyNo FAMILY_PHONE] [/pEmail PATIENT_EMAIL] [/fEmail FAMILY_EMAIL] [/address ADDRESS] [/tag PRIORITY]`<br> e.g., `edit 2 /name James Lee /pEmail jameslee@example.com`
 **Unarchive** | `unarchive INDEX`<br> e.g., `unarchive 3`
@@ -706,6 +743,8 @@ Action     | Format, Examples
 **Filter** | `filter [/name NAME_KEYWORDS] [/tag TAG]... [/address ADDRESS]...`<br> e.g., `filter /name ali /tag HIGH /tag MEDIUM`
 **Find**   | `find /CRITERION INPUT`<br> e.g., `find /patientNo 87`<br>Legacy name search: `find James Jake`
 **Sort**   | `sort priority [asc\|desc]`, `sort name [asc\|desc]`, `sort checkup [asc\|desc]` or `sort recent`<br> e.g., `sort priority`, `sort name desc`
+**Mark**   | `mark INDEX`<br> e.g., `mark 1`
+**Unmark** | `unmark INDEX`<br> e.g., `unmark 1`
 **Remark** | `remark INDEX NOTE`, `remark INDEX /edit NOTE_NUMBER NOTE`, `remark INDEX /delete NOTE_NUMBER`, `remark INDEX /clear`<br> e.g., `remark 2 Allergic to penicillin`
 **View**   | `view INDEX`<br> e.g., `view 2`
 **Help**   | `help`

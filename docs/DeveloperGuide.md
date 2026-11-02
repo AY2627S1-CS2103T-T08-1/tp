@@ -387,6 +387,11 @@ repeated whitespace and parses the displayed `Index`. A delete request creates a
 otherwise the command retains the date/time input until the target contact can be checked during execution.
 Missing arguments and invalid index syntax cause a `ParseException` with the command usage.
 
+The deletion factory `CheckupCommand.delete(index)` sets `appointmentValue` to `null`. Only `/delete`,
+ignoring case, selects this path; bare `delete` is treated as invalid date/time input. Deletion requires an
+existing appointment and also works for archived contacts. Archive, date/time and booking-conflict
+checks apply only when setting an appointment.
+
 `CheckupCommand#execute()` validates the displayed index before retrieving the contact. For scheduling,
 the archived-contact check runs before date/time validation, so an archived contact produces
 `Appointments cannot be made with archived contacts. Unarchive the contact to do so.` even if the supplied
@@ -420,7 +425,7 @@ preserves its mark. A deletion clears both the optional appointment and its mark
 
 `PersonCard` shows the appointment row and a `[ ]` or `[X]` indicator only while an appointment is present.
 After deletion, the row is invisible and unmanaged, so it reserves no layout space, and the indicator is
-omitted. Updating a selected immutable contact refreshes the details panel. The command uses the displayed
+omitted. A successful checkup command closes the details panel. The command uses the displayed
 list index and preserves sorting and filtering; if a view predicate excludes the replacement because its
 fields changed, the display is refreshed to keep the updated contact visible.
 
@@ -432,19 +437,46 @@ the date/time format, while the command enforces the not-in-the-past rule for ne
 **Design consideration:** Checking archive status and booking conflicts during execution uses the current
 model state and ensures the displayed index refers to the selected contact. Keeping parsing and storage
 formatting independent of regional settings makes saved appointments portable between computers.
-### Removing a checkup appointment
 
-`checkup INDEX /delete` removes the selected contact's appointment and checkup mark. `CheckupCommandParser`
-normalizes whitespace, validates the displayed index and recognizes `/delete` ignoring letter case before
-creating the command through `CheckupCommand.delete(index)`. The slash is required; bare `delete` is not
-recognized as the deletion option and follows the existing date-validation path during execution.
+### Marking and unmarking checkups
 
-`CheckupCommand` represents deletion with a null `appointmentValue`. During execution, it validates the
-displayed index and checks that the contact has an appointment, otherwise throwing `MESSAGE_NO_APPOINTMENT`.
-It replaces the immutable `Person` with an absent appointment and a cleared checkup mark through
-`Model#setPerson()`, preserving the remaining details. The contact card hides the appointment row and
-removes the mark indicator. Deletion also works for archived contacts; the archive, date/time and booking
-conflict checks apply when setting an appointment. `LogicManager` saves the changed contact as usual.
+`mark INDEX` and `unmark INDEX` change the `checkupMarked` flag of a contact with an appointment.
+The command words are case-insensitive. Both commands use the current displayed index, including
+filtered, sorted and archived lists; neither changes the appointment date/time or the archive status.
+
+#### Parsing and validation
+
+`AddressBookParser` delegates to `MarkCommandParser` or `UnmarkCommandParser`. Both parsers use
+`ParserUtil#parseIndex()` to parse one positive index and convert parsing failures to a `ParseException`
+with `Invalid index.` During execution, an index outside the displayed list produces a `CommandException`
+with the same message. Each command then checks for an appointment before checking its mark.
+
+| Validation failure | `mark` message | `unmark` message |
+| --- | --- | --- |
+| No appointment | `Contacts with no checkup appointments cannot be marked.` | `Contacts with no checkup appointments cannot be unmarked.` |
+| Mark already has the requested state | `Marked contact cannot be marked again.` | `Unmarked contact cannot be unmarked again.` |
+
+Validation failures occur before the model is changed or saved. Neither command validates the appointment
+against the current time or performs booking-conflict checks, since the booking itself is unchanged.
+
+#### Execution, UI and storage
+
+1. The command obtains `Model#getFilteredPersonList()` and retrieves the contact at the displayed index.
+1. After validation, `MarkCommand` calls `Person#withMarkedCheckup()`; `UnmarkCommand` calls
+   `Person#withUnmarkedCheckup()`. These methods create immutable replacements while preserving other fields.
+1. The command calls `Model#setPerson(person, updatedPerson)`. `PersonCard` shows `[X]` for a marked
+   appointment and `[ ]` for an unmarked appointment; contacts without appointments have no indicator.
+1. The command returns `Marked contact: NAME` or `Unmarked contact: NAME` in a `CommandResult`.
+1. Both commands inherit `modifiesData() == true`, so `LogicManager` saves the contact list through `Storage`.
+   `JsonAdaptedPerson` stores `checkupMarked` alongside `checkupAppointment`. After a successful command,
+   `LogicManager` clears selection and closes the details panel, as it does for other non-view commands.
+
+The following diagrams show the successful mark and unmark paths. Validation errors stop before
+`Model#setPerson()`. Restore-point creation and individual UI observer calls are omitted for clarity.
+
+<puml src="diagrams/MarkSequenceDiagram.puml" alt="Sequence of parsing, validating, marking and saving a checkup" />
+
+<puml src="diagrams/UnmarkSequenceDiagram.puml" alt="Sequence of parsing, validating, unmarking and saving a checkup" />
 
 ### Remarks
 
@@ -1269,7 +1301,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 1. User requests to display contacts.
 2. CareBook displays the requested contact list.
 3. User requests to schedule, replace or delete the checkup appointment of a contact.
-4. CareBook accepts any command-word or delete-keyword case and ignores extra spaces between arguments. For scheduling, it checks archive status before
+4. CareBook accepts any command-word or `/delete` option case and ignores extra spaces between arguments. For scheduling, it checks archive status before
    date/time validity, then checks for a booking conflict among active contacts.
 5. CareBook updates or removes the appointment and its mark as appropriate, refreshes the contact card
    and selected details, and saves the updated contact list.
@@ -1331,6 +1363,42 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
       Use case resumes at step 6.
 
       
+**Use case: Mark or unmark a checkup**
+
+**MSS:**
+
+1. User requests to display contacts.
+2. CareBook displays the requested contact list.
+3. User requests to mark or unmark a contact's checkup using its displayed index.
+4. CareBook validates the index, confirms that an appointment exists and checks the current mark.
+5. CareBook updates the indicator to `[X]` for mark or `[ ]` for unmark, preserves the appointment and
+   other contact details, and saves the updated contact list.
+6. CareBook displays a confirmation and closes any selected details panel.
+
+    Use case ends.
+
+**Extensions**
+
+* 4a. The index is missing, malformed, non-positive or outside the displayed list, or extra arguments are given.
+
+    * 4a1. CareBook shows `Invalid index.` and leaves the contacts unchanged.
+
+      Use case resumes at step 3.
+
+* 4b. The contact has no checkup appointment.
+
+    * 4b1. CareBook shows `Contacts with no checkup appointments cannot be marked.` or
+      `Contacts with no checkup appointments cannot be unmarked.` and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
+* 4c. The appointment is already marked for a mark request, or already unmarked for an unmark request.
+
+    * 4c1. CareBook shows `Marked contact cannot be marked again.` or
+      `Unmarked contact cannot be unmarked again.` and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
 **Use case: Filter contacts**
 
 **MSS:**
@@ -1680,6 +1748,36 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect inputs to try: `checkup`, `checkup 0 DATE 14:30`, `checkup x DATE 14:30`,
       an out-of-range displayed index, `31/02/2030 14:30` and `DATE 24:00`.<br>
       Expected: Appropriate format, index or date/time errors. No contact data is changed.
+
+### Marking and unmarking checkups
+
+1. Changing and saving the mark
+
+   1. Prerequisites: A displayed contact at index 1 with an unmarked checkup appointment.
+
+   1. Test case: `MaRk   1  `, then `UNMARK 1`.<br>
+      Expected: The name changes from `[ ]` to `[X]`, then back to `[ ]`. The appointment and other
+      contact details remain unchanged. Each command confirms the change.
+
+   1. Test case: Mark the appointment, restart CareBook, then unmark it and restart again.<br>
+      Expected: The marked and unmarked states each survive reloading.
+
+   1. Test case: Find or sort contacts, then mark and unmark a scheduled contact using its displayed index.
+      Repeat after `list archive` with an archived contact that has an appointment.<br>
+      Expected: The displayed contact is updated, list scope and order are preserved, and archived contacts
+      remain archived.
+
+1. Rejecting invalid requests
+
+   1. Test case: Run `mark 1` twice, then `unmark 1` twice.<br>
+      Expected: The repeated requests report `Marked contact cannot be marked again.` and
+      `Unmarked contact cannot be unmarked again.` respectively, without changing the contact.
+
+   1. Test case: Remove the appointment with `checkup 1 /delete`, then run `mark 1` and `unmark 1`.<br>
+      Expected: Each command reports its no-appointment error; no mark indicator appears.
+
+   1. Other incorrect inputs to try: `mark`, `mark 0`, `unmark x`, `unmark 1 extra` and an out-of-range index.<br>
+      Expected: `Invalid index.` The contact data and current selection remain unchanged.
 
 ### Keeping care notes
 
