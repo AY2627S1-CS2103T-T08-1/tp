@@ -14,12 +14,17 @@
 ## **Acknowledgements**
 
 * CareBook is developed from [AddressBook-Level3](https://github.com/se-edu/addressbook-level3).
-* **AI assistance:** [@graceqian06](https://github.com/graceqian06) used
-  [OpenAI Codex](https://developers.openai.com/codex/) extensively for the `view`, `clear` and `exit`
-  features and their supporting UI. Assistance included generating and refining implementation code,
-  proposing and writing regression tests, debugging, refactoring, preliminary code reviews, and
-  drafting and revising the related User Guide, Developer Guide and PlantUML documentation.
-  This entry describes her use; other team members are responsible for declaring their own AI use.
+* Libraries used: [JavaFX](https://openjfx.io/) for the GUI, [Jackson](https://github.com/FasterXML/jackson) for
+  reading and writing the JSON data file, and [JUnit 5](https://junit.org/junit5/) for testing.
+* The documentation website is built with [MarkBind](https://markbind.org/), and its diagrams are drawn with
+  [PlantUML](https://plantuml.com/).
+* Notable uses of AI:
+  * [OpenAI Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code)
+    were used to help implement features and their supporting UI, generate and refine code, write regression tests,
+    debug, refactor, and do preliminary reviews of pull requests.
+  * The same tools were used to draft and revise parts of the User Guide, the Developer Guide and the PlantUML
+    diagrams, and to check the guides against the product.
+  * All AI-assisted work was checked by team members and by the project's automated tests before it was merged.
 
 --------------------------------------------------------------------------------------------------------------------
 
