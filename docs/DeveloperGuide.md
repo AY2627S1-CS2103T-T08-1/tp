@@ -399,7 +399,7 @@ For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edi
 ### Checkup appointments
 
 The `checkup INDEX dd/mm/yyyy HH:mm` command sets or replaces an appointment for a displayed contact.
-`checkup INDEX /delete` removes it. The command word and `/delete` keyword are case-insensitive.
+`checkup INDEX /delete` removes it. The command word and `/delete` option are case-insensitive.
 
 #### Parsing and validation
 
@@ -448,7 +448,7 @@ preserves its mark. A deletion clears both the optional appointment and its mark
 The row wraps independently of the name, so name truncation cannot hide the appointment's status.
 After deletion, the row is invisible and unmanaged, so it reserves no layout space. The details panel
 shows status on its own line only for a scheduled appointment. Both displays read `Person#isCheckupMarked()`;
-formatting does not modify the contact. Updating a selected immutable contact refreshes the details panel.
+formatting does not modify the contact. A successful checkup command closes the details panel.
 The command uses the displayed list index and preserves sorting and filtering; if a view predicate excludes
 the replacement because its fields changed, the display is refreshed to keep the updated contact visible.
 

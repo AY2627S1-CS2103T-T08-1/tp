@@ -16,6 +16,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.CheckupCommand;
@@ -138,7 +139,7 @@ public class PersonCardTest {
             assertEquals(scheduled.getName().fullName, name.getText());
             assertEquals("Checkup appointment: 01/01/2030 09:05 (Marked)", appointment.getText());
             assertTrue(appointment.isWrapText());
-            assertFalse(appointment.isTextTruncated());
+            assertTrue(showsFullText(appointment));
             assertTrue(appointment.getHeight() > singleLineHeight);
         });
     }
@@ -217,5 +218,14 @@ public class PersonCardTest {
                 .build();
 
         assertEquals(List.of("MEDIUM"), PersonCard.getTagTexts(person));
+    }
+
+    /**
+     * Returns true if {@code label} shows its whole text without an ellipsis.
+     * {@code Labeled#isTextTruncated()} would do this, but it needs JavaFX 23 and CareBook uses JavaFX 17.
+     */
+    private static boolean showsFullText(Label label) {
+        Text shownText = (Text) label.lookup(".text");
+        return shownText != null && shownText.getText().equals(label.getText());
     }
 }
