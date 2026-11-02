@@ -181,7 +181,7 @@ For example, after `find Alice`, `archive 1` archives the first contact in those
 | --- | --- | --- |
 | `archive`, `archive Alice`, or `archive 1 2` | Invalid command format; usage instructions are shown. | Enter exactly one index, such as `archive 3`. |
 | `archive 0` or `archive -1` | Invalid index. | Use a positive integer shown in the current list. |
-| `archive 4` when only three contacts are displayed | The index is out of range. | Check the displayed indices and select an existing contact. |
+| `archive 4` when only three contacts are displayed | `Invalid index.` | Check the displayed indices and select an existing contact. |
 | `archive 1` when the displayed list is empty | `There are no persons in the displayed list to archive.` | Use `list` to check for active contacts. |
 | Archiving a contact in `list archive` | `This person is already archived.` | Use `list` to select an active contact instead. |
 
@@ -297,7 +297,7 @@ Common errors:
 
 | Input | Error message shown | How to fix |
 | --- | --- | --- |
-| `view 3` when 2 contacts are displayed | `Index 3 is out of range. The displayed list has 2 contacts. Enter an index from 1 to 2.` | Use an index shown in the current list. |
+| `view 3` when 2 contacts are displayed | `Invalid index.` | Use an index shown in the current list. |
 | `view 1` when no contacts are displayed, including after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. If no contacts are saved, add one. |
 
 These errors leave contacts, the current list and selection unchanged. `view` never falls back to
@@ -339,7 +339,7 @@ Examples:
 | `edit 1 /email john@example.com` | `/email is no longer supported. Use /pEmail for the patient's email or /fEmail for the family member's email.` | Use `/pEmail` for the patient's email or `/fEmail` for the family member's email. |
 | `edit 0 /name John Doe` | `Index must be a positive integer.` | Use an index of 1 or more. |
 | `edit 1 John Doe` (no prefix) | `Unexpected text after the index: John Doe. Put each new value after its prefix, e.g. edit 1 /name John Doe` | Put the prefix of the field before its new value, e.g. `edit 1 /name John Doe`. |
-| `edit 99 /name John Doe` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
+| `edit 99 /name John Doe` when 7 contacts are displayed | `Invalid index.` | Use an index shown in the displayed list. |
 | `edit 1 /name John Doe` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `edit 1 /pEmail john` | `Emails should be of the format local-part@domain ...` followed by the rules | Enter a full email address, e.g. `john@example.com`. |
 | `edit 2 /patientNo 87438807` (another person already has this patient phone number or email) | `Someone with this patient HP or email already exists in CareBook.` | Check that you are editing the right person, or use their own number or email. |
@@ -443,7 +443,7 @@ After `remark 1 /edit 3 Visits after 4pm only`, the person's card shows the numb
 | `remark 1` (no note) | `Invalid command format!` followed by the correct usage | Add a note, e.g. `remark 1 Allergic to penicillin`, or use `remark 1 /clear` to delete all notes. |
 | `remark /clear` or `remark Diabetic` (no index) | `Invalid command format!` followed by the correct usage | Put the person's index first, e.g. `remark 1 /clear` or `remark 1 Diabetic`. |
 | `remark 0 Diabetic` | `Index must be a positive integer.` | Use an index of 1 or more. |
-| `remark 99 Diabetic` when 7 contacts are displayed | `Index 99 is out of range. The displayed list has 7 contacts. Enter an index from 1 to 7.` | Use an index shown in the displayed list. |
+| `remark 99 Diabetic` when 7 contacts are displayed | `Invalid index.` | Use an index shown in the displayed list. |
 | `remark 1 Diabetic` when no contacts are displayed, e.g. after `clear` | `No contacts are currently displayed. Use list to show all contacts, or find KEYWORD to search.` | Run `list` or `find KEYWORD` first. |
 | `remark 1 Allergic to penicillin` (the person already has this note as note 1) | `Alex Yeoh already has this note (note 1).` | Add a different note, or change the existing note with `remark 1 /edit 1 ...`. |
 | `remark 1 /delete 5` (the person has 2 notes) | `There is no note 5. Alex Yeoh has 2 note(s).` | Use a note number shown on the person's card. |
@@ -565,7 +565,7 @@ Input | Error message shown | How to fix
 `delete 1 2` | `Invalid command format!` followed by the correct usage | Use a single index per command
 `delete 1 confirm` | `Invalid command format!` followed by the correct usage | Write the flag with the slash: `delete 1 /confirm`
 `delete 0` / `delete -1` | `Index must be a positive integer.` | Use an index of 1 or more
-`delete 99` (out of range) | `The index provided is out of range. The displayed list has 3 person(s), so the index must be from 1 to 3.` | Use an index shown in the displayed list
+`delete 99` (out of range) | `Invalid index.` | Use an index shown in the displayed list
 `delete 1` (displayed list is empty) | `There are no persons in the displayed list to delete.` | Run `list` to show all persons, or add a person first 
 
 ### Clearing the displayed contact list: `clear`
