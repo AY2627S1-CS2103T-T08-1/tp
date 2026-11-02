@@ -13,7 +13,13 @@
 
 ## **Acknowledgements**
 
-* _{List the sources of reused or adapted ideas, code, documentation, and third-party libraries here, with links to the originals.}_
+* CareBook is developed from [AddressBook-Level3](https://github.com/se-edu/addressbook-level3).
+* **AI assistance:** [@graceqian06](https://github.com/graceqian06) used
+  [OpenAI Codex](https://developers.openai.com/codex/) extensively for the `view`, `clear` and `exit`
+  features and their supporting UI. Assistance included generating and refining implementation code,
+  proposing and writing regression tests, debugging, refactoring, preliminary code reviews, and
+  drafting and revising the related User Guide, Developer Guide and PlantUML documentation.
+  This entry describes her use; other team members are responsible for declaring their own AI use.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -158,12 +164,12 @@ The sequence diagram below shows how `LogicManager` decides whether to save afte
 
 <puml src="diagrams/SaveSequenceDiagram.puml" alt="How LogicManager decides whether to save after a command" />
 
-1. `LogicManager` parses the command text into a `Command`, keeps a copy of the address book, and executes the command.
+1. `LogicManager` parses the command text into a `Command`, calls `Model#createRestorePoint()`, and executes the command. The restore point is a `Runnable` that puts the address book and the displayed list back as they were before the command.
 1. It then calls `modifiesData()` on the command.
-1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. If the save fails, `LogicManager` restores the copy with `Model#setAddressBook` and throws a `CommandException`. The user sees `Could not save data to file ...` (or a message about insufficient permissions), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
+1. If the command changes data, `LogicManager` gets the address book from the `Model` and passes it to `Storage#saveAddressBook`. `FileUtil#writeToFile` writes the data to a temporary file in the same folder and then replaces the data file with it, so a write that fails partway leaves the old file unchanged. If the save fails, `LogicManager` runs the restore point and throws a `CommandException`. The user sees `Could not save data to file ...` (or a message about insufficient permissions), followed by `The command was undone, so your contacts are unchanged.`, and CareBook keeps running.
 1. Otherwise, `LogicManager` only logs that the save was skipped, and the data file is left as it is.
 
-**Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. Restoring the address book also clears the details panel, which is acceptable after an error.
+**Design consideration:** if a failed save left the change in memory, the app would show a change that is not in the file. It would be lost on exit, or saved later by an unrelated command, and retrying a failed `add` would be rejected as a duplicate. Undoing the command keeps the app and the file the same. The restore point also puts back the displayed list, including the active or archive list, contacts kept shown after `find` or `filter`, and the sort order, so each index still points to the same contact. It clears the details panel, which is acceptable after an error.
 
 **Design consideration:** saving after every command would be simpler, but it would rewrite the data file even when nothing changed. Skipping the save for commands that only show information means a command such as `list` never overwrites a data file that the user is editing by hand.
 
@@ -186,6 +192,9 @@ cannot be stored in any field value. Strict tokenization therefore rejects `/add
 `/addressExtra 4 St` and `/address 4/5 Main St` instead of silently storing the extra text as an address.
 The invalid-format response includes `AddCommand.MESSAGE_USAGE`, which also supplies the Add entry in
 the Help window and explains the slash restriction.
+An unknown slash-prefixed token produces `Unknown criterion: PREFIX` before the invalid-format response
+and usage. This validation is shared with `EditCommandParser`; embedded literal slashes retain the
+existing invalid-format response.
 
 `ParserUtil` validates individual fields and trims surrounding whitespace. `Name` also collapses repeated
 spaces, so `Kim    Lee   ` is stored as `Kim Lee` and cannot bypass duplicate detection through spacing.
@@ -210,10 +219,11 @@ stop before the model is changed; their messages are described below.
 <puml src="diagrams/AddSequenceDiagram.puml" alt="Sequence of validating, adding and saving a new contact" />
 
 1. `AddCommandParser` creates the validated `Person` and an `AddCommand` containing it.
-1. `AddCommand` calls `Model#hasPerson()` to check for a duplicate. A duplicate patient phone or email
-   produces `AddCommand.MESSAGE_DUPLICATE_PERSON`: `This person already exists in CareBook.`
+1. `AddCommand` calls `requireNoDuplicate()` against the stored contacts to check for a duplicate.
+   A duplicate patient phone or email
+   produces `AddCommand.MESSAGE_DUPLICATE_PERSON`: `Someone with this patient HP or email already exists in CareBook.`
 1. A same-name, same-address conflict without a duplicate patient phone or email instead produces
-   `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+   `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.`
 1. Otherwise, `Model#addPerson()` adds the contact and restores the active list. The command returns the
    new contact's details in a `CommandResult`.
 1. `AddCommand#modifiesData()` returns `true`, so `LogicManager` saves the updated address book through
@@ -221,8 +231,8 @@ stop before the model is changed; their messages are described below.
 
 **Error handling:** Invalid prefixes, missing required fields, duplicate prefixes and invalid values cause a
 `ParseException`. Duplicate contacts cause a `CommandException`. Neither path adds a contact or saves a
-partial entry. Shared family phone numbers and family emails are allowed; patient contact details provide
-the uniqueness checks.
+partial entry. If the conflicting contact is archived, the duplicate error appends
+`The matching contact is archived. Use list archive to see it.` Shared family contact details are allowed.
 
 **Design consideration:** Normalizing names when constructing `Name` gives parsing, storage loading and
 duplicate checks the same representation. Checking the full address book prevents a hidden or archived
@@ -383,7 +393,7 @@ For example, `edit 1 /tag MEDIUM` replaces all existing tags with `MEDIUM`, `edi
 ### Checkup appointments
 
 The `checkup INDEX dd/mm/yyyy HH:mm` command sets or replaces an appointment for a displayed contact.
-`checkup INDEX delete` removes it. The command word and `delete` keyword are case-insensitive.
+`checkup INDEX /delete` removes it. The command word and `/delete` option are case-insensitive.
 
 #### Parsing and validation
 
@@ -391,6 +401,11 @@ The `checkup INDEX dd/mm/yyyy HH:mm` command sets or replaces an appointment for
 repeated whitespace and parses the displayed `Index`. A delete request creates a deletion command;
 otherwise the command retains the date/time input until the target contact can be checked during execution.
 Missing arguments and invalid index syntax cause a `ParseException` with the command usage.
+
+The deletion factory `CheckupCommand.delete(index)` sets `appointmentValue` to `null`. Only `/delete`,
+ignoring case, selects this path; bare `delete` is treated as invalid date/time input. Deletion requires an
+existing appointment and also works for archived contacts. Archive, date/time and booking-conflict
+checks apply only when setting an appointment.
 
 `CheckupCommand#execute()` validates the displayed index before retrieving the contact. For scheduling,
 the archived-contact check runs before date/time validation, so an archived contact produces
@@ -425,7 +440,7 @@ preserves its mark. A deletion clears both the optional appointment and its mark
 
 `PersonCard` shows the appointment row and a `[ ]` or `[X]` indicator only while an appointment is present.
 After deletion, the row is invisible and unmanaged, so it reserves no layout space, and the indicator is
-omitted. Updating a selected immutable contact refreshes the details panel. The command uses the displayed
+omitted. A successful checkup command closes the details panel. The command uses the displayed
 list index and preserves sorting and filtering; if a view predicate excludes the replacement because its
 fields changed, the display is refreshed to keep the updated contact visible.
 
@@ -437,19 +452,61 @@ the date/time format, while the command enforces the not-in-the-past rule for ne
 **Design consideration:** Checking archive status and booking conflicts during execution uses the current
 model state and ensures the displayed index refers to the selected contact. Keeping parsing and storage
 formatting independent of regional settings makes saved appointments portable between computers.
-### Removing a checkup appointment
 
-`checkup INDEX /delete` removes the selected contact's appointment and checkup mark. `CheckupCommandParser`
-normalizes whitespace, validates the displayed index and recognizes `/delete` ignoring letter case before
-creating the command through `CheckupCommand.delete(index)`. The slash is required; bare `delete` is not
-recognized as the deletion option and follows the existing date-validation path during execution.
+### Checkup retention when archiving
 
-`CheckupCommand` represents deletion with a null `appointmentValue`. During execution, it validates the
-displayed index and checks that the contact has an appointment, otherwise throwing `MESSAGE_NO_APPOINTMENT`.
-It replaces the immutable `Person` with an absent appointment and a cleared checkup mark through
-`Model#setPerson()`, preserving the remaining details. The contact card hides the appointment row and
-removes the mark indicator. Deletion also works for archived contacts; the archive, date/time and booking
-conflict checks apply when setting an appointment. `LogicManager` saves the changed contact as usual.
+`ArchiveCommand` removes a checkup only when it is unmarked and its calendar date is after today in the
+system's local timezone at execution. It uses `Person#withoutCheckup()` on the archived copy to clear
+the appointment and its mark while preserving all other contact details. The success message formats
+the updated contact and explicitly reports when a checkup was removed.
+
+Today's appointments are retained, including those later in the day, to avoid losing the contact's
+same-day schedule when they are archived. Past appointments retain their marked or unmarked status,
+and marked appointments are retained even when dated in the future to preserve the recorded completion
+status. Retention preserves a record; it does not reserve the appointment slot. Booking-conflict checks
+exclude archived contacts, so an active contact may still be booked at the same time as a retained
+archived appointment. This is a deliberate tradeoff between preserving the schedule record and allowing
+active contacts to use slots previously assigned to archived contacts.
+
+### Marking and unmarking checkups
+
+`mark INDEX` and `unmark INDEX` change the `checkupMarked` flag of a contact with an appointment.
+The command words are case-insensitive. Both commands use the current displayed index, including
+filtered, sorted and archived lists; neither changes the appointment date/time or the archive status.
+
+#### Parsing and validation
+
+`AddressBookParser` delegates to `MarkCommandParser` or `UnmarkCommandParser`. Both parsers use
+`ParserUtil#parseIndex()` to parse one positive index and convert parsing failures to a `ParseException`
+with `Invalid index.` During execution, an index outside the displayed list produces a `CommandException`
+with the same message. Each command then checks for an appointment before checking its mark.
+
+| Validation failure | `mark` message | `unmark` message |
+| --- | --- | --- |
+| No appointment | `Contacts with no checkup appointments cannot be marked.` | `Contacts with no checkup appointments cannot be unmarked.` |
+| Mark already has the requested state | `Marked contact cannot be marked again.` | `Unmarked contact cannot be unmarked again.` |
+
+Validation failures occur before the model is changed or saved. Neither command validates the appointment
+against the current time or performs booking-conflict checks, since the booking itself is unchanged.
+
+#### Execution, UI and storage
+
+1. The command obtains `Model#getFilteredPersonList()` and retrieves the contact at the displayed index.
+1. After validation, `MarkCommand` calls `Person#withMarkedCheckup()`; `UnmarkCommand` calls
+   `Person#withUnmarkedCheckup()`. These methods create immutable replacements while preserving other fields.
+1. The command calls `Model#setPerson(person, updatedPerson)`. `PersonCard` shows `[X]` for a marked
+   appointment and `[ ]` for an unmarked appointment; contacts without appointments have no indicator.
+1. The command returns `Marked contact: NAME` or `Unmarked contact: NAME` in a `CommandResult`.
+1. Both commands inherit `modifiesData() == true`, so `LogicManager` saves the contact list through `Storage`.
+   `JsonAdaptedPerson` stores `checkupMarked` alongside `checkupAppointment`. After a successful command,
+   `LogicManager` clears selection and closes the details panel, as it does for other non-view commands.
+
+The following diagrams show the successful mark and unmark paths. Validation errors stop before
+`Model#setPerson()`. Restore-point creation and individual UI observer calls are omitted for clarity.
+
+<puml src="diagrams/MarkSequenceDiagram.puml" alt="Sequence of parsing, validating, marking and saving a checkup" />
+
+<puml src="diagrams/UnmarkSequenceDiagram.puml" alt="Sequence of parsing, validating, unmarking and saving a checkup" />
 
 ### Remarks
 
@@ -466,8 +523,9 @@ word accepts four formats:
 `Remark` is an immutable list of notes held by every `Person`. A person with no notes holds an empty `Remark`
 (equal to `Remark.EMPTY`), so `Person#getRemark()` never returns `null`. Each note must not be blank or start with
 a space, a person cannot have the same note twice, and the notes can have at most
-`Remark.MAX_TOTAL_LENGTH` (500) characters in total, which stops one contact's card from filling the list.
-The `Remark` constructor enforces both rules, so an invalid remark cannot exist in the model.
+`Remark.MAX_TOTAL_LENGTH` (500) characters in total.
+The `Remark` constructor enforces the blank-note and length rules, so a remark that breaks them cannot exist in the
+model. `RemarkCommand` rejects duplicate notes.
 
 The notes count towards `Person#equals()` but not `Person#isSamePerson()`, so notes never decide whether two
 contacts are the same person. `EditCommand` copies the remark unchanged into the edited person.
@@ -537,7 +595,7 @@ would be too long cause a `CommandException`. In each case the person is unchang
 
 The `find` command searches names using `find INPUT`, or one selected field using `find /CRITERION INPUT`.
 The command word and criterion are case-insensitive. Supported criteria are `/name`, `/patientNo`,
-`/familyNo`, `/address`, `/pEmail`, `/fEmail`, `/email` (either email) and `/tag`.
+`/familyNo`, `/address`, `/pEmail`, `/fEmail`, `/email` (either email), `/tag` and `/remark`.
 It changes the displayed contacts and returns the match count without modifying stored contacts.
 
 #### Parsing and phrase matching
@@ -552,11 +610,13 @@ not as separate alternative keywords. Text matching uses case-insensitive substr
 * `find alex david` does not return `Alex Yeoh` and `David Li` separately; the name must contain
   `alex david` together in that order.
 * Single substrings still work: `find dy` matches `Brandy`. `/name` uses the same phrase semantics.
+* `/remark` matches a phrase within any one care note, ignoring case and repeated whitespace. Separate
+  notes are not joined, and displayed note numbers are not searched.
 * Phone searches require one sequence of at least two digits and match consecutive digits:
   `87` matches `900087000`, but not `89700000`. Spaces within a phone number are rejected.
 
 `PersonContainsKeywordsPredicate#test()` selects the requested field before matching. Missing optional
-emails or tags do not match. Leading and trailing whitespace never creates an additional search term.
+emails, tags or remarks do not match. Leading and trailing whitespace never creates an additional search term.
 
 #### Search scope and execution
 
@@ -577,62 +637,27 @@ between active and archive scope. Helper calls and UI updates are omitted for cl
 1. `AddressBookParser#parseCommand()` recognises `find` and delegates to `FindCommandParser`.
 1. The parser validates one syntax, normalizes the search phrase and creates the corresponding predicate
    and `FindCommand`.
-1. `FindCommand#execute()` checks the model's list scope, selects the corresponding active or archived
-   base predicate, then calls `Model#filterPersonsInCurrentList()` with the search predicate.
-1. The model combines the scope and search predicates, updates the observable list and clears selection
-   if the selected contact no longer appears. The UI updates the contact cards.
+1. `FindCommand#execute()` calls `Model#filterPersonsInCurrentList()` with the search predicate.
+1. `ModelManager` uses its `archiveScope` boolean to combine the scope and search predicates, then updates
+   the observable list. List switches call `Model#setArchiveScope(boolean)` explicitly; scope is never
+   inferred from predicate identity. The UI updates the contact cards.
 1. The command uses `Model#getFilteredPersonList().size()` to format
    `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` in a `CommandResult`.
-1. `FindCommand#modifiesData()` returns `false`, so `LogicManager` skips saving.
+1. `FindCommand#modifiesData()` returns `false`, so `LogicManager` skips saving and clears the selected
+   contact through `Model#selectPerson(null)`, closing the details panel.
 
 **Error handling:** Empty input, missing criterion input, multiple criteria, invalid phone input and mixed
 syntax such as `find Alice /address A` cause a `ParseException`. Mixed syntax uses the same invalid-format
 response as bare `find`, including `Use either find KEYWORD or find /CRITERION INPUT.` and the supported
-criteria. An unknown criterion reports `Unknown criterion: /...`. Parsing errors leave stored contacts,
+criteria. An unknown criterion reports `Unknown criterion: /...`, followed by the invalid-format message
+and `FindCommand.MESSAGE_USAGE`. Parsing errors leave stored contacts,
 selection and the current display unchanged. A valid search with no matches instead succeeds, displays
-an empty list and reports `0 person(s) listed!` without losing its active or archive scope.
+an empty list and reports `0 person(s) listed!` followed by
+`Use 'list archive' to search through archived contacts`, without losing its active or archive scope.
 
 **Design consideration:** Passing one normalized phrase to the existing predicate classes preserves partial
 matching while preventing multiword input from matching unrelated contacts one word at a time. Retaining
 scope in the model keeps archive searches reliable even when the current results are empty.
-
-The `find /CRITERION INPUT` command searches one selected contact field and returns the number of
-matches in the result box. Supported criteria are `/name`, `/patientNo`, `/familyNo`, `/address`,
-`/pEmail`, `/fEmail`, `/email` (either email), and `/tag`. Text searches match any whitespace-separated
-keyword as a case-insensitive substring. Phone searches require one sequence of at least two digits and
-match those digits consecutively: `87` matches `900087000`, but not `89700000`.
-It searches all stored contacts and changes the display filter without modifying stored contacts.
-
-The  `find KEYWORD [MORE_KEYWORDS]...` command only does name searches, of which any name matching
-the case-insensitive substring is given.
-
-The sequence diagram below shows a successful `find /patientNo 87` command. A successful search may
-return zero matches. It focuses on parsing and execution; helper calls and UI updates are omitted for clarity.
-
-<puml src="diagrams/FindSequenceDiagram.puml" alt="Sequence of parsing and executing a successful find /patientNo 87 command" />
-
-1. `LogicManager#execute()` passes the input to `AddressBookParser#parseCommand()`, which recognises
-   `find` and creates a `FindCommandParser`.
-2. `FindCommandParser#parse()` extracts the slash-prefixed criterion and validates the input. It creates a
-   `PersonContainsKeywordsPredicate` containing the criterion and keywords, then a `FindCommand` using that
-   predicate. Legacy name searches continue to use `NameContainsKeywordsPredicate`.
-3. `FindCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)` to replace the search criteria
-   within the selected active or archive scope. `ModelManager` stores this scope as a boolean; list switches
-   call `Model#setArchiveScope(boolean)` explicitly, so filtering never infers scope from predicate identity.
-   `PersonContainsKeywordsPredicate#test()` selects the requested field and checks for matching substrings.
-   Absent optional emails or tags do not match. The UI observes the filtered list and updates the contact cards.
-4. The command obtains `Model#getFilteredPersonList()` and uses its size to format
-   `Messages.MESSAGE_PERSONS_LISTED_OVERVIEW` for the feedback in a new `CommandResult`.
-5. `LogicManager` checks `FindCommand#modifiesData()`, which returns `false`, and skips saving.
-   `MainWindow` displays the returned feedback in `ResultDisplay`.
-
-**Error handling:** Missing or whitespace-only input, an unknown slash-prefixed criterion, multiple criteria,
-or phone input other than a single sequence of at least two digits causes `FindCommandParser#parse()` to
-throw a `ParseException` with the command usage. This leaves stored contacts and the display filter unchanged.
-A search with no matches succeeds, displays an empty list, and reports `0 person(s) listed!`.
-Use `list` to display all active (unarchived) contacts again after a successful search.
-Use `list archive` to display all archived contacts.
-
 
 ### Delete command
 
@@ -666,17 +691,20 @@ parsing and execution; helper calls and UI updates are omitted for clarity.
 1. `LogicManager` checks `DeleteCommand#modifiesData()`, which returns whether the command was confirmed. Only a
    confirmed delete is saved to storage.
 
-**Error handling:** A missing, non-numeric or non-positive index, or any other extra argument, causes
-`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. An index larger than the displayed
-list causes `DeleteCommand#execute()` to throw a `CommandException`. Both leave the stored contacts unchanged.
+**Error handling:** A missing or non-numeric index, or any other extra argument, causes
+`DeleteCommandParser#parse()` to throw a `ParseException` with the command usage. A zero or negative index causes it
+to throw a `ParseException` with the message `Index must be a positive integer.` An empty displayed list, or an index
+larger than the displayed list, causes `DeleteCommand#execute()` to throw a `CommandException`. All of these leave the
+stored contacts unchanged.
 
 
 ### Filter command
 
 The `filter` command narrows the displayed list to contacts matching all of the given criteria: `/name`, `/tag` and
 `/address`. Within one criterion, matching any one of the values is enough, and a contact must satisfy every criterion
-that was given. Matching ignores case. A filter applies to the list currently shown, so it keeps the active or archived
-scope, and it does not modify the stored contacts.
+that was given. Matching ignores case. A filter keeps the active or archived scope currently shown, and it does not
+modify the stored contacts. It searches the whole scope, not only the contacts currently displayed, so it replaces an
+earlier `filter` or `find` instead of narrowing it.
 
 The sequence diagram below shows a successful `filter /tag HIGH` command. It focuses on parsing and execution; helper
 calls and UI updates are omitted for clarity.
@@ -698,7 +726,7 @@ calls and UI updates are omitted for clarity.
 1. `FilterCommand#execute()` calls `Model#filterPersonsInCurrentList(predicate)`. This combines the predicate with the
    scope of the list currently shown (active contacts after `list`, archived contacts after `list archive`), so the
    filtered list only contains persons in that scope who match the criteria. The scope is kept even when nothing
-   matches, and `find` switches back to active contacts.
+   matches, and `find` keeps the same active or archive scope.
 1. The command calls `Model#getFilteredPersonList()` to count the persons now shown, and returns a `CommandResult`
    with the "N person(s) listed!" message.
 1. `LogicManager` checks `FilterCommand#modifiesData()`, which returns `false`, and skips saving.
@@ -906,6 +934,8 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 | `* * *`  | user                                       | edit a contact's details | keep phone numbers, emails and addresses up to date when they change |
 | `* *`    | user                                       | remove a contact's email | stop keeping an email address that is no longer used       |
 | `* * *`  | user                                       | view a specific contact | locate details of persons quickly when book gets populated |
+| `* *`    | caregiver                                  | temporarily hide displayed contact information | keep patient details out of sight without deleting saved records |
+| `* *`    | caregiver                                  | close CareBook with a typed command | finish a session without switching to the mouse |
 | `* *`    | user                                       | find any contact        | find contacts I might not remember the full names of       |
 | `* *`    | user                                       | filter contacts by name, tag and address | focus on the patients I need to look after right now |
 | `* *`    | user                                       | sort contacts by name, priority or when they were added | see the most urgent or most recent patients first |
@@ -949,14 +979,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 * 2c. An active or archived contact has the same patient phone number or non-empty patient email, ignoring email case.
 
-    * 2c1. CareBook shows `This person already exists in CareBook.` and does not add the person.
+    * 2c1. CareBook shows `Someone with this patient HP or email already exists in CareBook.` and does not add the person.
 
       Use case resumes at step 1.
 
 * 2d. Another contact has the same normalized name and address, but distinct patient contact details.
 
     * 2d1. CareBook compares the address ignoring case and whitespace, then shows
-      `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
+      `Another contact with this name already has this Address. Include a differentiator such as a number (e.g. Alice 2) or surname.`
 
       Use case resumes at step 1.
 
@@ -965,24 +995,6 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
     * 2e1. CareBook allows the shared name. Shared family contact details are also allowed.
 
       Use case resumes at step 3.
-
-*2d. A prefix is unknown or mistyped, or a field value contains `/`.
-
-    *2d1. CareBook rejects the command and shows the correct format and slash restriction.
-
-        Use case resumes at step 1.
-
-*2e. Another active or archived contact has the same patient phone number or non-empty patient email.
-
-    *2e1. CareBook shows `This person already exists in CareBook.` and does not add the contact.
-
-        Use case resumes at step 1.
-
-*2f. Another contact has the same normalized name and address, with distinct patient contact details.
-
-    *2f1. CareBook shows `WARNING: Same Address. Include a differentiator such as a number (eg Alice 2) or surname.`
-
-        Use case resumes at step 1.
 
 **Use case: Delete a person**
 
@@ -1260,7 +1272,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 3. User requests to find contacts by a keyword or one criterion: name, patient phone,
    family phone, address, patient email, family email, either email, priority tag or remark.
 4. CareBook validates the command format and criterion ignoring case, trims surrounding
-   whitespace and truncates trailing spaces in text input.
+   whitespace and collapses repeated whitespace in text input.
 5. CareBook searches the selected list scope for a case-insensitive substring matching the whole input phrase.
    A remark search matches within an individual care note; phone input matches consecutive digits.
 6. CareBook displays matching contact cards and the match count without changing stored contacts.
@@ -1289,7 +1301,8 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 
 * 5a. No contacts match the search phrase in the selected scope.
 
-    * 5a1. CareBook displays an empty list and reports `0 person(s) listed!`.
+    * 5a1. CareBook displays an empty list and reports `0 person(s) listed!` followed by
+      `Use 'list archive' to search through archived contacts`.
 
       Use case ends.
 
@@ -1307,11 +1320,11 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 1. User requests to display contacts.
 2. CareBook displays the requested contact list.
 3. User requests to schedule, replace or delete the checkup appointment of a contact.
-4. CareBook accepts any command-word or delete-keyword case and ignores extra spaces between arguments. For scheduling, it checks archive status before
+4. CareBook accepts any command-word or `/delete` option case and ignores extra spaces between arguments. For scheduling, it checks archive status before
    date/time validity, then checks for a booking conflict among active contacts.
 5. CareBook updates or removes the appointment and its mark as appropriate, refreshes the contact card
-   and selected details, and saves the updated contact list.
-6. CareBook displays a confirmation.
+   and saves the updated contact list.
+6. CareBook displays a confirmation and closes any selected details panel.
 
     Use case ends.
 
@@ -1369,6 +1382,42 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
       Use case resumes at step 6.
 
       
+**Use case: Mark or unmark a checkup**
+
+**MSS:**
+
+1. User requests to display contacts.
+2. CareBook displays the requested contact list.
+3. User requests to mark or unmark a contact's checkup using its displayed index.
+4. CareBook validates the index, confirms that an appointment exists and checks the current mark.
+5. CareBook updates the indicator to `[X]` for mark or `[ ]` for unmark, preserves the appointment and
+   other contact details, and saves the updated contact list.
+6. CareBook displays a confirmation and closes any selected details panel.
+
+    Use case ends.
+
+**Extensions**
+
+* 4a. The index is missing, malformed, non-positive or outside the displayed list, or extra arguments are given.
+
+    * 4a1. CareBook shows `Invalid index.` and leaves the contacts unchanged.
+
+      Use case resumes at step 3.
+
+* 4b. The contact has no checkup appointment.
+
+    * 4b1. CareBook shows `Contacts with no checkup appointments cannot be marked.` or
+      `Contacts with no checkup appointments cannot be unmarked.` and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
+* 4c. The appointment is already marked for a mark request, or already unmarked for an unmark request.
+
+    * 4c1. CareBook shows `Marked contact cannot be marked again.` or
+      `Unmarked contact cannot be unmarked again.` and leaves the contact unchanged.
+
+      Use case resumes at step 3.
+
 **Use case: Filter contacts**
 
 **MSS:**
@@ -1490,6 +1539,14 @@ testers are expected to do more *exploratory* testing.
 1. Enter `clear 1`, then `Clear`.<br>
    Expected: The first command reports the `clear` usage and leaves the displayed contacts unchanged.
    `Clear` hides the list, highlight and details panel without deleting contacts.
+1. Enter `clear 1`.<br>
+   Expected: The command reports the `clear` usage. The displayed contacts and selection stay unchanged.
+1. Enter `Clear`, then `list`.<br>
+   Expected: `Clear` hides the list, highlight and details panel without deleting contacts.
+   `list` restores both active contacts without selecting either one.
+1. Enter `CLEAR`, then `list`.<br>
+   Expected: Uppercase `CLEAR` also hides the displayed contacts without deleting them;
+   `list` restores both contacts.
 1. Enter `exit 1`, then `Exit`.<br>
    Expected: The first reports that `exit` takes no arguments and leaves the application open.
    `Exit` closes the application. Relaunch CareBook and enter `LIST`. The same two contacts are still saved.
@@ -1698,7 +1755,7 @@ testers are expected to do more *exploratory* testing.
    1. Test case: Mark contact 1, then assign the same appointment again; next run `checkup 1 DATE 15:30`.<br>
       Expected: The identical appointment preserves `[X]`. The changed appointment resets it to `[ ]`.
 
-   1. Test case: `checkup 1 delete`, then repeat the command.<br>
+   1. Test case: `checkup 1 /delete`, then repeat the command.<br>
       Expected: The first command removes the appointment row and mark indicator entirely. The second
       reports `This contact has no checkup appointment to delete.` without changing the contact.
 
@@ -1717,6 +1774,36 @@ testers are expected to do more *exploratory* testing.
    1. Other incorrect inputs to try: `checkup`, `checkup 0 DATE 14:30`, `checkup x DATE 14:30`,
       an out-of-range displayed index, `31/02/2030 14:30` and `DATE 24:00`.<br>
       Expected: Appropriate format, index or date/time errors. No contact data is changed.
+
+### Marking and unmarking checkups
+
+1. Changing and saving the mark
+
+   1. Prerequisites: A displayed contact at index 1 with an unmarked checkup appointment.
+
+   1. Test case: `MaRk   1  `, then `UNMARK 1`.<br>
+      Expected: The name changes from `[ ]` to `[X]`, then back to `[ ]`. The appointment and other
+      contact details remain unchanged. Each command confirms the change.
+
+   1. Test case: Mark the appointment, restart CareBook, then unmark it and restart again.<br>
+      Expected: The marked and unmarked states each survive reloading.
+
+   1. Test case: Find or sort contacts, then mark and unmark a scheduled contact using its displayed index.
+      Repeat after `list archive` with an archived contact that has an appointment.<br>
+      Expected: The displayed contact is updated, list scope and order are preserved, and archived contacts
+      remain archived.
+
+1. Rejecting invalid requests
+
+   1. Test case: Run `mark 1` twice, then `unmark 1` twice.<br>
+      Expected: The repeated requests report `Marked contact cannot be marked again.` and
+      `Unmarked contact cannot be unmarked again.` respectively, without changing the contact.
+
+   1. Test case: Remove the appointment with `checkup 1 /delete`, then run `mark 1` and `unmark 1`.<br>
+      Expected: Each command reports its no-appointment error; no mark indicator appears.
+
+   1. Other incorrect inputs to try: `mark`, `mark 0`, `unmark x`, `unmark 1 extra` and an out-of-range index.<br>
+      Expected: `Invalid index.` The contact data and current selection remain unchanged.
 
 ### Keeping care notes
 

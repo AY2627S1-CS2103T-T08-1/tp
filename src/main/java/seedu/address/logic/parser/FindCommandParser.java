@@ -61,7 +61,8 @@ public class FindCommandParser implements Parser<FindCommand> {
                 .map(Map.Entry::getValue)
                 .findFirst().orElse(null);
         if (criterion == null) {
-            throw new ParseException("Unknown criterion: " + tokens[0]);
+            throw new ParseException("Unknown criterion: " + tokens[0] + "\n"
+                    + String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));
         }
         if (tokens.length < 2) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, FindCommand.MESSAGE_USAGE));

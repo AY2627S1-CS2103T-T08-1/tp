@@ -73,7 +73,7 @@ public class ListCommandTest {
     public void execute_noArchivedContacts_reportsNoContacts() {
         expectedModel.setArchiveScope(true);
 
-        assertCommandSuccess(new ListCommand(true), model, ListCommand.MESSAGE_NO_CONTACTS, expectedModel);
+        assertCommandSuccess(new ListCommand(true), model, "No archived contacts", expectedModel);
     }
 
     @Test

@@ -49,6 +49,15 @@ public class CheckupAppointmentTest {
     }
 
     @Test
+    public void isAfterToday_comparesCalendarDateInLocalTimezone() {
+        Clock clock = Clock.fixed(Instant.parse("2026-10-27T17:30:00Z"), ZoneId.of("Asia/Singapore"));
+        assertFalse(new CheckupAppointment("27/10/2026 23:59").isAfterToday(clock));
+        assertFalse(new CheckupAppointment("28/10/2026 00:00").isAfterToday(clock));
+        assertFalse(new CheckupAppointment("28/10/2026 23:59").isAfterToday(clock));
+        assertTrue(new CheckupAppointment("29/10/2026 00:00").isAfterToday(clock));
+    }
+
+    @Test
     public void equals_comparesDateTime() {
         CheckupAppointment appointment = new CheckupAppointment("01/01/2030 12:00");
         assertEquals(appointment, appointment);

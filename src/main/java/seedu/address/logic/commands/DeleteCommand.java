@@ -30,8 +30,7 @@ public class DeleteCommand extends Command {
             + "This cannot be undone.\n%1$s\n"
             + "To confirm, enter: " + COMMAND_WORD + " %2$d " + CONFIRM_FLAG;
     public static final String MESSAGE_EMPTY_LIST = "There are no persons in the displayed list to delete.";
-    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "The index provided is out of range. "
-            + "The displayed list has %1$d person(s), so the index must be from 1 to %1$d.";
+    public static final String MESSAGE_INDEX_OUT_OF_RANGE = "Invalid index.";
 
     private final Index targetIndex;
     private final boolean isConfirmed;
