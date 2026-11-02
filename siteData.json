@@ -66,6 +66,7 @@
         "filter-command": "Filter command",
         "sort-command": "Sort command",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
+        "proposed-dynamic-marking-of-future-checkups": "[Proposed] Dynamic marking of future checkups",
         "proposed-past-checkup-tracking": "[Proposed] Past checkup tracking",
         "proposed-active-and-archive-list-headers": "[Proposed] Active and archive list headers",
         "documentation-logging-testing-dev-ops": "Documentation, logging, testing, dev-ops",
