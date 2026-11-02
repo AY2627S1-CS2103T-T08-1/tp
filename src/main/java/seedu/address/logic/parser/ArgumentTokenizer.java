@@ -23,6 +23,8 @@ public class ArgumentTokenizer {
 
     public static final String MESSAGE_SLASH_IN_VALUE = "Unexpected \"/\" in \"%1$s\". Put a space before each "
             + "prefix. Inside a value, \"/\" can only join short parts, as in s/o, a/l, c/o or 4/5.";
+    public static final String MESSAGE_LONE_SLASH = "Unexpected \"/\" on its own. Put the prefix name straight "
+            + "after \"/\", e.g. /name, or remove the spaces around a \"/\" that joins short parts, e.g. s/o.";
 
     // the shortest prefix name, tag in /tag, has 3 letters, so a slash followed by fewer letters is not a prefix
     private static final int MIN_PREFIX_NAME_LENGTH = 3;
@@ -66,7 +68,8 @@ public class ArgumentTokenizer {
                     throw new ParseException(String.format(MESSAGE_SLASH_IN_VALUE, getWordAt(argsString, index))
                             + "\n" + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
                 }
-                throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
+                throw new ParseException(MESSAGE_LONE_SLASH + "\n"
+                        + String.format(MESSAGE_INVALID_COMMAND_FORMAT, usage));
             }
         }
         return extractArguments(argsString, positions);

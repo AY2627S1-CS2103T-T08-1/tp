@@ -75,8 +75,8 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_malformedPrefixesOrSlashInField_failure() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE);
-        for (String fields : List.of(" /", " / phone 123", " //")) {
+        String expectedMessage = ArgumentTokenizer.MESSAGE_LONE_SLASH + "\n" + MESSAGE_INVALID_FORMAT;
+        for (String fields : List.of(" /", " / phone 123", " //", " /address 5 / 6", " /name Tan / Lim")) {
             assertParseFailure(parser, "1" + fields, expectedMessage);
         }
         for (List<String> fieldsAndWord : List.of(List.of(" /address 4 St/name Alice", "St/name"),
