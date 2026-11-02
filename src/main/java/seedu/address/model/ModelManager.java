@@ -95,7 +95,7 @@ public class ModelManager implements Model {
     @Override
     public Runnable createRestorePoint() {
         AddressBook savedAddressBook = new AddressBook(addressBook);
-        boolean savedArchiveScope = archiveScope;
+        boolean wasShowingArchiveList = archiveScope;
         Predicate<? super Person> savedDisplayPredicate = displayPredicate;
         Set<Person> savedKeptDisplayedPersons = Set.copyOf(keptDisplayedPersons);
         Comparator<? super Person> savedSortOrder = sortOrder;
@@ -103,7 +103,7 @@ public class ModelManager implements Model {
         Comparator<? super Person> savedComparator = sortedPersons.getComparator();
 
         return () -> {
-            archiveScope = savedArchiveScope;
+            archiveScope = wasShowingArchiveList;
             displayPredicate = savedDisplayPredicate;
             keptDisplayedPersons.clear();
             keptDisplayedPersons.addAll(savedKeptDisplayedPersons);

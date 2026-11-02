@@ -123,7 +123,7 @@ public class RemarkCommand extends Command {
             logger.fine("Remark rejected: index " + personIndex.getOneBased()
                     + " is not in the displayed list");
             throw new CommandException(
-                    Messages.getMessageForIndexNotDisplayed(personIndex.getOneBased(), lastShownList.size()));
+                    Messages.getMessageForIndexNotDisplayed(lastShownList.size()));
         }
         return lastShownList.get(personIndex.getZeroBased());
     }

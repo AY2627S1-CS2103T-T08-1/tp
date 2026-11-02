@@ -39,12 +39,8 @@ public class Messages {
      * Returns the error message for an index that is not in a displayed list of {@code displayedCount} contacts,
      * explaining how to recover.
      */
-    public static String getMessageForIndexNotDisplayed(int oneBasedIndex, int displayedCount) {
-        if (displayedCount == 0) {
-            return MESSAGE_EMPTY_DISPLAYED_LIST;
-        }
-        String contactNoun = displayedCount == 1 ? "contact" : "contacts";
-        return String.format(MESSAGE_INDEX_OUT_OF_RANGE, oneBasedIndex, displayedCount, contactNoun);
+    public static String getMessageForIndexNotDisplayed(int displayedCount) {
+        return displayedCount == 0 ? MESSAGE_EMPTY_DISPLAYED_LIST : MESSAGE_INDEX_OUT_OF_RANGE;
     }
 
     /**

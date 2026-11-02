@@ -74,7 +74,7 @@ public class RemarkCommandTest {
                 model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased()).getRemark().getNotes());
     }
 
-    private static Model expectedModelWith(Model model, Person original, Person changed) {
+    private static Model createExpectedModelWith(Model model, Person original, Person changed) {
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
         expectedModel.setPerson(original, changed);
         return expectedModel;
@@ -88,7 +88,7 @@ public class RemarkCommandTest {
                 NOTE_ALLERGY);
 
         assertCommandSuccess(RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_ALLERGY), model, expectedMessage,
-                expectedModelWith(model, firstPerson, changedPerson));
+                createExpectedModelWith(model, firstPerson, changedPerson));
     }
 
     @Test
@@ -100,7 +100,7 @@ public class RemarkCommandTest {
                 "Diabetic");
 
         assertCommandSuccess(RemarkCommand.add(INDEX_FIRST_PERSON, "Diabetic"), model, expectedMessage,
-                expectedModelWith(model, withNotes, changedPerson));
+                createExpectedModelWith(model, withNotes, changedPerson));
     }
 
     @Test
@@ -111,7 +111,7 @@ public class RemarkCommandTest {
                 "Visits after 4pm");
 
         assertCommandSuccess(RemarkCommand.edit(INDEX_FIRST_PERSON, NOTE_SECOND, "Visits after 4pm"), model,
-                expectedMessage, expectedModelWith(model, withNotes, changedPerson));
+                expectedMessage, createExpectedModelWith(model, withNotes, changedPerson));
     }
 
     @Test
@@ -122,7 +122,7 @@ public class RemarkCommandTest {
                 NOTE_ALLERGY);
 
         assertCommandSuccess(RemarkCommand.delete(INDEX_FIRST_PERSON, NOTE_FIRST), model, expectedMessage,
-                expectedModelWith(model, withNotes, changedPerson));
+                createExpectedModelWith(model, withNotes, changedPerson));
     }
 
     @Test
@@ -132,7 +132,7 @@ public class RemarkCommandTest {
         String expectedMessage = String.format(RemarkCommand.MESSAGE_CLEAR_SUCCESS, withNotes.getName());
 
         assertCommandSuccess(RemarkCommand.clear(INDEX_FIRST_PERSON), model, expectedMessage,
-                expectedModelWith(model, withNotes, changedPerson));
+                createExpectedModelWith(model, withNotes, changedPerson));
     }
 
     @Test
@@ -181,14 +181,14 @@ public class RemarkCommandTest {
                 longNote);
 
         assertCommandSuccess(RemarkCommand.add(INDEX_FIRST_PERSON, longNote), model, expectedMessage,
-                expectedModelWith(model, withNotes, changedPerson));
+                createExpectedModelWith(model, withNotes, changedPerson));
     }
 
     @Test
     public void execute_invalidPersonIndexUnfilteredList_throwsCommandException() {
         Index outOfBoundIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
 
-        String expectedMessage = Messages.getMessageForIndexNotDisplayed(outOfBoundIndex.getOneBased(),
+        String expectedMessage = Messages.getMessageForIndexNotDisplayed(
                 model.getFilteredPersonList().size());
 
         assertCommandFailure(RemarkCommand.add(outOfBoundIndex, NOTE_ALLERGY), model, expectedMessage);
@@ -208,7 +208,7 @@ public class RemarkCommandTest {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
 
         assertCommandFailure(RemarkCommand.add(INDEX_SECOND_PERSON, NOTE_ALLERGY), model,
-                Messages.getMessageForIndexNotDisplayed(2, 1));
+                Messages.getMessageForIndexNotDisplayed(1));
     }
 
     @Test
@@ -233,7 +233,7 @@ public class RemarkCommandTest {
         String expectedMessage = String.format(RemarkCommand.MESSAGE_ADD_SUCCESS, 1, secondPerson.getName(),
                 NOTE_ALLERGY);
 
-        Model expectedModel = expectedModelWith(model, secondPerson, changedPerson);
+        Model expectedModel = createExpectedModelWith(model, secondPerson, changedPerson);
         showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
 
         assertCommandSuccess(RemarkCommand.add(INDEX_FIRST_PERSON, NOTE_ALLERGY), model, expectedMessage,

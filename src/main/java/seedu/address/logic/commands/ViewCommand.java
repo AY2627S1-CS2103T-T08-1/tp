@@ -69,7 +69,7 @@ public class ViewCommand extends Command {
     private void validateTargetIndex(int displayedCount) throws CommandException {
         if (targetIndex.getZeroBased() >= displayedCount) {
             throw new CommandException(
-                    Messages.getMessageForIndexNotDisplayed(targetIndex.getOneBased(), displayedCount));
+                    Messages.getMessageForIndexNotDisplayed(displayedCount));
         }
     }
 

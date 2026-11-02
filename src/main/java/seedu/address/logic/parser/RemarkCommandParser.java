@@ -17,12 +17,15 @@ import seedu.address.model.person.Remark;
 public class RemarkCommandParser implements Parser<RemarkCommand> {
 
     public static final String MESSAGE_INVALID_NOTE_NUMBER = "Note number must be a positive integer.";
-    public static final String MESSAGE_EDIT_FORMAT = "Give the number of the note to edit and its new text "
-            + "after /edit, e.g. remark %1$d /edit 2 Visits after 4pm.";
-    public static final String MESSAGE_DELETE_FORMAT = "Give only the number of the note to delete after /delete, "
-            + "e.g. remark %1$d /delete 2.";
-    public static final String MESSAGE_CLEAR_FORMAT = "/clear takes nothing after it. To delete all of this "
-            + "contact's notes, enter: remark %1$d /clear";
+    public static final String MESSAGE_EDIT_FORMAT = "Give the number of the note to edit and its new text after "
+            + RemarkCommand.KEYWORD_EDIT + ", e.g. " + RemarkCommand.COMMAND_WORD + " %1$d "
+            + RemarkCommand.KEYWORD_EDIT + " 2 Visits after 4pm.";
+    public static final String MESSAGE_DELETE_FORMAT = "Give only the number of the note to delete after "
+            + RemarkCommand.KEYWORD_DELETE + ", e.g. " + RemarkCommand.COMMAND_WORD + " %1$d "
+            + RemarkCommand.KEYWORD_DELETE + " 2.";
+    public static final String MESSAGE_CLEAR_FORMAT = RemarkCommand.KEYWORD_CLEAR + " takes nothing after it. "
+            + "To delete all of this contact's notes, enter: " + RemarkCommand.COMMAND_WORD + " %1$d "
+            + RemarkCommand.KEYWORD_CLEAR;
 
     /** Matches a whole number with an optional minus sign, which is what an attempted index looks like. */
     private static final String INTEGER_REGEX = "-?\\d+";
@@ -37,12 +40,12 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
      */
     public RemarkCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        FirstWordAndRest indexAndDetails = splitFirstWord(args.trim());
+        FirstWordAndRest indexAndDetails = requireFirstWord(args.trim());
         Index personIndex = parsePersonIndex(indexAndDetails.firstWord());
         String details = indexAndDetails.rest();
 
         // a missing note is an error rather than a way to clear, so notes are never lost by accident
-        FirstWordAndRest keywordAndRest = splitFirstWord(details);
+        FirstWordAndRest keywordAndRest = requireFirstWord(details);
         return switch (keywordAndRest.firstWord().toLowerCase(Locale.ROOT)) {
             case RemarkCommand.KEYWORD_CLEAR -> parseClear(personIndex, keywordAndRest.rest());
             case RemarkCommand.KEYWORD_DELETE -> parseDelete(personIndex, keywordAndRest.rest());
@@ -54,14 +57,14 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     private static Index parsePersonIndex(String firstWord) throws ParseException {
         // a first word that is not a number means the index was left out, not that it was mistyped
         if (!firstWord.matches(INTEGER_REGEX)) {
-            throw invalidFormat();
+            throw createInvalidFormatException();
         }
         return ParserUtil.parseDisplayedIndex(firstWord);
     }
 
     private static RemarkCommand parseClear(Index personIndex, String rest) throws ParseException {
         if (!rest.isEmpty()) {
-            throw withPersonIndex(MESSAGE_CLEAR_FORMAT, personIndex);
+            throw createExceptionWithIndex(MESSAGE_CLEAR_FORMAT, personIndex);
         }
         return RemarkCommand.clear(personIndex);
     }
@@ -69,7 +72,7 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     private static RemarkCommand parseDelete(Index personIndex, String rest) throws ParseException {
         FirstWordAndRest noteNumberAndRest = splitOffFirstWord(rest);
         if (noteNumberAndRest.firstWord().isEmpty() || !noteNumberAndRest.rest().isEmpty()) {
-            throw withPersonIndex(MESSAGE_DELETE_FORMAT, personIndex);
+            throw createExceptionWithIndex(MESSAGE_DELETE_FORMAT, personIndex);
         }
         return RemarkCommand.delete(personIndex, parseNoteIndex(noteNumberAndRest.firstWord()));
     }
@@ -78,7 +81,7 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
         // an empty rest also has an empty note, so this covers a missing note number too
         FirstWordAndRest noteNumberAndNote = splitOffFirstWord(rest);
         if (noteNumberAndNote.rest().isEmpty()) {
-            throw withPersonIndex(MESSAGE_EDIT_FORMAT, personIndex);
+            throw createExceptionWithIndex(MESSAGE_EDIT_FORMAT, personIndex);
         }
         Index noteIndex = parseNoteIndex(noteNumberAndNote.firstWord());
         return RemarkCommand.edit(personIndex, noteIndex, parseNote(noteNumberAndNote.rest()));
@@ -88,10 +91,10 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
      * Returns {@code text} split into its first word and the rest.
      * @throws ParseException if {@code text} has no words
      */
-    private static FirstWordAndRest splitFirstWord(String text) throws ParseException {
+    private static FirstWordAndRest requireFirstWord(String text) throws ParseException {
         FirstWordAndRest firstWordAndRest = splitOffFirstWord(text);
         if (firstWordAndRest.firstWord().isEmpty()) {
-            throw invalidFormat();
+            throw createInvalidFormatException();
         }
         return firstWordAndRest;
     }
@@ -105,7 +108,7 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
     }
 
     /** Returns an exception with {@code message}, whose example uses the index the user typed. */
-    private static ParseException withPersonIndex(String message, Index personIndex) {
+    private static ParseException createExceptionWithIndex(String message, Index personIndex) {
         return new ParseException(String.format(message, personIndex.getOneBased()));
     }
 
@@ -128,7 +131,7 @@ public class RemarkCommandParser implements Parser<RemarkCommand> {
         return note;
     }
 
-    private static ParseException invalidFormat() {
+    private static ParseException createInvalidFormatException() {
         return new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, RemarkCommand.MESSAGE_USAGE));
     }
 
