@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.ArchiveCommand;
 import seedu.address.logic.commands.CheckupCommand;
@@ -24,7 +26,7 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonCardTest {
 
     @Test
-    public void deletedCheckup_hidesAppointmentRowAndRemovesMarkIndicator() throws Exception {
+    public void deletedCheckup_hidesAppointmentRowAndStatus() throws Exception {
         Person scheduled = new PersonBuilder().withName("Kim Lee")
                 .withCheckupAppointment("01/01/2030 09:05").build().withMarkedCheckup();
         ModelManager model = new ModelManager();
@@ -61,13 +63,13 @@ public class PersonCardTest {
     }
 
     @Test
-    public void getNameText_onlyScheduledCheckupsHaveMarkIndicators() {
+    public void getNameText_checkupStatus_doesNotChangeName() {
         Person person = new PersonBuilder().withName("Carlyn Goh").build();
         assertEquals("Carlyn Goh", PersonCard.getNameText(person));
         Person scheduled = new PersonBuilder(person).withCheckupAppointment("01/01/2030 09:05").build();
-        assertEquals("Carlyn Goh [ ]", PersonCard.getNameText(scheduled));
-        assertEquals("Carlyn Goh [X]", PersonCard.getNameText(scheduled.withMarkedCheckup()));
-        assertEquals("Carlyn Goh [ ]", PersonCard.getNameText(scheduled.withMarkedCheckup().withUnmarkedCheckup()));
+        assertEquals("Carlyn Goh", PersonCard.getNameText(scheduled));
+        assertEquals("Carlyn Goh", PersonCard.getNameText(scheduled.withMarkedCheckup()));
+        assertEquals("Carlyn Goh", PersonCard.getNameText(scheduled.withMarkedCheckup().withUnmarkedCheckup()));
     }
 
     @Test
@@ -101,8 +103,44 @@ public class PersonCardTest {
     @Test
     public void getCheckupAppointmentText_formatsAppointmentAndOmitsAbsentAppointment() {
         assertEquals("", PersonCard.getCheckupAppointmentText(new PersonBuilder().build()));
-        assertEquals("Checkup appointment: 01/01/2030 09:05", PersonCard.getCheckupAppointmentText(
+        assertEquals("Checkup appointment: 01/01/2030 09:05 (Unmarked)", PersonCard.getCheckupAppointmentText(
                 new PersonBuilder().withCheckupAppointment("01/01/2030 09:05").build()));
+    }
+
+    @Test
+    public void getCheckupAppointmentText_markAndUnmark_showsCurrentStatus() {
+        Person scheduled = new PersonBuilder().withCheckupAppointment("01/01/2030 09:05").build();
+        assertEquals("Checkup appointment: 01/01/2030 09:05 (Marked)",
+                PersonCard.getCheckupAppointmentText(scheduled.withMarkedCheckup()));
+        assertEquals("Checkup appointment: 01/01/2030 09:05 (Unmarked)",
+                PersonCard.getCheckupAppointmentText(scheduled.withMarkedCheckup().withUnmarkedCheckup()));
+    }
+
+    @Test
+    public void longName_narrowCard_wrapsCompleteAppointmentAndStatus() throws Exception {
+        Person scheduled = new PersonBuilder()
+                .withName("Muhammad Abdul Rahman bin Abdullah Al Hakeem Al Mahmood")
+                .withCheckupAppointment("01/01/2030 09:05").build().withMarkedCheckup();
+        runOnFxThread(() -> {
+            PersonCard card = new PersonCard(scheduled, 1);
+            StackPane container = new StackPane(card.getRoot());
+            new Scene(container, 300, 450);
+            container.applyCss();
+            Label name = (Label) card.getRoot().lookup("#name");
+            Label appointment = (Label) card.getRoot().lookup("#checkupAppointment");
+            // Measure this platform's unwrapped text rather than assuming a particular font width or height.
+            double wideWidth = appointment.prefWidth(-1) + 40;
+            container.resize(wideWidth, 450);
+            container.layout();
+            double singleLineHeight = appointment.getHeight();
+            container.resize(wideWidth / 2, 450);
+            container.layout();
+            assertEquals(scheduled.getName().fullName, name.getText());
+            assertEquals("Checkup appointment: 01/01/2030 09:05 (Marked)", appointment.getText());
+            assertTrue(appointment.isWrapText());
+            assertFalse(appointment.isTextTruncated());
+            assertTrue(appointment.getHeight() > singleLineHeight);
+        });
     }
 
     @Test
