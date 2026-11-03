@@ -313,7 +313,7 @@ This also handles archiving an active selected contact and restoring one from th
 contacts, so `view`, `remark` and `checkup` use the same displayed indices. Sorting keeps the selected
 contact at model level rather than selecting whichever contact moves into its former row; the command
 processing policy then clears selection after a successful sort. `PersonDetailsFormatter`
-includes the optional checkup appointment, its `Marked` or `Unmarked` status on a separate line, and
+includes the optional checkup appointment, its `[X]` (marked) or `[ ]` (unmarked) status on a separate line, and
 every numbered remark. An absent appointment is shown as `Not scheduled` without a status line for an active
 contact; an archived contact without an appointment omits the appointment field entirely.
 Replacing the selected immutable `Person` through `setPerson()` refreshes these details without
@@ -525,8 +525,8 @@ against the current time or performs booking-conflict checks, since the booking 
 1. The command obtains `Model#getFilteredPersonList()` and retrieves the contact at the displayed index.
 1. After validation, `MarkCommand` calls `Person#withMarkedCheckup()`; `UnmarkCommand` calls
    `Person#withUnmarkedCheckup()`. These methods create immutable replacements while preserving other fields.
-1. The command calls `Model#setPerson(person, updatedPerson)`. `PersonCard` shows `(Marked)` for a marked
-   appointment and `(Unmarked)` for an unmarked appointment; contacts without appointments have no indicator.
+1. The command calls `Model#setPerson(person, updatedPerson)`. `PersonCard` shows `[X]` for a marked
+   appointment and `[ ]` for an unmarked appointment; contacts without appointments have no indicator.
 1. The command returns `Marked contact: NAME` or `Unmarked contact: NAME` in a `CommandResult`.
 1. Both commands inherit `modifiesData() == true`, so `LogicManager` saves the contact list through `Storage`.
    `JsonAdaptedPerson` stores `checkupMarked` alongside `checkupAppointment`. After a successful command,
@@ -1592,7 +1592,7 @@ contacts, selection and the displayed list unchanged; there is no fallback to th
 2. CareBook displays the requested contact list.
 3. User requests to mark or unmark a contact's checkup using its displayed index.
 4. CareBook validates the index, confirms that an appointment exists and checks the current mark.
-5. CareBook updates the appointment status to `(Marked)` for mark or `(Unmarked)` for unmark, preserves the appointment and
+5. CareBook updates the appointment status to `[X]` for mark or `[ ]` for unmark, preserves the appointment and
    other contact details, and saves the updated contact list.
 6. CareBook displays a confirmation and closes any selected details panel.
 
@@ -2008,7 +2008,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: A displayed contact at index 1 with an unmarked checkup appointment.
 
    1. Test case: `MaRk   1  `, then `UNMARK 1`.<br>
-      Expected: The appointment status changes from `(Unmarked)` to `(Marked)`, then back to `(Unmarked)`.
+      Expected: The appointment status changes from `[ ]` to `[X]`, then back to `[ ]`.
       The appointment date/time and other contact details remain unchanged. Each command confirms the change.
 
    1. Test case: Mark the appointment, restart CareBook, then unmark it and restart again.<br>
